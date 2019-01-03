@@ -27,7 +27,21 @@ def download_app_data(resp):
     desc_lines = resp.css('div.DWPxHb').css('div.DWPxHb').css('content').css('div::text').extract()
     for lines in desc_lines : 
        description += lines + '\n'
-    #download amount
+    if description == '' :
+        description = None
 
+    ### Additional Infomation
+    add_info_contents = {}
+    download_amount = None
+
+    parent_elems = resp.css('div.hAyfc')
+    for container_elem in parent_elems :
+        container_name = container_elem.css('div.BgcNfc::text').extract_first()
+        if container_name != None :
+            container_content = container_elem.css('span.htlgb').css('div.IQ1z0d').css('span.htlgb::text').extract_first()
+            if not type(container_content) is list :
+                add_info_contents[container_name] = container_content
+    
+    print(app_name, add_info_contents)
     #save in db
     pass

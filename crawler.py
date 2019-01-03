@@ -33,11 +33,11 @@ class PlaystoreCrawler( scrapy.Spider):
         elif link_category_util.link_is_app_page(resp.url) and game_page_util.resp_is_game(resp) :
             #download app data
             print('download app data')
+            scrapy_util.download_app_data(resp)
             print('category', game_page_util.get_app_category(resp))
             #and add links
             self.crawl_state.add_links( scrapy_util.extract_all_links(resp))
             pass
-        input()
 
 
 proc = CrawlerProcess({
