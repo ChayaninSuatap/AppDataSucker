@@ -1,4 +1,5 @@
 import scrapy
+import db_util
 import link_category_util
 
 def extract_all_links(resp):
@@ -17,11 +18,13 @@ def _normalize_link(link):
     else :
         return link
 
-def download_app_data(resp):
-    #app name
-    app_name = resp.css("h1.AHFaub").xpath('.//span/text()').extract_first()
+def download_app_data(resp, conn):
     #icon : later 
     #screen shot : later
+
+    #app name
+    app_name = resp.css("h1.AHFaub").xpath('.//span/text()').extract_first()
+
     #description
     description = ''
     desc_lines = resp.css('div.DWPxHb').css('div.DWPxHb').css('content').css('div::text').extract()
@@ -43,5 +46,17 @@ def download_app_data(resp):
                 add_info_contents[container_name] = container_content
     
     print(app_name, add_info_contents)
+    #extract additional infomation
+    for k,v in add_info_contents.items() :
+        if k == 'Installs' : download_amount = v
+
     #save in db
-    pass
+    app_id = get_app_id(resp.url)
+    db_util.insert_new_row( app_id , conn)
+    db_util.update_game_name(app_name, app_id, conn)
+    db_util.update_description(description, app_id, conn)
+    if download_amount != None : db_util.update_download_amount( download_amount, app_id, conn)
+
+
+def get_app_id(app_page_link):
+    return app_page_link.split('details?id=')[1]

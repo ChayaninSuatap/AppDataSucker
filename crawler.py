@@ -3,6 +3,7 @@ import scrapy_util
 from scrapy.crawler import CrawlerProcess
 import link_category_util
 import game_page_util
+import db_util
 from CrawlState import CrawlState
 
 class PlaystoreCrawler( scrapy.Spider):
@@ -10,6 +11,7 @@ class PlaystoreCrawler( scrapy.Spider):
 
     def __init__(self):
         self.crawl_state = CrawlState()
+        self.conn_db = db_util.connect_db()
 
     def start_requests(self):
         self.crawl_state.add('https://play.google.com/store/apps/category/GAME')
@@ -18,26 +20,28 @@ class PlaystoreCrawler( scrapy.Spider):
                 yield scrapy.Request(link, self.parse)
         
     def parse(self, resp):
-        print(resp.url)
-        self.crawl_state.mark_as_crawled(resp.url)
-                
-        #link is container
-        if link_category_util.link_is_container(resp.url) :
-            print('link is container')
-            if link_category_util.link_is_cluster(resp.url) :
-                #extract with selenium
-                pass
-            else :
+        try:
+            print(resp.url)
+            self.crawl_state.mark_as_crawled(resp.url)
+                    
+            #link is container
+            if link_category_util.link_is_container(resp.url) :
+                print('link is container')
+                if link_category_util.link_is_cluster(resp.url) :
+                    #extract with selenium
+                    pass
+                else :
+                    self.crawl_state.add_links( scrapy_util.extract_all_links(resp))
+            #link is app page and is a game
+            elif link_category_util.link_is_app_page(resp.url) and game_page_util.resp_is_game(resp) :
+                #download app data
+                scrapy_util.download_app_data(resp, self.conn_db)
+                #and add links
                 self.crawl_state.add_links( scrapy_util.extract_all_links(resp))
-        #link is app page and is a game
-        elif link_category_util.link_is_app_page(resp.url) and game_page_util.resp_is_game(resp) :
-            #download app data
-            print('download app data')
-            scrapy_util.download_app_data(resp)
-            print('category', game_page_util.get_app_category(resp))
-            #and add links
-            self.crawl_state.add_links( scrapy_util.extract_all_links(resp))
-            pass
+                
+        except Exception as e:
+            print(repr(e))
+            input()
 
 
 proc = CrawlerProcess({
