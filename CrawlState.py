@@ -1,16 +1,23 @@
 import mypath
 
-class CrawlState :
+class CrawlState() :
     state = {}
+    save_interval_tick = 0
+    save_interval = 0
 
-    def __init__(self) :
+    def __init__(self, save_interval) :
         self.load_state()
+        self.save_interval = save_interval
     
     def save_state(self):
-        fs = open( mypath.crawlstate_txt, 'w')
-        for k,v in self.state.items() :
-            fs.write(str(v) +  k + '\n')
-        fs.close()
+        self.save_interval_tick += 1
+        if self.save_interval_tick % self.save_interval == 0 :
+            self.save_interval_tick = 0
+            fs = open( mypath.crawlstate_txt, 'w')
+            for k,v in self.state.items() :
+                fs.write(str(v) +  k + '\n')
+            fs.close()
+            print('saved')
     
     def load_state(self):
         try:

@@ -10,7 +10,7 @@ class PlaystoreCrawler( scrapy.Spider):
     name = 'playstore_crawler'
 
     def __init__(self):
-        self.crawl_state = CrawlState()
+        self.crawl_state = CrawlState(save_interval = 10)
         self.conn_db = db_util.connect_db()
 
     def start_requests(self):
@@ -22,6 +22,7 @@ class PlaystoreCrawler( scrapy.Spider):
     def parse(self, resp):
         try:
             print(resp.url)
+            #mark as crawled
             self.crawl_state.mark_as_crawled(resp.url)
                     
             #link is container
