@@ -1,5 +1,26 @@
+import mypath
+
 class CrawlState :
     state = {}
+
+    def __init__(self) :
+        self.load_state()
+    
+    def save_state(self):
+        fs = open( mypath.crawlstate_txt, 'w')
+        for k,v in self.state.items() :
+            fs.write(str(v) +  k + '\n')
+        fs.close()
+    
+    def load_state(self):
+        try:
+            fs = open( mypath.crawlstate_txt)
+            for line in fs :
+                v = int(line[0])
+                k = line[1:-1]
+                self.state[k] = v
+        except:
+            pass
 
     def add(self, link):
         if link not in self.state :
