@@ -20,7 +20,7 @@ class CrawlState() :
         for k,v in self.state.items() :
             fs.write(str(v) +  k + '\n')
         fs.close()
-        print('saved')
+        print('crawl state saved')
     
     def load_state(self):
         try:
@@ -51,6 +51,11 @@ class CrawlState() :
     def mark_as_crawled(self, link):
         if link in self.state :
             self.state[link] = 1
+    
+    def unmark_as_crawled(self, link):
+        if link in self.state :
+            self.state[link] = 0
+ 
 
     def has_uncrawled_link(self):
         for link in self.state :

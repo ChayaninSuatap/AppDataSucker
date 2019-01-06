@@ -2,6 +2,15 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import mypath
 from time import sleep
+import link_category_util
+from scrapy_util import _link_is_within_playstore
+import logging
+from selenium.webdriver.remote.remote_connection import LOGGER
+LOGGER.setLevel(logging.WARNING)
+logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("scrapy.core.engine").setLevel(logging.WARNING)
+
 
 def create_selenium_browser():
     options = Options()
@@ -17,8 +26,7 @@ def create_selenium_browser():
     return driver
 
 def extract_all_links(url, driver):
-    print('extracting selenium link')
-    print('url : ', url)
+    print('crawling cluster :',url)
     oldheight = 0
     driver.get(url)
     while True:
@@ -34,5 +42,8 @@ def extract_all_links(url, driver):
     elems = driver.find_elements_by_xpath("//a[@href]")
     output = []
     for elem in elems:
-        output.append(elem.get_attribute("href"))
+        link = elem.get_attribute('href')
+        if link_category_util.link_is_queueable(link) and _link_is_within_playstore(link):
+            output.append(link)
+    print(len(output),'links extracted')
     return output

@@ -45,10 +45,11 @@ def download_app_data(resp, conn):
             if not type(container_content) is list :
                 add_info_contents[container_name] = container_content
     
-    print(app_name, add_info_contents)
     #extract additional infomation
     for k,v in add_info_contents.items() :
         if k == 'Installs' : download_amount = v
+
+    print('crawling app :',app_name, download_amount)
 
     #save in db
     app_id = get_app_id(resp.url)
