@@ -6,6 +6,7 @@ import game_page_util
 import db_util
 import selenium_util
 from CrawlState import CrawlState
+from time import sleep
 
 class PlaystoreCrawler( scrapy.Spider):
     name = 'playstore_crawler'
@@ -19,8 +20,11 @@ class PlaystoreCrawler( scrapy.Spider):
 
     def start_requests(self):
         self.crawl_state.add('https://play.google.com/store/apps/category/GAME')
+        uncrawled_links = self.crawl_state.get_uncrawled_links()
+        print('uncrawled links :', len(uncrawled_links))
+        sleep(2)
         while self.crawl_state.has_uncrawled_link() :
-            for link in self.crawl_state.get_uncrawled_links():
+            for link in uncrawled_links:
                 yield scrapy.Request(link, self.parse)
             
             if not self.crawl_cluster :
