@@ -4,6 +4,7 @@ from scrapy.crawler import CrawlerProcess
 import link_category_util
 import game_page_util
 import db_util
+import selenium_util
 from CrawlState import CrawlState
 
 class PlaystoreCrawler( scrapy.Spider):
@@ -12,6 +13,7 @@ class PlaystoreCrawler( scrapy.Spider):
     def __init__(self):
         self.crawl_state = CrawlState(save_interval = 10)
         self.conn_db = db_util.connect_db()
+        self.selenium_driver = selenium_util.create_selenium_browser()
 
     def start_requests(self):
         self.crawl_state.add('https://play.google.com/store/apps/category/GAME')
@@ -27,10 +29,10 @@ class PlaystoreCrawler( scrapy.Spider):
                     
             #link is container
             if link_category_util.link_is_container(resp.url) :
-                print('link is container')
-                if link_category_util.link_is_cluster(resp.url) :
+                if link_category_util.link_is_cluster(resp.url) or link_category_util.link_is_game_category(resp.url):
                     #extract with selenium
-                    pass
+                    self.crawl_state.add_links( selenium_util.extract_all_links(resp.url, self.selenium_driver))
+                    self.crawl_state.force_save_state()
                 else :
                     self.crawl_state.add_links( scrapy_util.extract_all_links(resp))
             #link is app page and is a game

@@ -13,11 +13,14 @@ class CrawlState() :
         self.save_interval_tick += 1
         if self.save_interval_tick % self.save_interval == 0 :
             self.save_interval_tick = 0
-            fs = open( mypath.crawlstate_txt, 'w')
-            for k,v in self.state.items() :
-                fs.write(str(v) +  k + '\n')
-            fs.close()
-            print('saved')
+            self.force_save_state()
+    
+    def force_save_state(self):
+        fs = open( mypath.crawlstate_txt, 'w')
+        for k,v in self.state.items() :
+            fs.write(str(v) +  k + '\n')
+        fs.close()
+        print('saved')
     
     def load_state(self):
         try:
