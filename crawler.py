@@ -20,15 +20,23 @@ class PlaystoreCrawler( scrapy.Spider):
 
     def start_requests(self):
         self.crawl_state.add('https://play.google.com/store/apps/category/GAME')
-        uncrawled_links = self.crawl_state.get_uncrawled_links()
-        print('uncrawled links :', len(uncrawled_links))
-        sleep(2)
-        while self.crawl_state.has_uncrawled_link() :
-            for link in uncrawled_links:
-                yield scrapy.Request(link, self.parse)
+        
+        if self.crawl_cluster :
+            while self.crawl_state.has_uncrawled_link() :
+                uncrawled_links = self.crawl_state.get_uncrawled_links()
+                print('uncrawled links :', len(uncrawled_links))    
+                sleep(2)
+                for link in uncrawled_links:
+                    yield scrapy.Request(link, self.parse)
+        #dont crawl cluster
+        elif not self.crawl_cluster :
+            while self.crawl_state.has_uncrawled_link_no_cluster() :
+                uncrawled_links = self.crawl_state.get_uncrawled_links_no_cluster()
+                print('uncrawled links :', len(uncrawled_links))    
+                sleep(2)
+                for link in uncrawled_links:
+                    yield scrapy.Request(link, self.parse) 
             
-            if not self.crawl_cluster :
-                break
     
     def parse(self, resp):
         try:
@@ -39,13 +47,9 @@ class PlaystoreCrawler( scrapy.Spider):
             #link is container
             if link_category_util.link_is_container(resp.url) :
                 if link_category_util.link_is_cluster(resp.url) or link_category_util.link_is_game_category(resp.url):
-                    if self.crawl_cluster :
                         #extract with selenium
                         self.crawl_state.add_links( selenium_util.extract_all_links(resp.url, self.selenium_driver))
                         self.crawl_state.force_save_state()
-                        #by pass selenium crawling to save time
-                    else :
-                        self.crawl_state.unmark_as_crawled(resp.url)
 
                 else :
                     self.crawl_state.add_links( scrapy_util.extract_all_links(resp))

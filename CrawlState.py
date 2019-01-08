@@ -1,4 +1,5 @@
 import mypath
+import link_category_util
 
 class CrawlState() :
     state = {}
@@ -47,6 +48,13 @@ class CrawlState() :
             if self.state[link] == 0 :
                 output.append(link)
         return output
+    
+    def get_uncrawled_links_no_cluster(self):
+        output = []
+        for link in self.state :
+            if self.state[link] == 0 and not link_category_util.link_is_cluster(link) :
+                output.append(link)
+        return output 
 
     def mark_as_crawled(self, link):
         if link in self.state :
@@ -60,5 +68,11 @@ class CrawlState() :
     def has_uncrawled_link(self):
         for link in self.state :
             if self.state[link] == 0 :
+                return True
+        return False
+    
+    def has_uncrawled_link_no_cluster(self):
+        for link in self.state :
+            if self.state[link] == 0 and not link_category_util.link_is_cluster(link) :
                 return True
         return False
