@@ -60,7 +60,7 @@ class PlaystoreCrawler( scrapy.Spider):
                 self.crawl_state.save_state()
                 #and add links
                 self.crawl_state.add_links( scrapy_util.extract_all_links(resp))
-                
+            print('done')                
         except Exception as e:
             print(repr(e))
             input()
