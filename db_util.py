@@ -41,8 +41,16 @@ def update_description(desc, app_id, conn):
 def update_download_amount(download_amount, app_id, conn):
     conn.execute('UPDATE app_data SET download_amount = ? WHERE app_id = ?', (download_amount, app_id, ))
 
+def get_all_app_id(conn):
+    datas = conn.execute('SELECT app_id from app_data')
+    output = []
+    for row in datas :
+        output.append( row[0])
+    return output
+
 
 if __name__ == '__main__' :
-    create_table()
+    # create_table()
+    print(get_all_app_id(connect_db()))
 
 

@@ -12,3 +12,5 @@ chromedriver\.exe
 data\.db-journal
 
 crawlstate\.backup\.txt
+
+icons/
