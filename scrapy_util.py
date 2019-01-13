@@ -24,6 +24,7 @@ def download_app_data(resp, conn):
     app_name = resp.css("h1.AHFaub").xpath('.//span/text()').extract_first()
     description = _download_app_description(resp)
     category = _download_app_category(resp)
+    rating = _download_app_rating(resp)
      
     #extract additional infomation
     add_info_contents = _extract_additional_info_data(resp)
@@ -40,6 +41,7 @@ def download_app_data(resp, conn):
     db_util.update_game_name(app_name, app_id, conn)
     db_util.update_description(description, app_id, conn)
     db_util.update_category(category, app_id, conn)
+    db_util.update_rating(rating, app_id, conn)
     if download_amount != None : db_util.update_download_amount( download_amount, app_id, conn)
 
 def _download_app_category(resp):
@@ -75,6 +77,12 @@ def _download_app_description(resp):
     if description == '' :
         description = None
     return description
+
+def _download_app_rating(resp):
+    try:
+        return resp.css('div.BHMmbe::text').extract()[0]
+    except:
+        return None
 
 def get_app_id(app_page_link):
     return app_page_link.split('details?id=')[1]
