@@ -63,6 +63,9 @@ def update_app_size(value, app_id, conn):
 def update_sdk_version(value, app_id, conn):
     _update_field('sdk_version', value, app_id, conn)
 
+def update_in_app_products(value, app_id, conn):
+    _update_field('in_app_products', value, app_id, conn)
+
 def update_app_version(app_version, app_id, conn):
     _update_field('app_version', app_version, app_id, conn)
 

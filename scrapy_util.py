@@ -34,6 +34,7 @@ def download_app_data(resp, conn):
     last_update_date = None
     app_size = None
     sdk_version = None
+    in_app_products = None
         
     for k,v in add_info_contents.items() :
         if k == 'Installs' : download_amount = v
@@ -41,6 +42,7 @@ def download_app_data(resp, conn):
         elif k == 'Updated' : last_update_date = v
         elif k == 'Size' : app_size = v
         elif k == 'Requires Android' : sdk_version = v
+        elif k == 'In-app Products' : in_app_products = v
 
     print('crawling app :',app_name, download_amount)
     
@@ -56,6 +58,7 @@ def download_app_data(resp, conn):
     db_util.update_last_update_date(last_update_date, app_id, conn)
     db_util.update_app_size(app_size, app_id, conn)
     db_util.update_sdk_version(sdk_version, app_id, conn)
+    db_util.update_in_app_products(in_app_products, app_id, conn)
     db_util.update_download_amount( download_amount, app_id, conn)
 
 def _download_app_category(resp):
