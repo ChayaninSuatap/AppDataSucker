@@ -57,6 +57,9 @@ def update_price(price, app_id, conn):
 def update_last_update_date(value, app_id, conn):
     _update_field('last_update_date', value, app_id, conn)
 
+def update_app_size(value, app_id, conn):
+    _update_field('app_size', value, app_id, conn)
+
 def update_app_version(app_version, app_id, conn):
     _update_field('app_version', app_version, app_id, conn)
 
