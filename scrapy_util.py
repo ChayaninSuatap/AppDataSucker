@@ -25,6 +25,7 @@ def download_app_data(resp, conn):
     description = _download_app_description(resp)
     category = _download_app_category(resp)
     rating = _download_app_rating(resp)
+    price = _download_app_price(resp)
      
     #extract additional infomation
     add_info_contents = _extract_additional_info_data(resp)
@@ -42,6 +43,7 @@ def download_app_data(resp, conn):
     db_util.update_description(description, app_id, conn)
     db_util.update_category(category, app_id, conn)
     db_util.update_rating(rating, app_id, conn)
+    db_util.update_price(price, app_id,  conn)
     if download_amount != None : db_util.update_download_amount( download_amount, app_id, conn)
 
 def _download_app_category(resp):
@@ -68,6 +70,16 @@ def _extract_additional_info_data(resp):
                 add_info_contents[container_name] = container_content
     return add_info_contents
 
+def _download_app_price(resp):
+    #free or paid
+    try:
+        install_button_label = resp.css('button.LkLjZd.ScJHi.HPiPcc.IfEcue::attr(aria-label)').extract()[0]
+        if install_button_label=='Install':
+            return 'free'
+        else:
+            return install_button_label
+    except:
+        return None
 
 def _download_app_description(resp):
     description = ''

@@ -51,6 +51,9 @@ def update_category(category , app_id, conn):
 def update_rating(rating, app_id, conn):
     _update_field('rating', rating, app_id, conn)
 
+def update_price(price, app_id, conn):
+    _update_field('price', price, app_id, conn)
+
 def _update_field(field_name , field_value, app_id, conn):
     conn.execute('UPDATE app_data SET ' + field_name + '= ? WHERE app_id = ?', (field_value, app_id, ))
     conn.commit()    
