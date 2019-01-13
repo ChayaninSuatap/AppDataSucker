@@ -31,10 +31,12 @@ def download_app_data(resp, conn):
     add_info_contents = _extract_additional_info_data(resp)
     download_amount = None
     app_version = None
+    last_update_date = None
         
     for k,v in add_info_contents.items() :
         if k == 'Installs' : download_amount = v
         elif k == 'Current Version' : app_version = v
+        elif k == 'Updated' : last_update_date = v
 
     print('crawling app :',app_name, download_amount)
     
@@ -47,6 +49,7 @@ def download_app_data(resp, conn):
     db_util.update_rating(rating, app_id, conn)
     db_util.update_price(price, app_id,  conn)
     db_util.update_app_version(app_version, app_id, conn)
+    db_util.update_last_update_date(last_update_date, app_id, conn)
     if download_amount != None : db_util.update_download_amount( download_amount, app_id, conn)
 
 def _download_app_category(resp):
