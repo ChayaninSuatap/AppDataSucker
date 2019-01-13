@@ -24,6 +24,12 @@ def _download_app_rating_amount(resp):
     except:
         return None
 
+def _download_app_screenshots_amount(resp):
+    try:
+        return len(resp.css('button.NIc6yf').extract())
+    except:
+        return None
+
 def download_app_data(resp, conn):
     #screen shot : later
 
@@ -33,6 +39,7 @@ def download_app_data(resp, conn):
     rating = _download_app_rating(resp)
     price = _download_app_price(resp)
     rating_amount = _download_app_rating_amount(resp)
+    screenshots_amount = _download_app_screenshots_amount(resp)
      
     #extract additional infomation
     add_info_contents = _extract_additional_info_data(resp)
@@ -68,6 +75,7 @@ def download_app_data(resp, conn):
     db_util.update_in_app_products(in_app_products, app_id, conn)
     db_util.update_download_amount( download_amount, app_id, conn)
     db_util.update_rating_amount( rating_amount, app_id, conn)
+    db_util.update_screenshots_amount( screenshots_amount, app_id, conn)
 
 def _download_app_category(resp):
     category = ''

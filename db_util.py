@@ -63,6 +63,9 @@ def update_last_update_date(value, app_id, conn):
 def update_app_size(value, app_id, conn):
     _update_field('app_size', value, app_id, conn)
 
+def update_screenshots_amount(value, app_id, conn):
+    _update_field('screenshots_amount', value, app_id, conn)
+
 def update_sdk_version(value, app_id, conn):
     _update_field('sdk_version', value, app_id, conn)
 
