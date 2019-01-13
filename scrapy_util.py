@@ -18,6 +18,12 @@ def _normalize_link(link):
     else :
         return link
 
+def _download_app_rating_amount(resp):
+    try:
+        return resp.xpath('''.//span[@class='AYi5wd TBRnV']/span/text()''').extract()[0]
+    except:
+        return None
+
 def download_app_data(resp, conn):
     #screen shot : later
 
@@ -26,6 +32,7 @@ def download_app_data(resp, conn):
     category = _download_app_category(resp)
     rating = _download_app_rating(resp)
     price = _download_app_price(resp)
+    rating_amount = _download_app_rating_amount(resp)
      
     #extract additional infomation
     add_info_contents = _extract_additional_info_data(resp)
@@ -60,6 +67,7 @@ def download_app_data(resp, conn):
     db_util.update_sdk_version(sdk_version, app_id, conn)
     db_util.update_in_app_products(in_app_products, app_id, conn)
     db_util.update_download_amount( download_amount, app_id, conn)
+    db_util.update_rating_amount( rating_amount, app_id, conn)
 
 def _download_app_category(resp):
     category = ''
