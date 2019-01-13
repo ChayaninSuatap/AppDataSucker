@@ -52,7 +52,7 @@ class CrawlState() :
     def get_uncrawled_links_no_cluster(self):
         output = []
         for link in self.state :
-            if self.state[link] == 0 and not link_category_util.link_is_cluster(link) :
+            if self.state[link] == 0 and not link_category_util.link_is_cluster(link) and not link_category_util.link_is_game_category(link) :
                 output.append(link)
         return output 
 

@@ -34,12 +34,15 @@ def insert_new_row(app_id, conn):
 
 def update_game_name(game_name, app_id, conn):
     conn.execute('UPDATE app_data SET game_name = ? WHERE app_id = ?', (game_name, app_id, ))
+    conn.commit()
 
 def update_description(desc, app_id, conn):
     conn.execute('UPDATE app_data SET description = ? WHERE app_id = ?', (desc, app_id, ))
+    conn.commit()
 
 def update_download_amount(download_amount, app_id, conn):
     conn.execute('UPDATE app_data SET download_amount = ? WHERE app_id = ?', (download_amount, app_id, ))
+    conn.commit()
 
 def get_all_app_id(conn):
     datas = conn.execute('SELECT app_id from app_data')

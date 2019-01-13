@@ -19,33 +19,16 @@ def _normalize_link(link):
         return link
 
 def download_app_data(resp, conn):
-    #icon : later 
     #screen shot : later
 
-    #app name
     app_name = resp.css("h1.AHFaub").xpath('.//span/text()').extract_first()
-
-    #description
-    description = ''
-    desc_lines = resp.css('div.DWPxHb').css('div.DWPxHb').css('content').css('div::text').extract()
-    for lines in desc_lines : 
-       description += lines + '\n'
-    if description == '' :
-        description = None
-
-    ### Additional Infomation
-    add_info_contents = {}
-    download_amount = None
-
-    parent_elems = resp.css('div.hAyfc')
-    for container_elem in parent_elems :
-        container_name = container_elem.css('div.BgcNfc::text').extract_first()
-        if container_name != None :
-            container_content = container_elem.css('span.htlgb').css('div.IQ1z0d').css('span.htlgb::text').extract_first()
-            if not type(container_content) is list :
-                add_info_contents[container_name] = container_content
-    
+    description = _download_app_description(resp)
+    category = _download_app_category(resp)
+     
     #extract additional infomation
+    add_info_contents = _extract_additional_info_data(resp)
+    download_amount = None
+        
     for k,v in add_info_contents.items() :
         if k == 'Installs' : download_amount = v
 
@@ -58,6 +41,39 @@ def download_app_data(resp, conn):
     db_util.update_description(description, app_id, conn)
     if download_amount != None : db_util.update_download_amount( download_amount, app_id, conn)
 
+def _download_app_category(resp):
+    category = ''
+    try:
+        link_to_categories = resp.css('a.hrTbp.R8zArc::attr(href)').extract()[1:]
+        game_category_arr = [ x.split('/')[-1] for x in link_to_categories]
+        for x in game_category_arr:
+            category += x + ','
+    except:
+        category = None
+    return category
+
+def _extract_additional_info_data(resp):
+    add_info_contents = {}
+    parent_elems = resp.css('div.hAyfc')
+    for container_elem in parent_elems :
+        container_name = container_elem.css('div.BgcNfc::text').extract_first()
+        #if got None mean can't find container box
+        if container_name != None :
+            container_content = container_elem.css('span.htlgb').css('div.IQ1z0d').css('span.htlgb::text').extract_first()
+            #assign None to unextractable container name
+            if not type(container_content) is list :
+                add_info_contents[container_name] = container_content
+    return add_info_contents
+
+
+def _download_app_description(resp):
+    description = ''
+    desc_lines = resp.css('div.DWPxHb').css('div.DWPxHb').css('content').css('div::text').extract()
+    for lines in desc_lines : 
+       description += lines + '\n'
+    if description == '' :
+        description = None
+    return description
 
 def get_app_id(app_page_link):
     return app_page_link.split('details?id=')[1]
