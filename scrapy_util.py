@@ -39,6 +39,7 @@ def download_app_data(resp, conn):
     db_util.insert_new_row( app_id , conn)
     db_util.update_game_name(app_name, app_id, conn)
     db_util.update_description(description, app_id, conn)
+    db_util.update_category(category, app_id, conn)
     if download_amount != None : db_util.update_download_amount( download_amount, app_id, conn)
 
 def _download_app_category(resp):

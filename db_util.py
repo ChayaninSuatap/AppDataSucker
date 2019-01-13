@@ -9,6 +9,7 @@ def create_table():
         game_name text,
         download_amount text,
         description text,
+        category text,
         crawl_date date
     );
     """
@@ -43,6 +44,13 @@ def update_description(desc, app_id, conn):
 def update_download_amount(download_amount, app_id, conn):
     conn.execute('UPDATE app_data SET download_amount = ? WHERE app_id = ?', (download_amount, app_id, ))
     conn.commit()
+
+def update_category(category , app_id, conn):
+    _update_field('category', category, app_id, conn)
+
+def _update_field(field_name , field_value, app_id, conn):
+    conn.execute('UPDATE app_data SET ' + field_name + '= ? WHERE app_id = ?', (field_value, app_id, ))
+    conn.commit()    
 
 def get_all_app_id(conn):
     datas = conn.execute('SELECT app_id from app_data')
