@@ -49,6 +49,7 @@ def download_app_data(resp, conn):
     app_size = None
     sdk_version = None
     in_app_products = None
+    content_rating = None
         
     for k,v in add_info_contents.items() :
         if k == 'Installs' : download_amount = v
@@ -57,9 +58,10 @@ def download_app_data(resp, conn):
         elif k == 'Size' : app_size = v
         elif k == 'Requires Android' : sdk_version = v
         elif k == 'In-app Products' : in_app_products = v
+        elif k == 'Content Rating' : content_rating = v
 
     print('crawling app :',app_name, download_amount)
-    
+
     #save in db
     app_id = get_app_id(resp.url)
     db_util.insert_new_row( app_id , conn)
@@ -76,6 +78,7 @@ def download_app_data(resp, conn):
     db_util.update_download_amount( download_amount, app_id, conn)
     db_util.update_rating_amount( rating_amount, app_id, conn)
     db_util.update_screenshots_amount( screenshots_amount, app_id, conn)
+    db_util.update_content_rating( content_rating, app_id, conn)
 
 def _download_app_category(resp):
     category = ''
@@ -95,10 +98,21 @@ def _extract_additional_info_data(resp):
         container_name = container_elem.css('div.BgcNfc::text').extract_first()
         #if got None mean can't find container box
         if container_name != None :
-            container_content = container_elem.css('span.htlgb').css('div.IQ1z0d').css('span.htlgb::text').extract_first()
-            #assign None to unextractable container name
-            if not type(container_content) is list :
-                add_info_contents[container_name] = container_content
+            #got None if not found , got List if multi field
+            if container_name == 'Content Rating' :
+                content_rating = container_elem.xpath('''.//span/div/span/div/text()''').extract()
+                if content_rating != None :
+                    output = ''
+                    for x in content_rating :
+                        output += x + ','
+                    add_info_contents['Content Rating'] = output
+                else :
+                    add_info_contents['Content Rating'] = None
+            else :
+                container_content = container_elem.css('span.htlgb').css('div.IQ1z0d').css('span.htlgb::text').extract_first()
+                #assign None to unextractable container name
+                if not type(container_content) is list :
+                    add_info_contents[container_name] = container_content
     return add_info_contents
 
 def _download_app_price(resp):
