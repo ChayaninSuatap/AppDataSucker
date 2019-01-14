@@ -30,7 +30,7 @@ def _download_app_screenshots_amount(resp):
     except:
         return None
 
-def download_app_data(resp, conn):
+def download_app_data(resp, conn, update_only = False):
     #screen shot : later
 
     app_name = resp.css("h1.AHFaub").xpath('.//span/text()').extract_first()
@@ -64,7 +64,8 @@ def download_app_data(resp, conn):
 
     #save in db
     app_id = get_app_id(resp.url)
-    db_util.insert_new_row( app_id , conn)
+    if not update_only :
+        db_util.insert_new_row( app_id , conn)
     db_util.update_game_name(app_name, app_id, conn)
     db_util.update_description(description, app_id, conn)
     db_util.update_category(category, app_id, conn)
