@@ -9,7 +9,7 @@ from keras.utils.np_utils import to_categorical
 #extract feature vector
 vec_and_labels = []
 for record in overall_db_util.query() :
-    t = extract_feature_vec(record, use_download_amount=False, use_rating_amount=False)
+    t = extract_feature_vec(record, use_download_amount=False, use_rating_amount=False, use_sdk_version=False)
     vec_and_labels.append(t)
 
 #shuffle

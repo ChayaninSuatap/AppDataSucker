@@ -1,6 +1,6 @@
 import math
 
-def extract_feature_vec(rec , use_download_amount = True, use_rating_amount = True) :
+def extract_feature_vec(rec , use_download_amount = True, use_rating_amount = True, use_sdk_version=True) :
     rating = rec[0]
     download_amount = rec[1]
     category = rec[2]
@@ -25,12 +25,13 @@ def extract_feature_vec(rec , use_download_amount = True, use_rating_amount = Tr
     screenshots_amount = _extract_screenshots_amount( screenshots_amount)
     content_rating = _extract_content_rating( content_rating)
 
-    output_vec = category + [price, app_version, last_update_date] + sdk_version + \
+    output_vec = category + [price, app_version, last_update_date] + \
     [in_app_products, screenshots_amount] + content_rating
     if use_download_amount :
         output_vec += [download_amount]
     if use_rating_amount :
         output_vec += [rating_amount]
+    if use_sdk_version : output_vec += sdk_version
     return output_vec , rating
 
 
