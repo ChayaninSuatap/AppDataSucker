@@ -1,6 +1,6 @@
 import math
 
-def extract_feature_vec(rec) :
+def extract_feature_vec(rec , use_download_amount = True, use_rating_amount = True) :
     rating = rec[0]
     download_amount = rec[1]
     category = rec[2]
@@ -13,7 +13,7 @@ def extract_feature_vec(rec) :
     screenshots_amount = rec[9]
     content_rating = rec[10]
 
-    rating = float(rating)
+    rating = 0 if float(rating) < 4 else 1
     download_amount = _extract_download_amount(download_amount)
     category = _extract_category(category)
     price = 0 if price == 'free' else 1
@@ -22,6 +22,38 @@ def extract_feature_vec(rec) :
     last_update_date = _extract_last_update_date( last_update_date)
     sdk_version = _extract_sdk_version( sdk_version)
     in_app_products = 0 if in_app_products == None else 1
+    screenshots_amount = _extract_screenshots_amount( screenshots_amount)
+    content_rating = _extract_content_rating( content_rating)
+
+    output_vec = category + [price, app_version, last_update_date] + sdk_version + \
+    [in_app_products, screenshots_amount] + content_rating
+    if use_download_amount :
+        output_vec += [download_amount]
+    if use_rating_amount :
+        output_vec += [rating_amount]
+    return output_vec , rating
+
+
+_all_content_rating = \
+['Gambling', 'Rated for 12+', ' Mild Violence', ' Strong Language', 'Strong Violence', 'Drugs', ' Sexual Innuendo', ' Simulated Gambling', ' Sex', 'Mild Swearing', ' Nudity',
+'Rated for 16+', ' Fear', 'Horror', ' Drugs', 'Strong Language', ' Horror', 'Moderate Violence', ' Moderate Violence', 'Fear', ' Implied Violence', 'Nudity', 'Use of Alcohol/Tobacco', ' Gambling', 'Mild Violence', 'Rated for 3+', 'Parental Guidance Recommended', 'Sexual Innuendo', 'Unrated', 'Implied Violence', 'Rated for 7+', 'Simulated Gambling', 'Rated for 18+', ' Mild Swearing', 'Sex', 'Extreme Violence', ' Use of Alcohol/Tobacco', 'Warning – content has not yet been rated.']
+
+def _extract_content_rating(x):
+    one_hot_vec = [0] * len( _all_content_rating)
+    splited = x.split(',')[:-1]
+    for content_rating in splited :
+        try :
+            index = _all_content_rating.index(content_rating)
+            one_hot_vec[index] = 1
+        except :
+            pass
+    return one_hot_vec
+
+def _extract_screenshots_amount(x):
+    if x == None :
+        return 0
+    else :
+        return int(x)
 
 def _extract_download_amount(x):
     if x == None :
