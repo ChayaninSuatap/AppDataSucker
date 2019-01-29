@@ -9,7 +9,7 @@ from keras.utils.np_utils import to_categorical
 #extract feature vector
 vec_and_labels = []
 for record in overall_db_util.query() :
-    t = extract_feature_vec(record, use_download_amount=False, use_rating_amount=False, use_sdk_version=False)
+    t = extract_feature_vec(record, use_download_amount=False, use_rating_amount=False, use_in_app_products=False)
     vec_and_labels.append(t)
 
 #shuffle
@@ -22,12 +22,14 @@ label = []
 for x in vec_and_labels :
     featvec.append( x[0])
     label.append( x[1])
+print('train y ratio :', label.count(0), label.count(1))
 output_shape = len( set(label))
 
 #separate train , test
 ninety = int(len(vec_and_labels) * 90 / 100)
 x90 = np.asarray(featvec[:ninety])
 x10 = np.asarray(featvec[ninety:])
+print('test y ratio :', label[ninety:].count(0), label[ninety:].count(1))
 y90 = to_categorical(np.asarray(label[:ninety]), output_shape)
 y10 = to_categorical(np.asarray(label[ninety:]), output_shape)
 

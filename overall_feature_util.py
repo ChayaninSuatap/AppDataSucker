@@ -1,6 +1,7 @@
 import math
 
-def extract_feature_vec(rec , use_download_amount = True, use_rating_amount = True, use_sdk_version=True) :
+def extract_feature_vec(rec , use_download_amount = True, use_rating_amount = True, use_sdk_version=True, use_last_update_date=True, use_screenshots_amount=True, use_price=True \
+,use_content_rating=True, use_app_version=True, use_category=True, use_in_app_products=True):
     rating = rec[0]
     download_amount = rec[1]
     category = rec[2]
@@ -13,7 +14,7 @@ def extract_feature_vec(rec , use_download_amount = True, use_rating_amount = Tr
     screenshots_amount = rec[9]
     content_rating = rec[10]
 
-    rating = 0 if float(rating) < 4 else 1
+    rating = 0 if float(rating) < 4.5 else 1
     download_amount = _extract_download_amount(download_amount)
     category = _extract_category(category)
     price = 0 if price == 'free' else 1
@@ -25,20 +26,23 @@ def extract_feature_vec(rec , use_download_amount = True, use_rating_amount = Tr
     screenshots_amount = _extract_screenshots_amount( screenshots_amount)
     content_rating = _extract_content_rating( content_rating)
 
-    output_vec = category + [price, app_version, last_update_date] + \
-    [in_app_products, screenshots_amount] + content_rating
-    if use_download_amount :
-        output_vec += [download_amount]
-    if use_rating_amount :
-        output_vec += [rating_amount]
+    output_vec = []
+    if use_in_app_products : output_vec += [in_app_products]
+    if use_download_amount : output_vec += [download_amount]
+    if use_rating_amount : output_vec += [rating_amount]
     if use_sdk_version : output_vec += sdk_version
+    if use_last_update_date : output_vec += [last_update_date]
+    if use_screenshots_amount : output_vec += [screenshots_amount]
+    if use_price : output_vec += [price]
+    if use_content_rating : output_vec += content_rating
+    if use_app_version : output_vec += [app_version]
+    if use_category : output_vec += category
     return output_vec , rating
 
 
 _all_content_rating = \
 ['Gambling', 'Rated for 12+', ' Mild Violence', ' Strong Language', 'Strong Violence', 'Drugs', ' Sexual Innuendo', ' Simulated Gambling', ' Sex', 'Mild Swearing', ' Nudity',
 'Rated for 16+', ' Fear', 'Horror', ' Drugs', 'Strong Language', ' Horror', 'Moderate Violence', ' Moderate Violence', 'Fear', ' Implied Violence', 'Nudity', 'Use of Alcohol/Tobacco', ' Gambling', 'Mild Violence', 'Rated for 3+', 'Parental Guidance Recommended', 'Sexual Innuendo', 'Unrated', 'Implied Violence', 'Rated for 7+', 'Simulated Gambling', 'Rated for 18+', ' Mild Swearing', 'Sex', 'Extreme Violence', ' Use of Alcohol/Tobacco', 'Warning – content has not yet been rated.']
-
 def _extract_content_rating(x):
     one_hot_vec = [0] * len( _all_content_rating)
     splited = x.split(',')[:-1]
@@ -112,6 +116,7 @@ def _extract_last_update_date(x):
     return x
 
 _all_sdk_version = ['', '4.4 and up', '1.5 and up', '4.1 and up', '2.3 - 7.1.1', '3.2 and up', '2.0.1 and up', '2.1 and up', '3.1 and up', '7.1 and up', '2.3 - 3.2', '8.0 and up', '1.0 and up','6.0 and up', '3.0 and up', '1.6 and up', '4.4W and up', '1.1 and up', '3.0 - 7.0', '2.0 and up', '2.2 and up', '4.0.3 and up', '4.1 - 4.4W', '2.3 - 4.4W', '7.0 and up', '4.0 and up', '4.2 - 7.1.1', '4.0 - 5.0', '4.2 and up', '4.1 - 8.0', '5.0 and up', '4.3 and up', '2.3.3 and up', '2.3 - 7.0', '2.3 and up', '5.1 and up', '2.2 - 4.3', 'Varies with device']
+
 def _extract_sdk_version(x):
     if x == None :
         x = ''
