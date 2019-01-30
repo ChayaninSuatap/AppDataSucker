@@ -34,9 +34,9 @@ def extract_feature_vec(rec , use_download_amount = True, use_rating_amount = Tr
     if use_last_update_date : output_vec += [last_update_date]
     if use_screenshots_amount : output_vec += [screenshots_amount]
     if use_price : output_vec += [price]
-    if use_content_rating : output_vec += content_rating
     if use_app_version : output_vec += [app_version]
     if use_category : output_vec += category
+    if use_content_rating : output_vec += content_rating
     return output_vec , rating
 
 
