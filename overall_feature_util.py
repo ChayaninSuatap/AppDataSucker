@@ -14,7 +14,7 @@ def extract_feature_vec(rec , use_download_amount = True, use_rating_amount = Tr
     screenshots_amount = rec[9]
     content_rating = rec[10]
 
-    rating = 0 if float(rating) < 4.5 else 1
+    rating = float(rating)
     download_amount = _extract_download_amount(download_amount)
     category = _extract_category(category)
     price = 0 if price == 'free' else 1
