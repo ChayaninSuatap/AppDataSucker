@@ -24,6 +24,7 @@ for x in vec_and_labels :
     label.append( x[1])
 print('train y ratio :', label.count(0), label.count(1))
 output_shape = len( set(label))
+print('output shape :', output_shape)
 
 #separate train , test
 ninety = int(len(vec_and_labels) * 90 / 100)
@@ -42,7 +43,7 @@ layer_input = Input(shape=(input_shape,), name='overall_input')
 t = Dense( dense_size, activation='relu' )(layer_input)
 for i in range(10) :
     t = Dense(dense_size, activation='relu')(t)
-layer_output = Dense(2, activation='softmax', name='overall_output')(t)
+layer_output = Dense(output_shape, activation='softmax', name='overall_output')(t)
 
 model = Model(inputs = layer_input, outputs = layer_output)
 model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
