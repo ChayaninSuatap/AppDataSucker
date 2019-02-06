@@ -83,7 +83,7 @@ def _update_field(field_name , field_value, app_id, conn):
     conn.commit()    
 
 def get_all_app_id(conn):
-    datas = conn.execute('SELECT app_id from app_data')
+    datas = conn.execute('SELECT app_id from app_data where not app_id LIKE "%&%"')
     output = []
     for row in datas :
         output.append( row[0])

@@ -14,7 +14,7 @@ USE_CONTENT_RATING = True
 #extract feature vector
 vec_and_labels = []
 for record in overall_db_util.query() :
-    t = extract_feature_vec(record, use_content_rating=USE_CONTENT_RATING,use_rating_amount=False, use_download_amount=False)
+    t = extract_feature_vec(record, use_content_rating=USE_CONTENT_RATING,use_rating_amount=True, use_download_amount=True)
     vec_and_labels.append(t)
 
 #shuffle
@@ -93,4 +93,9 @@ if USE_CONTENT_RATING and input_shape > 0:
 elif USE_CONTENT_RATING and input_shape == 0:
     model.fit(x90cr, y90, validation_data=(x10cr, y10), epochs=20, batch_size=32)    
 else:
-    model.fit(x90, y90, validation_data=(x10, y10), epochs=20, batch_size=32)    
+    model.fit(x90, y90, validation_data=(x10, y10), epochs=20, batch_size=32)
+
+answers = [x[0] for x in model.predict([x10,x10cr], batch_size=32)]
+f = open('answer.txt', 'w')
+for x in answers:
+    f.write(str(x)+'\n')
