@@ -5,11 +5,12 @@ from keras.layers import Input, Dense
 from keras.models import Model
 import numpy as np
 from keras.utils.np_utils import to_categorical
+from overall_util import save_prediction_to_file, save_testset_labels_to_file
 
 #extract feature vector
 vec_and_labels = []
 for record in overall_db_util.query() :
-    t = extract_feature_vec(record, use_download_amount=False, use_rating_amount=False, use_in_app_products=False)
+    t = extract_feature_vec(record, use_download_amount=False, use_rating_amount=False)
     vec_and_labels.append(t)
 
 #shuffle
@@ -48,4 +49,6 @@ layer_output = Dense(output_shape, activation='softmax', name='overall_output')(
 model = Model(inputs = layer_input, outputs = layer_output)
 model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
-model.fit(x90, y90, validation_data=(x10, y10), epochs=10, batch_size=32)    
+model.fit(x90, y90, validation_data=(x10, y10), epochs=200, batch_size=32)    
+save_prediction_to_file(model, x10, 32)
+save_testset_labels_to_file(label[ninety:])
