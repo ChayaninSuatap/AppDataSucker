@@ -30,17 +30,21 @@ def extract_feature_vec(rec , use_download_amount = True, use_rating_amount = Tr
     content_rating = _extract_content_rating( content_rating)
 
     output_vec = []
-    if use_in_app_products : output_vec += [in_app_products]
-    if use_download_amount : output_vec += [download_amount]
-    if use_rating_amount : output_vec += [rating_amount]
-    if use_sdk_version : output_vec += sdk_version
-    if use_last_update_date : output_vec += [last_update_date]
-    if use_screenshots_amount : output_vec += [screenshots_amount]
-    if use_price : output_vec += [price]
-    if use_content_rating : output_vec += content_rating
-    if use_app_version : output_vec += [app_version]
-    if use_category : output_vec += category
-    return output_vec , rating
+    single_node_output_vec = []
+    #one hot features
+    if use_category : output_vec += [category]
+    if use_sdk_version : output_vec += [sdk_version]
+    if use_content_rating : output_vec += [content_rating]
+    #single node features
+    if use_in_app_products : single_node_output_vec += [in_app_products]
+    if use_download_amount : single_node_output_vec += [download_amount]
+    if use_rating_amount : single_node_output_vec += [rating_amount]
+    if use_last_update_date : single_node_output_vec += [last_update_date]
+    if use_screenshots_amount : single_node_output_vec += [screenshots_amount]
+    if use_price : single_node_output_vec += [price]
+    if use_app_version : single_node_output_vec += [app_version]
+    #merge output node
+    return output_vec, single_node_output_vec, rating
 
 
 _all_content_rating = \
