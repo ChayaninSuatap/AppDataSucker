@@ -23,5 +23,5 @@ model = create_model(input_other_shape=other_shape, input_category_shape=categor
 checkpoint_path = 'overall_ep_{epoch:03d}_loss_{loss:.2f}_val_loss_{val_loss:.2f}_val_acc_{val_acc:.2f}.hdf5'
 checkpoint = ModelCheckpoint(checkpoint_path, monitor='val_acc', save_best_only=True)
 history = model.fit([x_category_90, x_sdk_version_90, x_content_rating_90, x_other_90], y_90, \
-    validation_data=([x_category_10, x_sdk_version_10, x_content_rating_10, x_other_10], y_10), epochs=999, batch_size=32, callbacks=[checkpoint])
+    validation_data=([x_category_10, x_sdk_version_10, x_content_rating_10, x_other_10], y_10), epochs=10, batch_size=32, callbacks=[checkpoint])
 plot_loss(history)

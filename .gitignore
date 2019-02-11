@@ -18,3 +18,7 @@ icons/
 data\.backup\.db
 
 answers\.txt
+
+graph_acc\.png
+
+graph_loss\.png
