@@ -4,6 +4,7 @@ from overall_feature_util import extract_feature_vec
 import random
 from keras.layers import Input, Dense, concatenate
 from keras.models import Model
+import matplotlib.pyplot as plt
 
 def save_prediction_to_file(model, dataset, batch_size):
     answers = [x[0] for x in model.predict(dataset, batch_size=batch_size)]
@@ -19,6 +20,24 @@ def save_testset_labels_to_file(testset):
     f = open('testset_labels.txt','w')
     for x in testset:
         f.write(str(x)+'\n')
+
+def plot_loss(history):
+    plt.plot(history.history['acc'])
+    plt.plot(history.history['val_acc'])
+    plt.title('model accuracy')
+    plt.ylabel('accuracy')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'test'], loc='upper left')
+    plt.savefig('graph_acc.png')
+    plt.clf()
+    # summarize history for loss
+    plt.plot(history.history['loss'])
+    plt.plot(history.history['val_loss'])
+    plt.title('model loss')
+    plt.ylabel('loss')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'test'], loc='upper left')
+    plt.savefig('graph_loss.png')
 
 def prepare_dataset(use_download_amount=True, use_rating_amount=True, testset_percent=90):
     #query from db
