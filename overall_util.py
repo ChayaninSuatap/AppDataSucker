@@ -79,5 +79,5 @@ def create_model(input_other_shape, input_category_shape, input_sdk_version_shap
     output_layer = Dense(num_class, activation='softmax', name='overall_output')(t)
     #create model
     model = Model(inputs=[category_input, sdk_version_input, content_rating_input, other_input], outputs=output_layer)
-    model.compile(optimizer='adam', loss='mse', metrics=['accuracy'])
+    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
     return model
