@@ -2,3 +2,19 @@
 \.vscode/
 
 __pycache__/
+
+data\.db
+
+crawlstate\.txt
+
+chromedriver\.exe
+
+data\.db-journal
+
+crawlstate\.backup\.txt
+
+icons/
+
+data\.backup\.db
+
+answers\.txt
