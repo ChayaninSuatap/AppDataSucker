@@ -4,6 +4,8 @@ from overall_feature_util import extract_feature_vec
 import random
 from keras.layers import Input, Dense, concatenate
 from keras.models import Model
+import matplotlib
+matplotlib.use('agg')
 import matplotlib.pyplot as plt
 
 def save_prediction_to_file(model, dataset, batch_size):
@@ -92,11 +94,12 @@ def create_model(input_other_shape, input_category_shape, input_sdk_version_shap
     t = concatenate([category_densed, sdk_version_densed, content_rating_densed, other_input], name='overall_input_concatenated')
     #dense layers
     dense_size = category_densed_shape + sdk_version_densed_shape + content_rating_densed_shape + input_other_shape
+    print('dense size', dense_size)
     for i in range(dense_level):
         t = Dense(dense_size, activation='relu', name='overall_dense_'+str(i))(t)
     #output layer
     output_layer = Dense(num_class, activation='softmax', name='overall_output')(t)
     #create model
     model = Model(inputs=[category_input, sdk_version_input, content_rating_input, other_input], outputs=output_layer)
-    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
     return model
