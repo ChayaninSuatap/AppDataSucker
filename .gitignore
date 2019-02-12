@@ -22,3 +22,5 @@ answers\.txt
 graph_acc\.png
 
 graph_loss\.png
+
+*.hdf5

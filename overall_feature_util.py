@@ -119,7 +119,7 @@ def _extract_app_version(x):
 
 def _extract_last_update_date(x):
     x = x[-4:]
-    x = int(x) - 2010
+    x = 2019-int(x)
     return x
 
 _all_sdk_version = ['', '4.4 and up', '1.5 and up', '4.1 and up', '2.3 - 7.1.1', '3.2 and up', '2.0.1 and up', '2.1 and up', '3.1 and up', '7.1 and up', '2.3 - 3.2', '8.0 and up', '1.0 and up','6.0 and up', '3.0 and up', '1.6 and up', '4.4W and up', '1.1 and up', '3.0 - 7.0', '2.0 and up', '2.2 and up', '4.0.3 and up', '4.1 - 4.4W', '2.3 - 4.4W', '7.0 and up', '4.0 and up', '4.2 - 7.1.1', '4.0 - 5.0', '4.2 and up', '4.1 - 8.0', '5.0 and up', '4.3 and up', '2.3.3 and up', '2.3 - 7.0', '2.3 and up', '5.1 and up', '2.2 - 4.3', 'Varies with device']
