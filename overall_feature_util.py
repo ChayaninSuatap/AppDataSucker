@@ -25,7 +25,7 @@ def extract_feature_vec(rec , use_download_amount = True, use_rating_amount = Tr
     app_version = _extract_app_version(app_version)
     last_update_date = _extract_last_update_date( last_update_date)
     sdk_version = _extract_sdk_version( sdk_version)
-    in_app_products = 0 if in_app_products == None else 1
+    in_app_products = _extract_in_app_products(in_app_products)
     screenshots_amount = _extract_screenshots_amount( screenshots_amount)
     content_rating = _extract_content_rating( content_rating)
 
@@ -45,6 +45,14 @@ def extract_feature_vec(rec , use_download_amount = True, use_rating_amount = Tr
     if use_app_version : single_node_output_vec += [app_version]
     #merge output node
     return output_vec, single_node_output_vec, rating
+
+def _extract_in_app_products(x):
+    if x == None: return 0
+    x = x.replace(u'\xa0', ' ')
+    splited = x.split(' ')
+    price = splited[1]
+    price = price.replace(',','')
+    return float(price)
 
 def _extract_price(x):
     if x == None: return 0
