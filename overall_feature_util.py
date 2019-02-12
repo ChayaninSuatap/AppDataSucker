@@ -1,4 +1,5 @@
 import math
+import numpy as np
 
 def extract_feature_vec(rec , use_download_amount = True, use_rating_amount = True, use_sdk_version=True, use_last_update_date=True, use_screenshots_amount=True, use_price=True \
 ,use_content_rating=True, use_app_version=True, use_category=True, use_in_app_products=True):
@@ -155,6 +156,17 @@ def _extract_sdk_version(x):
     index = _all_sdk_version.index(x)
     one_hot_vec[index] = 1
     return one_hot_vec
+
+def normalize_number(df):
+    npdf = np.asarray(df)
+    #each col
+    for i in range(len(df[0])):
+        mean = np.mean(npdf[:,i])
+        std = np.std(npdf[:,i])
+        #each row
+        for j in range(len(df)):
+            df[j][i] = (df[j][i] - mean)/std
+    return df
 
         
             

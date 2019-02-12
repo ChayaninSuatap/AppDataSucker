@@ -1,6 +1,6 @@
 import numpy as np
 import overall_db_util
-from overall_feature_util import extract_feature_vec
+from overall_feature_util import extract_feature_vec, normalize_number
 import random
 from keras.layers import Input, Dense, concatenate
 from keras.models import Model
@@ -62,6 +62,8 @@ def prepare_dataset(use_download_amount=True, use_rating_amount=True, testset_pe
         feat_content_rating.append(onehot[2])
         feat_other.append(single_node)
         labels.append(label)
+    #normalize
+    feat_other = normalize_number(feat_other)
     #split train, test
     split_num = int(len(features_and_labels) * 90/100)
     x_category_90 = np.asarray(feat_category[:split_num])
