@@ -20,7 +20,7 @@ def extract_feature_vec(rec , use_download_amount = True, use_rating_amount = Tr
     else: rating = 3
     download_amount = _extract_download_amount(download_amount)
     category = _extract_category(category)
-    price = 0 if price == 'free' else 1
+    price = _extract_price(price)
     rating_amount = _extract_rating_amount(rating_amount)
     app_version = _extract_app_version(app_version)
     last_update_date = _extract_last_update_date( last_update_date)
@@ -46,6 +46,17 @@ def extract_feature_vec(rec , use_download_amount = True, use_rating_amount = Tr
     #merge output node
     return output_vec, single_node_output_vec, rating
 
+def _extract_price(x):
+    if x == None: return 0
+    x = x.replace(u'\xa0', ' ')
+    if x == 'free': return 0
+    splited = x.split(' ')
+    if splited[-1] == 'Buy':
+        price = splited[-2]
+        price = price.replace(',','')
+        return float(price)
+    elif splited[-1] == 'Install':
+        return 0
 
 _all_content_rating = \
 ['Gambling', 'Rated for 12+', ' Mild Violence', ' Strong Language', 'Strong Violence', 'Drugs', ' Sexual Innuendo', ' Simulated Gambling', ' Sex', 'Mild Swearing', ' Nudity',
