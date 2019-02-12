@@ -42,7 +42,7 @@ def extract_feature_vec(rec , use_download_amount = True, use_rating_amount = Tr
     if use_last_update_date : single_node_output_vec += [last_update_date]
     if use_screenshots_amount : single_node_output_vec += [screenshots_amount]
     if use_price : single_node_output_vec += [price]
-    if use_app_version : single_node_output_vec += [app_version]
+    if use_app_version : single_node_output_vec += app_version
     #merge output node
     return output_vec, single_node_output_vec, rating
 
@@ -122,19 +122,24 @@ def _extract_rating_amount(x):
 _acceptable_chars = '1234567890.'
 def _extract_app_version(x):
     if x == None :
-        return 0
+        return [0,0]
     else :
         #filter 
         filtered_acceptable_chars = ''
         for char in x :
             if char in _acceptable_chars :
                 filtered_acceptable_chars += char
-        
-        output = filtered_acceptable_chars.split('.')[0]
-        if output == '' : 
-            return 0
-        else :
-            return int(output)
+        output = filtered_acceptable_chars.split('.')
+        if output[0] == '':
+            digit0 = 0
+        else:
+            digit0 = int(output[0])
+            digit0 = min([digit0,10])
+        digit1 = 0
+        if len(output)>1 and output[1]!='':
+            digit1 = int(output[1])
+            digit1 = min([digit1,10])
+        return [digit0,digit1]
 
 def _extract_last_update_date(x):
     x = x[-4:]
