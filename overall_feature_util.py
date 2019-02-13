@@ -2,7 +2,7 @@ import math
 import numpy as np
 
 def extract_feature_vec(rec , use_download_amount = True, use_rating_amount = True, use_sdk_version=True, use_last_update_date=True, use_screenshots_amount=True, use_price=True \
-,use_content_rating=True, use_app_version=True, use_category=True, use_in_app_products=True):
+,use_content_rating=True, use_app_version=True, use_category=True, use_in_app_products=True, use_video_screenshot=True):
     rating = rec[0]
     download_amount = rec[1]
     category = rec[2]
@@ -14,6 +14,7 @@ def extract_feature_vec(rec , use_download_amount = True, use_rating_amount = Tr
     in_app_products = rec[8]
     screenshots_amount = rec[9]
     content_rating = rec[10]
+    video_screenshot = rec[11]
 
     if float(rating) <= 3.5: rating = 0
     elif float(rating) > 3.5 and float(rating) <= 4.0: rating = 1
@@ -29,6 +30,7 @@ def extract_feature_vec(rec , use_download_amount = True, use_rating_amount = Tr
     in_app_products = _extract_in_app_products(in_app_products)
     screenshots_amount = _extract_screenshots_amount( screenshots_amount)
     content_rating = _extract_content_rating( content_rating)
+    video_screenshot = _extract_video_screenshot(video_screenshot)
 
     output_vec = []
     single_node_output_vec = []
@@ -44,8 +46,14 @@ def extract_feature_vec(rec , use_download_amount = True, use_rating_amount = Tr
     if use_screenshots_amount : single_node_output_vec += [screenshots_amount]
     if use_price : single_node_output_vec += [price]
     if use_app_version : single_node_output_vec += app_version
+    if use_video_screenshot : single_node_output_vec += [video_screenshot]
     #merge output node
     return output_vec, single_node_output_vec, rating
+
+def _extract_video_screenshot(x):
+    if x == None: return 0
+    else:
+        return int(x)
 
 def _extract_in_app_products(x):
     if x == None: return 0
@@ -161,6 +169,8 @@ def normalize_number(df):
     npdf = np.asarray(df)
     #each col
     for i in range(len(df[0])):
+        if set(npdf[:,i]) == {0,1}:
+            continue
         mean = np.mean(npdf[:,i])
         std = np.std(npdf[:,i])
         #each row
