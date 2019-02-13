@@ -24,3 +24,11 @@ graph_acc\.png
 graph_loss\.png
 
 *.hdf5
+
+cm_normalized\.png
+
+cm\.png
+
+testset_labels\.txt
+
+play\.py
