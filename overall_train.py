@@ -7,7 +7,7 @@ from overall_util import save_prediction_to_file, save_testset_labels_to_file, p
 from keras.callbacks import ModelCheckpoint
 from plt_util import plot_loss
 
-is_regression=True
+is_regression=False
 
 x_category_90, x_sdk_version_90, x_content_rating_90, x_other_90, y_90, \
     x_category_10, x_sdk_version_10, x_content_rating_10, x_other_10, y_10 = prepare_dataset(is_regression=is_regression,use_download_amount=True,use_rating_amount=True)
@@ -15,6 +15,10 @@ x_category_90, x_sdk_version_90, x_content_rating_90, x_other_90, y_90, \
 if not is_regression:
     y_10 = to_categorical(y_10,4)
     y_90 = to_categorical(y_90,4)
+    print('class 0',y_90.count(0)/len(y_90))
+    print('class 1',y_90.count(1)/len(y_90))
+    print('class 2',y_90.count(2)/len(y_90))
+    print('class 3',y_90.count(3)/len(y_90))
 
 #get x features shape
 other_shape = x_other_10[0].shape[0]

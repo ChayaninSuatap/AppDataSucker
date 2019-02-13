@@ -26,10 +26,17 @@ def save_testset_labels_to_file(testset):
 
 def prepare_dataset(is_regression,use_download_amount=True, use_rating_amount=True, testset_percent=90):
     #query from db
+    limit_class_2 = 5000
+    current_class_2_num = 0
     features_and_labels = []
     for record in overall_db_util.query():
         t = extract_feature_vec(record, use_download_amount=use_download_amount, use_rating_amount=use_rating_amount, is_regression=is_regression)
-        features_and_labels.append(t)
+        if t[-1] == 2:
+            if current_class_2_num < limit_class_2:
+                current_class_2_num += 1
+                features_and_labels.append(t)
+        else:
+            features_and_labels.append(t)
     #shuffle
     random.seed(1)
     random.shuffle(features_and_labels)
