@@ -2,14 +2,18 @@ import numpy as np
 import overall_db_util
 from overall_feature_util import extract_feature_vec, normalize_number
 import random
-from keras.layers import Input, Dense, concatenate
+from keras.layers import Input, Dense, concatenate, Activation
 from keras.models import Model
+from keras import backend as K
+from keras.utils.generic_utils import get_custom_objects
 
-def save_prediction_to_file(model, dataset, batch_size):
-    answers = [x[0] for x in model.predict(dataset, batch_size=batch_size)]
+def save_prediction_to_file(model, dataset, is_regression, batch_size):
     answers = []
     for x in model.predict(dataset, batch_size=batch_size):
-        answers.append(np.argmax(x))
+        if not is_regression:
+            answers.append(np.argmax(x))
+        else:
+            answers.append(x[0])
 
     f = open('answers.txt','w')
     for x in answers:
@@ -20,11 +24,11 @@ def save_testset_labels_to_file(testset):
     for x in testset:
         f.write(str(x)+'\n')
 
-def prepare_dataset(use_download_amount=True, use_rating_amount=True, testset_percent=90):
+def prepare_dataset(is_regression,use_download_amount=True, use_rating_amount=True, testset_percent=90):
     #query from db
     features_and_labels = []
     for record in overall_db_util.query():
-        t = extract_feature_vec(record, use_download_amount=use_download_amount, use_rating_amount=use_rating_amount)
+        t = extract_feature_vec(record, use_download_amount=use_download_amount, use_rating_amount=use_rating_amount, is_regression=is_regression)
         features_and_labels.append(t)
     #shuffle
     random.seed(1)
@@ -61,7 +65,7 @@ def prepare_dataset(use_download_amount=True, use_rating_amount=True, testset_pe
         x_category_10, x_sdk_version_10, x_content_rating_10, x_other_10, y_10
 
 def create_model(input_other_shape, input_category_shape, input_sdk_version_shape, input_content_rating_shape, \
-    dense_level, num_class, category_densed_shape=10, sdk_version_densed_shape=10, content_rating_densed_shape=10):
+    dense_level, num_class, category_densed_shape=10, sdk_version_densed_shape=10, content_rating_densed_shape=10, is_regression=False):
     #input layer
     category_input = Input(shape=(input_category_shape,), name='input_category')
     sdk_version_input = Input(shape=(input_sdk_version_shape,), name='input_sdk_version')
@@ -79,8 +83,22 @@ def create_model(input_other_shape, input_category_shape, input_sdk_version_shap
     for i in range(dense_level):
         t = Dense(dense_size, activation='relu', name='overall_dense_'+str(i))(t)
     #output layer
-    output_layer = Dense(num_class, activation='softmax', name='overall_output')(t)
+    #regression output layer
+    if is_regression:
+        #custom activation
+        def my_sigmoid(x):
+            return (K.sigmoid(x) * 5)
+        act = Activation(my_sigmoid)
+        act.__name__ = 'my_sigmoid'
+        get_custom_objects().update({'my_sigmoid': act})
+        output_layer = Dense(1, activation='my_sigmoid', name='overall_output')(t)
+    #category output layer
+    else:
+        output_layer = Dense(num_class, activation='softmax', name='overall_output')(t)
     #create model
     model = Model(inputs=[category_input, sdk_version_input, content_rating_input, other_input], outputs=output_layer)
-    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+    if is_regression:
+        model.compile(optimizer='adam', loss='mse', metrics=['mae'])
+    else:
+        model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
     return model

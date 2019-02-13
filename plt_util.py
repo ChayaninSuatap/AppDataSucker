@@ -4,9 +4,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import itertools
 
-def plot_loss(history):
-    plt.plot(history.history['acc'])
-    plt.plot(history.history['val_acc'])
+def plot_loss(history, is_regression):
+    if not is_regression:
+        plt.plot(history.history['acc'])
+        plt.plot(history.history['val_acc'])
+    else:
+        plt.plot(history.history['mean_absolute_error'])
+        plt.plot(history.history['val_mean_absolute_error'])
     plt.title('model accuracy')
     plt.ylabel('accuracy')
     plt.xlabel('epoch')

@@ -2,7 +2,7 @@ import math
 import numpy as np
 
 def extract_feature_vec(rec , use_download_amount = True, use_rating_amount = True, use_sdk_version=True, use_last_update_date=True, use_screenshots_amount=True, use_price=True \
-,use_content_rating=True, use_app_version=True, use_category=True, use_in_app_products=True, use_video_screenshot=True):
+,use_content_rating=True, use_app_version=True, use_category=True, use_in_app_products=True, use_video_screenshot=True, is_regression=False):
     rating = rec[0]
     download_amount = rec[1]
     category = rec[2]
@@ -15,8 +15,9 @@ def extract_feature_vec(rec , use_download_amount = True, use_rating_amount = Tr
     screenshots_amount = rec[9]
     content_rating = rec[10]
     video_screenshot = rec[11]
-
-    if float(rating) <= 3.5: rating = 0
+    if is_regression:
+        rating = float(rating)
+    elif float(rating) <= 3.5: rating = 0
     elif float(rating) > 3.5 and float(rating) <= 4.0: rating = 1
     elif float(rating) > 4.0 and float(rating) <= 4.5: rating = 2
     else: rating = 3
