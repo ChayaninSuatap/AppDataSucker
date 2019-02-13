@@ -57,6 +57,9 @@ def update_price(price, app_id, conn):
 def update_rating_amount(rating_amount, app_id, conn):
     _update_field('rating_amount', rating_amount, app_id, conn)
 
+def update_video_screenshot(video_screenshot, app_id, conn):
+    _update_field('video_screenshot', video_screenshot, app_id, conn)
+
 def update_last_update_date(value, app_id, conn):
     _update_field('last_update_date', value, app_id, conn)
 

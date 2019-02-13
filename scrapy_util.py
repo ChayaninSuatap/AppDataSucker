@@ -40,6 +40,7 @@ def download_app_data(resp, conn, update_only = False):
     price = _download_app_price(resp)
     rating_amount = _download_app_rating_amount(resp)
     screenshots_amount = _download_app_screenshots_amount(resp)
+    video_screenshot = 1 if resp.css('div.MSLVtf.NIc6yf') != [] else 0
      
     #extract additional infomation
     add_info_contents = _extract_additional_info_data(resp)
@@ -80,6 +81,7 @@ def download_app_data(resp, conn, update_only = False):
     db_util.update_rating_amount( rating_amount, app_id, conn)
     db_util.update_screenshots_amount( screenshots_amount, app_id, conn)
     db_util.update_content_rating( content_rating, app_id, conn)
+    db_util.update_video_screenshot( video_screenshot, app_id, conn)
 
 def _download_app_category(resp):
     category = ''
