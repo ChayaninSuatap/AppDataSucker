@@ -24,16 +24,22 @@ def save_testset_labels_to_file(testset):
     for x in testset:
         f.write(str(x)+'\n')
 
-def prepare_dataset(is_regression,use_download_amount=True, use_rating_amount=True, testset_percent=90):
-    #query from db
-    limit_class_2 = 5000
-    current_class_2_num = 0
+def prepare_dataset(is_regression, limit_class={}, fixed_random_seed=True ,use_download_amount=True, use_rating_amount=True, testset_percent=90):
+    #limit class = dict of key = class number , value = limit number
+    #ex. {2:5000} : limit class 2 by 5000
+    
     features_and_labels = []
+    #init current class num
+    current_class_num = {}
+    for key in limit_class:
+        current_class_num[key] = 0
+    #query from db
     for record in overall_db_util.query():
         t = extract_feature_vec(record, use_download_amount=use_download_amount, use_rating_amount=use_rating_amount, is_regression=is_regression)
-        if t[-1] == 2:
-            if current_class_2_num < limit_class_2:
-                current_class_2_num += 1
+        class_label = t[-1]
+        if class_label in limit_class:
+            if current_class_num[class_label] <= limit_class[class_label]:
+                current_class_num[class_label] += 1
                 features_and_labels.append(t)
         else:
             features_and_labels.append(t)
@@ -71,7 +77,13 @@ def prepare_dataset(is_regression,use_download_amount=True, use_rating_amount=Tr
     return x_category_90, x_sdk_version_90, x_content_rating_90, x_other_90, y_90 ,\
         x_category_10, x_sdk_version_10, x_content_rating_10, x_other_10, y_10
 
+def print_dataset_freq(dataset, preprint_text=''):
+    if preprint_text != '': print(preprint_text)
+    for label in np.unique(dataset):
+        print('class ', label, ' :', np.count_nonzero(dataset==label))
+
 def create_model(input_other_shape, input_category_shape, input_sdk_version_shape, input_content_rating_shape, \
+    
     dense_level, num_class, category_densed_shape=10, sdk_version_densed_shape=10, content_rating_densed_shape=10, is_regression=False):
     #input layer
     category_input = Input(shape=(input_category_shape,), name='input_category')
