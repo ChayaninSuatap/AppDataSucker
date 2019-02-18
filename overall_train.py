@@ -11,7 +11,7 @@ from keras import backend as K; K.set_session(K.tf.Session(config=K.tf.ConfigPro
 is_regression=False
 
 x_category_90, x_sdk_version_90, x_content_rating_90, x_other_90, y_90, \
-    x_category_10, x_sdk_version_10, x_content_rating_10, x_other_10, y_10 = prepare_dataset(is_regression=is_regression, fixed_random_seed=True,
+    x_category_10, x_sdk_version_10, x_content_rating_10, x_other_10, y_10 = prepare_dataset(is_regression=is_regression, fixed_random_seed=False,
     limit_class={0:1500,1:1500,2:1500,3:1500},use_download_amount=True,use_rating_amount=True)
 
 if not is_regression:
@@ -40,6 +40,6 @@ else:
     checkpoint = ModelCheckpoint(checkpoint_path, monitor='val_mean_absolute_error', save_best_only=False)
 
 history = model.fit([x_category_90, x_sdk_version_90, x_content_rating_90, x_other_90], y_90, \
-    validation_data=([x_category_10, x_sdk_version_10, x_content_rating_10, x_other_10], y_10), epochs=50, batch_size=32, callbacks=[checkpoint])
-print(history)
+    validation_data=([x_category_10, x_sdk_version_10, x_content_rating_10, x_other_10], y_10), epochs=30, batch_size=32, callbacks=[checkpoint])
+print('best acc :', max(history.history['val_acc']))
 plot_loss(history, is_regression)

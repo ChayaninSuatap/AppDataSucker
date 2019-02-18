@@ -28,14 +28,19 @@ def save_testset_labels_to_file(testset):
 def prepare_dataset(is_regression, fixed_random_seed, limit_class={}, use_download_amount=True, use_rating_amount=True, testset_percent=90):
     #limit class = dict of key = class number , value = limit number
     #ex. {2:5000} : limit class 2 by 5000
-    
-    features_and_labels = []
+    #seed
+    if fixed_random_seed: random.seed(7)
+    else: random.seed(datetime.now())
     #init current class num
+    features_and_labels = []
     current_class_num = {}
     for key in limit_class:
         current_class_num[key] = 0
     #query from db
-    for record in overall_db_util.query():
+    queried = list(overall_db_util.query())
+    #shuffle for limit class number
+    random.shuffle(queried)
+    for record in queried:
         t = extract_feature_vec(record, use_download_amount=use_download_amount, use_rating_amount=use_rating_amount, is_regression=is_regression)
         class_label = t[-1]
         if class_label in limit_class:
@@ -44,11 +49,7 @@ def prepare_dataset(is_regression, fixed_random_seed, limit_class={}, use_downlo
                 features_and_labels.append(t)
         else:
             features_and_labels.append(t)
-    #shuffle
-    if fixed_random_seed:
-        random.seed(7)
-    else:
-        random.seed(datetime.now())
+    #shuffle for vary test and train set
     random.shuffle(features_and_labels)
     #split features and labels
     feat_category = []
