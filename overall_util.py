@@ -6,6 +6,7 @@ from keras.layers import Input, Dense, concatenate, Activation
 from keras.models import Model
 from keras import backend as K
 from keras.utils.generic_utils import get_custom_objects
+from datetime import datetime
 
 def save_prediction_to_file(model, dataset, is_regression, batch_size):
     answers = []
@@ -24,7 +25,7 @@ def save_testset_labels_to_file(testset):
     for x in testset:
         f.write(str(x)+'\n')
 
-def prepare_dataset(is_regression, limit_class={}, fixed_random_seed=True ,use_download_amount=True, use_rating_amount=True, testset_percent=90):
+def prepare_dataset(is_regression, fixed_random_seed, limit_class={}, use_download_amount=True, use_rating_amount=True, testset_percent=90):
     #limit class = dict of key = class number , value = limit number
     #ex. {2:5000} : limit class 2 by 5000
     
@@ -44,7 +45,10 @@ def prepare_dataset(is_regression, limit_class={}, fixed_random_seed=True ,use_d
         else:
             features_and_labels.append(t)
     #shuffle
-    random.seed(1)
+    if fixed_random_seed:
+        random.seed(7)
+    else:
+        random.seed(datetime.now())
     random.shuffle(features_and_labels)
     #split features and labels
     feat_category = []
@@ -119,5 +123,5 @@ def create_model(input_other_shape, input_category_shape, input_sdk_version_shap
     if is_regression:
         model.compile(optimizer='adam', loss='mse', metrics=['mae'])
     else:
-        model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+        model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
     return model
