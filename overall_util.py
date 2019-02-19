@@ -66,7 +66,7 @@ def prepare_dataset(is_regression, fixed_random_seed, limit_class={}, use_downlo
     #normalize
     feat_other = normalize_number(feat_other)
     #split train, test
-    split_num = int(len(features_and_labels) * 90/100)
+    split_num = int(len(features_and_labels) * testset_percent/100)
     x_category_90 = np.asarray(feat_category[:split_num])
     x_sdk_version_90 = np.asarray(feat_sdk_version[:split_num])
     x_content_rating_90 = np.asarray(feat_content_rating[:split_num])
@@ -89,7 +89,7 @@ def print_dataset_freq(dataset, preprint_text=''):
 
 def create_model(input_other_shape, input_category_shape, input_sdk_version_shape, input_content_rating_shape, \
     
-    dense_level, num_class, category_densed_shape=10, sdk_version_densed_shape=10, content_rating_densed_shape=10, is_regression=False):
+    dense_level, num_class, is_regression, category_densed_shape=10, sdk_version_densed_shape=10, content_rating_densed_shape=10):
     #input layer
     category_input = Input(shape=(input_category_shape,), name='input_category')
     sdk_version_input = Input(shape=(input_sdk_version_shape,), name='input_sdk_version')
