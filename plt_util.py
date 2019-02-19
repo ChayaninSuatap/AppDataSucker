@@ -25,6 +25,7 @@ def plot_loss(history, is_regression):
     plt.xlabel('epoch')
     plt.legend(['train', 'test'], loc='upper left')
     plt.savefig('graph_loss.png')
+    plt.clf()
 
 def plot_confusion_matrix(cm, classes,
                           normalize=False,
