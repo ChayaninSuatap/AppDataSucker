@@ -2,7 +2,7 @@ import numpy as np
 import overall_db_util
 from overall_feature_util import extract_feature_vec, normalize_number
 import random
-from keras.layers import Input, Dense, concatenate, Activation
+from keras.layers import Input, Dense, concatenate, Activation, Dropout
 from keras.models import Model
 from keras import backend as K
 from keras.utils.generic_utils import get_custom_objects
@@ -89,7 +89,8 @@ def print_dataset_freq(dataset, preprint_text=''):
 
 def create_model(input_other_shape, input_category_shape, input_sdk_version_shape, input_content_rating_shape, \
     
-    dense_level, num_class, is_regression, category_densed_shape=10, sdk_version_densed_shape=10, content_rating_densed_shape=10):
+    dense_level, num_class, is_regression, dropout_rate,
+     category_densed_shape=10, sdk_version_densed_shape=10, content_rating_densed_shape=10):
     #input layer
     category_input = Input(shape=(input_category_shape,), name='input_category')
     sdk_version_input = Input(shape=(input_sdk_version_shape,), name='input_sdk_version')
@@ -106,6 +107,7 @@ def create_model(input_other_shape, input_category_shape, input_sdk_version_shap
     print('dense size', dense_size)
     for i in range(dense_level):
         t = Dense(dense_size, activation='relu', name='overall_dense_'+str(i))(t)
+        t = Dropout(dropout_rate, name='overall_dense_dropout_'+str(i))( t)
     #output layer
     #regression output layer
     if is_regression:

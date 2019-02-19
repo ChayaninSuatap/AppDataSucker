@@ -8,7 +8,7 @@ from keras.callbacks import ModelCheckpoint
 from plt_util import plot_loss
 from keras import backend as K; K.set_session(K.tf.Session(config=K.tf.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)))
 
-def train(is_regression, fixed_random_seed, use_odd, dense_level, epochs, batch_size, limit_class, testset_percent):
+def train(is_regression, fixed_random_seed, use_odd, dense_level, epochs, batch_size,dropout_rate, limit_class, testset_percent):
 
     x_category_90, x_sdk_version_90, x_content_rating_90, x_other_90, y_90, \
         x_category_10, x_sdk_version_10, x_content_rating_10, x_other_10, y_10 = prepare_dataset(is_regression=is_regression,
@@ -30,7 +30,7 @@ def train(is_regression, fixed_random_seed, use_odd, dense_level, epochs, batch_
     print(other_shape, category_shape, sdk_version_shape, content_rating_shape)
 
     model = create_model(input_other_shape=other_shape, input_category_shape=category_shape, input_sdk_version_shape=sdk_version_shape, \
-    input_content_rating_shape=content_rating_shape, \
+    input_content_rating_shape=content_rating_shape, dropout_rate=dropout_rate,
     category_densed_shape=10, sdk_version_densed_shape=10, content_rating_densed_shape=10, dense_level=dense_level, num_class=4,is_regression=is_regression)
 
     #assign checkpoint
@@ -43,9 +43,11 @@ def train(is_regression, fixed_random_seed, use_odd, dense_level, epochs, batch_
     #train
     history = model.fit([x_category_90, x_sdk_version_90, x_content_rating_90, x_other_90], y_90, verbose=False,
     validation_data=([x_category_10, x_sdk_version_10, x_content_rating_10, x_other_10], y_10), epochs=epochs, batch_size=batch_size, callbacks=[checkpoint])
-    print('best acc : %.3f' % (max(history.history['val_acc'])),)
+    max_acc = max(history.history['val_acc'])
+    print('best acc : %.3f' % (max_acc,))
     plot_loss(history, is_regression)
+    return max_acc
 
 if __name__ == '__main__':
-    train(is_regression=False, fixed_random_seed=False, use_odd=False,dense_level=10, epochs=30, batch_size=32,
+    train(is_regression=False, fixed_random_seed=False, use_odd=False,dense_level=10, dropout_rate=0, epochs=30, batch_size=32,
      testset_percent=80, limit_class={0:1500,1:1500,2:1500,3:1500})
