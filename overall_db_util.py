@@ -9,3 +9,4 @@ def query():
     datas = conn.execute(sql)
     for x in datas : 
         yield x
+    conn.close()

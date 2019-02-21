@@ -32,6 +32,7 @@ def _prepare_limit_class_dataset(fixed_random_seed, limit_class, use_odd, is_reg
     else: random.seed(datetime.now())
     #init current class num
     features_and_labels = []
+    features_and_labels_left = []
     current_class_num = {}
     for key in limit_class:
         current_class_num[key] = 0
@@ -46,11 +47,30 @@ def _prepare_limit_class_dataset(fixed_random_seed, limit_class, use_odd, is_reg
             if current_class_num[class_label] <= limit_class[class_label]:
                 current_class_num[class_label] += 1
                 features_and_labels.append(t)
+            else:
+                features_and_labels_left.append(t)
         else:
             features_and_labels.append(t)
     #shuffle for vary test and train set
     random.shuffle(features_and_labels)
-    return features_and_labels
+    return features_and_labels, features_and_labels_left
+
+def _convert_features_and_labels_to_np_array(features_and_labels):
+    feat_category = []
+    feat_sdk_version = []
+    feat_content_rating = []
+    feat_other = []
+    labels = []
+    for onehot, single_node, label in features_and_labels:
+        feat_category.append(onehot[0])
+        feat_sdk_version.append(onehot[1])
+        feat_content_rating.append(onehot[2])
+        feat_other.append(single_node)
+        labels.append(label)
+    #normalize
+    feat_other = normalize_number(feat_other)
+    #convert to np array
+    return np.asarray(feat_category), np.asarray(feat_sdk_version), np.asarray(feat_content_rating), np.asarray(feat_other), np.asarray(labels)
 
 def _chunks(l, n):
     """Yield successive n-sized chunks from l."""
@@ -72,6 +92,8 @@ def cross_validation_generator(k, prepared_limit_dataset):
         feat_content_rating.append(onehot[2])
         feat_other.append(single_node)
         labels.append(label)
+    #normalize
+    feat_other = normalize_number(feat_other)
     #chrunk feats and labels
     feat_category_chrunk = list(_chunks(feat_category, chrunk_size))
     feat_sdk_version_chrunk = list(_chunks(feat_sdk_version, chrunk_size))
@@ -114,7 +136,7 @@ def cross_validation_generator(k, prepared_limit_dataset):
 def prepare_dataset(is_regression, fixed_random_seed, limit_class, use_odd, testset_percent):
     #limit class = dict of key = class number , value = limit number
     #ex. {2:5000} : limit class 2 by 5000
-    features_and_labels = _prepare_limit_class_dataset(fixed_random_seed=fixed_random_seed, limit_class=limit_class,
+    features_and_labels,_ = _prepare_limit_class_dataset(fixed_random_seed=fixed_random_seed, limit_class=limit_class,
         use_odd=use_odd, is_regression=is_regression)
     #split features and labels
     feat_category = []
@@ -154,7 +176,7 @@ def print_dataset_freq(dataset, preprint_text=''):
 
 def create_model(input_other_shape, input_category_shape, input_sdk_version_shape, input_content_rating_shape, \
     
-    dense_level, num_class, is_regression, dropout_rate,
+    dense_level, num_class, is_regression, dropout_rate, optimizer,
      category_densed_shape=10, sdk_version_densed_shape=10, content_rating_densed_shape=10):
     #input layer
     category_input = Input(shape=(input_category_shape,), name='input_category')
@@ -189,7 +211,7 @@ def create_model(input_other_shape, input_category_shape, input_sdk_version_shap
     #create model
     model = Model(inputs=[category_input, sdk_version_input, content_rating_input, other_input], outputs=output_layer)
     if is_regression:
-        model.compile(optimizer='adam', loss='mse', metrics=['mae'])
+        model.compile(optimizer=optimizer, loss='mse', metrics=['mae'])
     else:
-        model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+        model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
     return model
