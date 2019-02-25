@@ -34,3 +34,7 @@ testset_labels\.txt
 play\.py
 
 t\.py
+
+*.zip
+
+t2\.py

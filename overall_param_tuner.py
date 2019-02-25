@@ -2,29 +2,7 @@ from overall_train import train
 import numpy as np
 from overall_util import _prepare_limit_class_dataset, cross_validation_generator, _convert_features_and_labels_to_np_array
 
-def train_cross_validation(k, is_regression, dense_level, epochs, batch_size, dropout_rate, limit_class, fixed_random_seed, optimizer):
-    #prepare limit class data
-    prepared_limit_dat, _ = _prepare_limit_class_dataset(is_regression=is_regression,
-    fixed_random_seed=fixed_random_seed, limit_class=limit_class, use_odd=False)
-    #prepare k chrunks generator
-    chrunks_gen = cross_validation_generator(k, prepared_limit_dat)
-    #train each chrunks
-    accs = []
-    for i, splited_dataset in enumerate(chrunks_gen):
-        print('training pass ',i, end='')
-        max_acc = train(is_regression=is_regression, dense_level=dense_level, epochs=epochs, batch_size=batch_size,
-         dropout_rate=dropout_rate, splited_dataset=splited_dataset, optimizer=optimizer, shut_up=True)
-        accs.append(max_acc)
-        print(' acc = %.3f' %  (max_acc,))
-    #finalize result
-    accs = np.asarray(accs)
-    if is_regression:
-        best_acc = np.min(accs)
-    else:
-        best_acc = np.max(accs)
-    avg_acc = np.mean(accs)
-    std_acc = np.std(accs)
-    return best_acc, avg_acc, std_acc
+
 
 def test_10_times(is_regression):
     accs=[]

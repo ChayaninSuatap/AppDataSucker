@@ -8,7 +8,7 @@ from keras.callbacks import ModelCheckpoint
 from plt_util import plot_loss
 from keras import backend as K; K.set_session(K.tf.Session(config=K.tf.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)))
 
-def train(is_regression, dense_level, epochs, batch_size, dropout_rate, splited_dataset, optimizer, shut_up=False):
+def train(is_regression, dense_level, epochs, batch_size, dropout_rate, splited_dataset, optimizer, shut_up=False, class_weight=None):
 
     x_category_90, x_sdk_version_90, x_content_rating_90, x_other_90, y_90, \
         x_category_10, x_sdk_version_10, x_content_rating_10, x_other_10, y_10 = splited_dataset
@@ -43,7 +43,8 @@ def train(is_regression, dense_level, epochs, batch_size, dropout_rate, splited_
         checkpoint = ModelCheckpoint(checkpoint_path, monitor='val_mean_absolute_error', save_best_only=False)
     #train
     history = model.fit([x_category_90, x_sdk_version_90, x_content_rating_90, x_other_90], y_90, verbose=(not shut_up),
-    validation_data=([x_category_10, x_sdk_version_10, x_content_rating_10, x_other_10], y_10), epochs=epochs, batch_size=batch_size, callbacks=[checkpoint])
+    validation_data=([x_category_10, x_sdk_version_10, x_content_rating_10, x_other_10], y_10), epochs=epochs, batch_size=batch_size,
+     callbacks=[checkpoint], class_weight=class_weight)
     #return result
     if is_regression:
         max_acc = min(history.history['val_mean_absolute_error']) #mae
@@ -52,6 +53,30 @@ def train(is_regression, dense_level, epochs, batch_size, dropout_rate, splited_
     if not shut_up : print('best acc : %.3f' % (max_acc,))
     plot_loss(history, is_regression)
     return max_acc
+
+def train_cross_validation(k, is_regression, dense_level, epochs, batch_size, dropout_rate, limit_class, fixed_random_seed, optimizer, class_weight=None):
+    #prepare limit class data
+    prepared_limit_dat, _ = _prepare_limit_class_dataset(is_regression=is_regression,
+    fixed_random_seed=fixed_random_seed, limit_class=limit_class, use_odd=False)
+    #prepare k chrunks generator
+    chrunks_gen = cross_validation_generator(k, prepared_limit_dat)
+    #train each chrunks
+    accs = []
+    for i, splited_dataset in enumerate(chrunks_gen):
+        print('training pass ',i, end='')
+        max_acc = train(is_regression=is_regression, dense_level=dense_level, epochs=epochs, batch_size=batch_size,
+         dropout_rate=dropout_rate, splited_dataset=splited_dataset, optimizer=optimizer, shut_up=True, class_weight=class_weight)
+        accs.append(max_acc)
+        print(' acc = %.3f' %  (max_acc,))
+    #finalize result
+    accs = np.asarray(accs)
+    if is_regression:
+        best_acc = np.min(accs)
+    else:
+        best_acc = np.max(accs)
+    avg_acc = np.mean(accs)
+    std_acc = np.std(accs)
+    return best_acc, avg_acc, std_acc
 
 if __name__ == '__main__':
     splited_dataset = prepare_dataset(is_regression=False,
