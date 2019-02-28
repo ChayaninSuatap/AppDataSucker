@@ -1,4 +1,5 @@
 def compute_class_weight(labels):
+    #make class_freq
     class_freq={}
     for x in labels:
         if not (x in class_freq):
@@ -6,10 +7,11 @@ def compute_class_weight(labels):
             class_freq[x]=1
         else:
             class_freq[x]+=1
-    sum_class_freq = sum(v for k,v in class_freq.items())
+    #make class weight
     class_weight={}
+    minfreq = min(v for k,v in class_freq.items())
     for k,v in class_freq.items():
-        class_weight[k] = v/sum_class_freq
+        class_weight[k] = minfreq/v
     return class_weight
 
 def group_for_fit_generator(xs, n):
