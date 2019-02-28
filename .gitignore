@@ -38,3 +38,5 @@ t\.py
 *.zip
 
 t2\.py
+
+models/
