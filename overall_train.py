@@ -5,14 +5,24 @@ import numpy as np
 from keras.utils.np_utils import to_categorical
 from overall_util import save_prediction_to_file, save_testset_labels_to_file, prepare_dataset, create_model, print_dataset_freq, cross_validation_generator, _prepare_limit_class_dataset
 from keras.callbacks import ModelCheckpoint
-from plt_util import plot_loss
+from plt_util import plot_loss, plot_confusion_matrix
 from keras import backend as K; K.set_session(K.tf.Session(config=K.tf.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)))
+import pickle
 
-def train(is_regression, dense_level, epochs, batch_size, dropout_rate, splited_dataset, optimizer, shut_up=False, class_weight=None):
+def train(is_regression, dense_level, epochs, batch_size, dropout_rate, splited_dataset, optimizer, shut_up=False, class_weight=None,
+    ret_model=False, fn_prefix='', save_xy=False):
 
     x_category_90, x_sdk_version_90, x_content_rating_90, x_other_90, y_90, \
         x_category_10, x_sdk_version_10, x_content_rating_10, x_other_10, y_10 = splited_dataset
     
+    #save pickle?
+    if save_xy:
+        x = x_category_10, x_sdk_version_10, x_content_rating_10, x_other_10
+        y = y_10
+        with open('models/p_' + fn_prefix + '.pickle', 'wb') as f:
+            pickle.dump((x,y),f) 
+    
+    #to_categorical
     if not is_regression:
         #print frequency of each class
         if not shut_up:
@@ -36,15 +46,16 @@ def train(is_regression, dense_level, epochs, batch_size, dropout_rate, splited_
 
     #assign checkpoint
     if not is_regression:
-        checkpoint_path = 'models/overall_ep_{epoch:03d}_loss_{loss:.3f}_val_loss_{val_loss:.3f}_val_acc_{val_acc:.2f}.hdf5'
-        checkpoint = ModelCheckpoint(checkpoint_path, monitor='val_acc', save_best_only=False)
+        checkpoint_path = 'models/'+fn_prefix+'overall_ep_{epoch:03d}_loss_{loss:.3f}_val_loss_{val_loss:.3f}_val_acc_{val_acc:.2f}.hdf5'
+        checkpoint = ModelCheckpoint(checkpoint_path, monitor='val_acc', save_best_only=True)
     else:
-        checkpoint_path = 'models/overall_ep_{epoch:03d}_loss_{loss:.3f}_val_loss_{val_loss:.3f}_val_mae_{val_mean_absolute_error:.2f}.hdf5'
-        checkpoint = ModelCheckpoint(checkpoint_path, monitor='val_mean_absolute_error', save_best_only=False)
+        checkpoint_path = 'models/'+fn_prefix+'overall_ep_{epoch:03d}_loss_{loss:.3f}_val_loss_{val_loss:.3f}_val_mae_{val_mean_absolute_error:.2f}.hdf5'
+        checkpoint = ModelCheckpoint(checkpoint_path, monitor='val_mean_absolute_error', save_best_only=True)
     #train
     history = model.fit([x_category_90, x_sdk_version_90, x_content_rating_90, x_other_90], y_90, verbose=(not shut_up),
     validation_data=([x_category_10, x_sdk_version_10, x_content_rating_10, x_other_10], y_10), epochs=epochs, batch_size=batch_size,
      callbacks=[checkpoint], class_weight=class_weight)
+
     #return result
     if is_regression:
         max_acc = min(history.history['val_mean_absolute_error']) #mae
@@ -52,9 +63,13 @@ def train(is_regression, dense_level, epochs, batch_size, dropout_rate, splited_
         max_acc = max(history.history['val_acc'])
     if not shut_up : print('best acc : %.3f' % (max_acc,))
     plot_loss(history, is_regression)
-    return max_acc
+    if ret_model:
+        return max_acc, model
+    else:
+        return max_acc
 
-def train_cross_validation(k, is_regression, dense_level, epochs, batch_size, dropout_rate, limit_class, fixed_random_seed, optimizer, class_weight=None):
+def train_cross_validation(k, is_regression, dense_level, epochs, batch_size, dropout_rate, limit_class, fixed_random_seed,
+    optimizer, class_weight=None, save_xy=False):
     #prepare limit class data
     prepared_limit_dat, _ = _prepare_limit_class_dataset(is_regression=is_regression,
     fixed_random_seed=fixed_random_seed, limit_class=limit_class, use_odd=False)
@@ -65,9 +80,11 @@ def train_cross_validation(k, is_regression, dense_level, epochs, batch_size, dr
     for i, splited_dataset in enumerate(chrunks_gen):
         print('training pass ',i, end='')
         max_acc = train(is_regression=is_regression, dense_level=dense_level, epochs=epochs, batch_size=batch_size,
-         dropout_rate=dropout_rate, splited_dataset=splited_dataset, optimizer=optimizer, shut_up=True, class_weight=class_weight)
+         dropout_rate=dropout_rate, splited_dataset=splited_dataset, optimizer=optimizer, shut_up=True, 
+         class_weight=class_weight, fn_prefix='p_' + str(i), save_xy=save_xy)
         accs.append(max_acc)
         print(' acc = %.3f' %  (max_acc,))
+
     #finalize result
     accs = np.asarray(accs)
     if is_regression:
