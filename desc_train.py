@@ -49,15 +49,18 @@ model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['acc']
 fn = 'descs_ep-{epoch:03d}-loss-{loss:.2f}-acc-{acc:.2f}-val_loss-{val_loss:.2f}-val_acc-{val_acc:.2f}.hdf5'
 checkpoint = ModelCheckpoint(fn, save_best_only=False)
 
+history=[]
 class SaveHistory(Callback):
     def on_epoch_end(self, batch, log={}):
-        util.save_pickle(self.model.history , 'model_history.obj')
+        rec = (log['loss'], log['acc'], log['val_loss'], log['val_acc'])
+        history.append(rec)
+        util.save_pickle(history , 'model_history.obj')
 
-# save_history = SaveHistory()
+save_history = SaveHistory()
 
 model.fit(x=indexized_words, y=labels, batch_size=32, validation_split=0.1,
     epochs=999, class_weight={1: 0.314, 2: 0.125, 3: 0.3, 0: 1.0},
-    callbacks=[checkpoint])
+    callbacks=[checkpoint, save_history])
 
 
 
