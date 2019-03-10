@@ -56,7 +56,7 @@ class SaveHistory(Callback):
 save_history = SaveHistory()
 
 model.fit(x=indexized_words, y=labels, batch_size=32, validation_split=0.1,
-    epochs=50, class_weight={1: 0.314, 2: 0.125, 3: 0.3, 0: 1.0},
+    epochs=999, class_weight={1: 0.314, 2: 0.125, 3: 0.3, 0: 1.0},
     callbacks=[checkpoint, save_history])
 
 
