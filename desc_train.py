@@ -13,6 +13,7 @@ import global_util as util
 conn = db_util.connect_db()
 dat = conn.execute('select description, rating, app_id from app_data where not (rating is NULL) and not (description is NULL)')
 dat = list(dat)
+random.seed(21)
 random.shuffle(dat)
 descs = [x[0] for x in dat]
 labels = [x[1] for x in dat] # rating floating point
