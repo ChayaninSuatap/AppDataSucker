@@ -41,7 +41,7 @@ lstm_out = 16
 
 input_layer = Input(shape = (sequence_size,))
 x = Embedding(input_dim=num_words, output_dim=embed_dim, input_length=sequence_size)(input_layer)
-x = LSTM(lstm_out)(x)
+x = LSTM(lstm_out, dropout=0.2, recurrent_dropout=0.2)(x)
 output_layer = Dense(4, activation='softmax')(x)
 
 model = Model(input=input_layer, output=output_layer)
