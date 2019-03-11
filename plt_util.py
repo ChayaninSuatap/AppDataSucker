@@ -44,16 +44,18 @@ def plot_confusion_matrix(model_path, xy_path, is_regression, batch_size, fn_pos
 
     #load model
     model = load_model(model_path)
+    # print(model.summary())
     #load pickle
     with open(xy_path, 'rb') as f:
         x,y = pickle.load(f)
-        x = [x[0], x[1], x[2], x[3]]
+        x = np.array(x)
+        print(x)
+        print(x.shape)
+        # x = [x[0], x[1], x[2], x[3]]
     if is_regression:
         #regression
         pass
     else:
-        #vars
-        batch_size = 32
         #classify 4 class
         y_10_eval = to_categorical(y, 4)
         print('evaluating')

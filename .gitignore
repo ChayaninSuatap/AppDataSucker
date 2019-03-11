@@ -42,3 +42,5 @@ t2\.py
 models/
 
 *.obj
+
+models_overall/
