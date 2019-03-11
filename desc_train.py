@@ -10,6 +10,7 @@ from keras.utils.np_utils import to_categorical
 from keras.callbacks import ModelCheckpoint
 from keras.callbacks import Callback
 import global_util as util
+import math
 conn = db_util.connect_db()
 dat = conn.execute('select description, rating, app_id from app_data where not (rating is NULL) and not (description is NULL)')
 dat = list(dat)
@@ -24,7 +25,8 @@ for i,rating in enumerate(labels):
     elif float(rating) > 4.0 and float(rating) <= 4.5: rating = 2
     else: rating = 3
     labels[i] = rating
-labels = to_categorical(labels, 4)
+
+
 
 # with open('descs.obj','rb') as f: english_only_descs = pickle.load(f)
 # filter only english
@@ -34,6 +36,17 @@ descs, labels = desc_util.preprocess_text(descs, labels, 0.7)
 indexized_words = desc_util.indexize_words(descs)
 print(indexized_words, len(indexized_words[0]))
 sequence_size = len(indexized_words[0])
+
+#save xy
+descs = indexized_words
+ninety = math.floor((90/100)*len(descs))
+print(ninety)
+print(len(descs[ninety:]), len(labels[ninety:]))
+util.save_pickle((descs[ninety:], labels[ninety:]), 'models/xy.obj')
+print('done')
+input()
+
+labels = to_categorical(labels, 4)
 
 num_words = 2500
 embed_dim = 128
