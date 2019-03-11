@@ -47,7 +47,7 @@ def generator():
             #prepare chrunk
             for app_id, label in g:
                 try:
-                    icon = icon_util.load_icon_by_app_id(app_id, 299,299)
+                    icon = icon_util.load_icon_by_app_id(app_id, 244,244)
                     icons.append(icon)
                     labels.append(label)
                 except:
@@ -56,10 +56,31 @@ def generator():
             icons = np.asarray(icons)
             labels = to_categorical(labels, 4)
             yield icons, labels
+
+def test_generator():
+    for i in range(epochs):
+        for g in group_for_fit_generator(app_ids_and_labels[ninety:], batch_size):
+            icons = []
+            labels = []
+            #prepare chrunk
+            for app_id, label in g:
+                try:
+                    icon = icon_util.load_icon_by_app_id(app_id, 244,244)
+                    icons.append(icon)
+                    labels.append(label)
+                except:
+                    # print('icon error:', app_id)
+                    pass
+            icons = np.asarray(icons)
+            labels = to_categorical(labels, 4)
+            yield icons, labels
+
 # write save each epoch
 filepath='model-{epoch:03d}-{loss:.3f}-{acc:.3f}.hdf5'
 checkpoint = ModelCheckpoint(filepath, monitor='val_acc', save_best_only=False, verbose=1)
 # do it
-model.fit_generator(generator(),
+history = model.fit_generator(generator(),
     steps_per_epoch=math.ceil(len(app_ids_and_labels[:ninety])/batch_size),
+    validation_data=test_generator(),
+    validation_steps=math.ceil(len(app_ids_and_labels[ninety:])/batch_size),
     epochs=epochs , callbacks=[checkpoint], verbose=1, class_weight=class_weight)
