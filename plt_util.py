@@ -34,7 +34,9 @@ def plot_loss(history, is_regression):
     plt.savefig('graph_loss.png')
     plt.clf()
 
-def plot_confusion_matrix(model_path, xy_path, is_regression, batch_size, fn_postfix=''):
+
+def plot_confusion_matrix(model_path, xy_path, is_regression, batch_size,
+    fn_postfix='', no_xy_path=False, xy_obj=None):
     #def my_sigmoid
     def my_sigmoid(x):
         return (K.sigmoid(x) * 5)
@@ -43,15 +45,16 @@ def plot_confusion_matrix(model_path, xy_path, is_regression, batch_size, fn_pos
     get_custom_objects().update({'my_sigmoid': act})
 
     #load model
+    print('loading model')
     model = load_model(model_path)
-    # print(model.summary())
-    #load pickle
-    with open(xy_path, 'rb') as f:
-        x,y = pickle.load(f)
-        x = np.array(x)
-        print(x)
-        print(x.shape)
-        # x = [x[0], x[1], x[2], x[3]]
+    print('loading xy')
+    if no_xy_path and xy_obj != None:
+        x,y = xy_obj
+    else:
+        #load pickle
+        with open(xy_path, 'rb') as f:
+            x,y = pickle.load(f)
+
     if is_regression:
         #regression
         pass
@@ -59,7 +62,7 @@ def plot_confusion_matrix(model_path, xy_path, is_regression, batch_size, fn_pos
         #classify 4 class
         y_10_eval = to_categorical(y, 4)
         print('evaluating')
-        result = model.evaluate(x, y_10_eval, batch_size=batch_size)
+        # result = model.evaluate(x, y_10_eval, batch_size=batch_size)
         print(result)
         pred = model.predict(x, batch_size=batch_size)
         conmat = confusion_matrix(y, pred.argmax(axis=1))
