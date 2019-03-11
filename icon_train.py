@@ -76,7 +76,7 @@ def test_generator():
             yield icons, labels
 
 # write save each epoch
-filepath='model-{epoch:03d}-{loss:.3f}-{acc:.3f}.hdf5'
+filepath='model-ep-{epoch:03d}-loss-{loss:.2f}-acc-{acc:.2f}-val_loss-{val_loss:.2f}-val_acc-{val_acc:.2f}.hdf5'
 checkpoint = ModelCheckpoint(filepath, monitor='val_acc', save_best_only=False, verbose=1)
 # do it
 history = model.fit_generator(generator(),
