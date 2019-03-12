@@ -38,7 +38,7 @@ model = load_model('model_modded.hdf5')
 # write fit generator
 
 epochs = 999
-batch_size = 32 
+batch_size = 24
 def generator():
     for i in range(epochs):
         for g in group_for_fit_generator(app_ids_and_labels[:ninety], batch_size):
@@ -81,6 +81,6 @@ checkpoint = ModelCheckpoint(filepath, monitor='val_acc', save_best_only=False, 
 # do it
 history = model.fit_generator(generator(),
     steps_per_epoch=math.ceil(len(app_ids_and_labels[:ninety])/batch_size),
-    validation_data=test_generator(),
+    validation_data=test_generator(), max_queue_size=1,
     validation_steps=math.ceil(len(app_ids_and_labels[ninety:])/batch_size),
     epochs=epochs , callbacks=[checkpoint], verbose=1, class_weight=class_weight)
