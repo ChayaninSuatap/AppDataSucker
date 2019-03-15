@@ -6,7 +6,7 @@ import db_util
 import icon_util
 import numpy as np
 from keras.utils import to_categorical
-model_path = 'model-09.hdf5'
+model_path = 'densenet-ep-4.hdf5'
 
 
 # prepare x y
@@ -31,13 +31,12 @@ xs = []
 ys = []
 for app_id, label in app_ids_and_labels:
     try:
-        icon = icon_util.load_icon_by_app_id(app_id, 299, 299)
+        icon = icon_util.load_icon_by_app_id(app_id, 244, 244)
         xs.append(np.array(icon))
         ys.append(label)
     except:
         pass
 xs = np.array(xs)
-
 plot_confusion_matrix(model_path, '', is_regression=False,
     batch_size=32, no_xy_path=True, xy_obj=(xs,ys), fn_postfix='09')
 

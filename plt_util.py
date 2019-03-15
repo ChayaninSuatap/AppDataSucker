@@ -11,6 +11,7 @@ from keras.models import load_model
 from keras.utils.np_utils import to_categorical
 from overall_util import save_prediction_to_file
 import pickle
+from global_util import save_pickle
 def plot_loss(history, is_regression):
     if not is_regression:
         plt.plot(history.history['acc'])
@@ -63,8 +64,10 @@ def plot_confusion_matrix(model_path, xy_path, is_regression, batch_size,
         y_10_eval = to_categorical(y, 4)
         print('evaluating')
         # result = model.evaluate(x, y_10_eval, batch_size=batch_size)
-        print(result)
         pred = model.predict(x, batch_size=batch_size)
+        print(pred)
+        save_pickle(pred, 'fucker_pred.obj')
+
         conmat = confusion_matrix(y, pred.argmax(axis=1))
         _plot_confusion_matrix(conmat, ['0 - 3.5','3.5 - 4','4 - 4.5','4.5 - 5'], fn_postfix=fn_postfix)
         _plot_confusion_matrix(conmat, ['0 - 3.5','3.5 - 4','4 - 4.5','4.5 - 5'], normalize=True, fn_postfix=fn_postfix)
