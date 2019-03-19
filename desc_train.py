@@ -51,7 +51,7 @@ output_layer = Dense(4, activation='softmax')(x)
 
 model = Model(input=input_layer, output=output_layer)
 model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['acc'])
-fn = 'desc_ep-{epoch:03d}-loss-{loss:.2f}-acc-{acc:.2f}-vloss-{val_loss:.2f}-vacc-{val_acc:.2f}.hdf5'
+fn = 'desc_nw_6000_ep-{epoch:03d}-loss-{loss:.2f}-acc-{acc:.2f}-vloss-{val_loss:.2f}-vacc-{val_acc:.2f}.hdf5'
 checkpoint = ModelCheckpoint(fn, save_best_only=False)
 
 history=[]
