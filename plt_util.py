@@ -36,8 +36,8 @@ def plot_loss(history, is_regression):
     plt.clf()
 
 
-def plot_confusion_matrix(model_path, xy_path, is_regression, batch_size,
-    fn_postfix='', no_xy_path=False, xy_obj=None):
+def plot_confusion_matrix(model_path, xy_path, batch_size,
+    fn_postfix='', shut_up=False):
     #def my_sigmoid
     def my_sigmoid(x):
         return (K.sigmoid(x) * 5)
@@ -46,31 +46,28 @@ def plot_confusion_matrix(model_path, xy_path, is_regression, batch_size,
     get_custom_objects().update({'my_sigmoid': act})
 
     #load model
-    print('loading model')
-    model = load_model(model_path)
-    print('loading xy')
-    if no_xy_path and xy_obj != None:
-        x,y = xy_obj
+    if not shut_up: print('loading model')
+    if isinstance(model_path, str):
+        model = load_model(model_path)
+    else:
+        model = model_path
+    
+    if not shut_up: print('loading xy')
+    if not isinstance(xy_path, str):
+        x,y = xy_path
     else:
         #load pickle
         with open(xy_path, 'rb') as f:
             x,y = pickle.load(f)
-
-    if is_regression:
-        #regression
-        pass
-    else:
-        #classify 4 class
-        y_10_eval = to_categorical(y, 4)
-        print('evaluating')
-        # result = model.evaluate(x, y_10_eval, batch_size=batch_size)
-        pred = model.predict(x, batch_size=batch_size)
-        print(pred)
-        save_pickle(pred, 'fucker_pred.obj')
-
-        conmat = confusion_matrix(y, pred.argmax(axis=1))
-        _plot_confusion_matrix(conmat, ['0 - 3.5','3.5 - 4','4 - 4.5','4.5 - 5'], fn_postfix=fn_postfix)
-        _plot_confusion_matrix(conmat, ['0 - 3.5','3.5 - 4','4 - 4.5','4.5 - 5'], normalize=True, fn_postfix=fn_postfix)
+    #revert one hot to original y
+    y = [t.argmax() for t in y]
+    #classify 4 class
+    if not shut_up: print('evaluating')
+    pred = model.predict(x, batch_size=batch_size)
+    if not shut_up: print(pred)
+    conmat = confusion_matrix(y, pred.argmax(axis=1))
+    _plot_confusion_matrix(conmat, ['0 - 3.5','3.5 - 4','4 - 4.5','4.5 - 5'], fn_postfix=fn_postfix)
+    _plot_confusion_matrix(conmat, ['0 - 3.5','3.5 - 4','4 - 4.5','4.5 - 5'], normalize=True, fn_postfix=fn_postfix)
 
 def _plot_confusion_matrix(cm, classes,
                           normalize=False,
@@ -104,7 +101,7 @@ def _plot_confusion_matrix(cm, classes,
     plt.xlabel('Predicted label')
     plt.tight_layout()
     if normalize:
-        plt.savefig('models/cm_norm' + fn_postfix + '.png')
+        plt.savefig('cm_norm_' + fn_postfix + '.png')
     else:
-        plt.savefig('models/cm' + fn_postfix + '.png')
+        plt.savefig('cm_' + fn_postfix + '.png')
     plt.clf()

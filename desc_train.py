@@ -10,6 +10,7 @@ from keras.utils.np_utils import to_categorical
 from keras.callbacks import ModelCheckpoint
 from keras.callbacks import Callback
 import global_util as util
+from keras_util import PlotConfusionMatrixCallback
 conn = db_util.connect_db()
 dat = conn.execute('select description, rating, app_id from app_data where not (rating is NULL) and not (description is NULL)')
 dat = list(dat)
@@ -24,7 +25,7 @@ for i,rating in enumerate(labels):
     elif float(rating) > 4.0 and float(rating) <= 4.5: rating = 2
     else: rating = 3
     labels[i] = rating
-
+labels = to_categorical(labels, 4)
 # with open('descs.obj','rb') as f: english_only_descs = pickle.load(f)
 # filter only english
 descs, labels = desc_util.preprocess_text(descs, labels, 0.7)
@@ -35,11 +36,11 @@ print(indexized_words, len(indexized_words[0]))
 sequence_size = len(indexized_words[0])
 # uncomment to extract 10% xy
 # ninety = int(len(labels)*90/100)
-# util.save_pickle((indexized_words[ninety:], labels[ninety:]), 'desc_xy_90.obj')
+# util.save_pickle((indexized_words[ninety:], labels[ninety:]), 'desc_xy_10.obj')
 # print('done')
 # input()
-labels = to_categorical(labels, 4)
 
+project_name = 'desc_nw_6000'
 num_words = 6000
 embed_dim = 128
 lstm_out = 16
@@ -51,21 +52,25 @@ output_layer = Dense(4, activation='softmax')(x)
 
 model = Model(input=input_layer, output=output_layer)
 model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['acc'])
-fn = 'desc_nw_6000_ep-{epoch:03d}-loss-{loss:.2f}-acc-{acc:.2f}-vloss-{val_loss:.2f}-vacc-{val_acc:.2f}.hdf5'
+fn = project_name + '_ep-{epoch:03d}-loss-{loss:.2f}-acc-{acc:.2f}-vloss-{val_loss:.2f}-vacc-{val_acc:.2f}.hdf5'
 checkpoint = ModelCheckpoint(fn, save_best_only=False)
 
 history=[]
 class SaveHistory(Callback):
+    def set_project_name(self, name):
+        self.project_name = name
     def on_epoch_end(self, batch, log={}):
         rec = (log['loss'], log['acc'], log['val_loss'], log['val_acc'])
         history.append(rec)
-        util.save_pickle(history , 'model_history.obj')
-
+        util.save_pickle(history , 'history_' + self.project_name + '.obj')
 save_history = SaveHistory()
+save_history.set_project_name(project_name)
+mycallback = PlotConfusionMatrixCallback()
+mycallback.set_postfix_name(project_name)
 
 model.fit(x=indexized_words, y=labels, batch_size=32, validation_split=0.1,
     epochs=999, class_weight={1: 0.314, 2: 0.125, 3: 0.3, 0: 1.0},
-    callbacks=[checkpoint, save_history])
+    callbacks=[checkpoint, save_history, mycallback])
 
 
 
