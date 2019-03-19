@@ -24,7 +24,6 @@ for i,rating in enumerate(labels):
     elif float(rating) > 4.0 and float(rating) <= 4.5: rating = 2
     else: rating = 3
     labels[i] = rating
-labels = to_categorical(labels, 4)
 
 # with open('descs.obj','rb') as f: english_only_descs = pickle.load(f)
 # filter only english
@@ -34,8 +33,14 @@ descs, labels = desc_util.preprocess_text(descs, labels, 0.7)
 indexized_words = desc_util.indexize_words(descs)
 print(indexized_words, len(indexized_words[0]))
 sequence_size = len(indexized_words[0])
+# uncomment to extract 10% xy
+# ninety = int(len(labels)*90/100)
+# util.save_pickle((indexized_words[ninety:], labels[ninety:]), 'desc_xy_90.obj')
+# print('done')
+# input()
+labels = to_categorical(labels, 4)
 
-num_words = 2500
+num_words = 6000
 embed_dim = 128
 lstm_out = 16
 
@@ -46,7 +51,7 @@ output_layer = Dense(4, activation='softmax')(x)
 
 model = Model(input=input_layer, output=output_layer)
 model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['acc'])
-fn = 'descs_ep-{epoch:03d}-loss-{loss:.2f}-acc-{acc:.2f}-val_loss-{val_loss:.2f}-val_acc-{val_acc:.2f}.hdf5'
+fn = 'desc_ep-{epoch:03d}-loss-{loss:.2f}-acc-{acc:.2f}-vloss-{val_loss:.2f}-vacc-{val_acc:.2f}.hdf5'
 checkpoint = ModelCheckpoint(fn, save_best_only=False)
 
 history=[]
