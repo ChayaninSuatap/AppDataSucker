@@ -5,7 +5,7 @@ import string
 import pickle
 import desc_util
 from keras.models import Model
-from keras.layers import Dense, Embedding, LSTM, Input
+from keras.layers import Dense, Embedding, LSTM, Input, Bidirectional
 from keras.utils.np_utils import to_categorical
 from keras.callbacks import ModelCheckpoint
 from keras.callbacks import Callback
@@ -40,14 +40,14 @@ sequence_size = len(indexized_words[0])
 # print('done')
 # input()
 
-project_name = 'desc_nw_6000'
-num_words = 6000
-embed_dim = 128
+project_name = 'desc_nw_20000_embed_512_bidir'
+num_words = 20000
+embed_dim = 512
 lstm_out = 16
 
 input_layer = Input(shape = (sequence_size,))
 x = Embedding(input_dim=num_words, output_dim=embed_dim, input_length=sequence_size)(input_layer)
-x = LSTM(lstm_out, dropout=0.2, recurrent_dropout=0.2)(x)
+x = Bidirectional(LSTM(lstm_out, dropout=0.2, recurrent_dropout=0.2))(x)
 output_layer = Dense(4, activation='softmax')(x)
 
 model = Model(input=input_layer, output=output_layer)

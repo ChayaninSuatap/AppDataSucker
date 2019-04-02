@@ -6,7 +6,7 @@ import db_util
 import icon_util
 import numpy as np
 from keras.utils import to_categorical
-model_path = 'models/dn_freezed_16_4-003-loss-0.65-acc-0.43-vloss-1.68-vacc-0.19.hdf5'
+model_path = 'models_icon/dn_conv_32_1_1-006-loss-0.64-acc-0.37-vloss-1.63-vacc-0.45.hdf5'
 
 
 # prepare x y
@@ -37,7 +37,8 @@ for app_id, label in app_ids_and_labels:
     except:
         pass
 xs = np.array(xs)
-plot_confusion_matrix(model_path, '', is_regression=False,
-    batch_size=32, no_xy_path=True, xy_obj=(xs,ys), fn_postfix='_dn_f_16_4_ep_3')
+ys = to_categorical(ys, 4)
+plot_confusion_matrix(model_path, (xs,ys), 
+    batch_size=32, fn_postfix='dn_conv_32_1_1_ep_6')
 
 

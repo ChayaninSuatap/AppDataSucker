@@ -34,11 +34,11 @@ class_weight = compute_class_weight(x for _,x in app_ids_and_labels)
 print(class_weight)
 
 # load pretrain model or get the old one
-model = load_model('densenet_freezed_16_4.hdf5')
+model = load_model('models_icon\dn_conv_32_1_1-009-loss-0.64-acc-0.37-vloss-2.12-vacc-0.18.hdf5')
 # write fit generator
 
 epochs = 999
-batch_size = 16
+batch_size = 32
 def generator():
     for i in range(epochs):
         for g in group_for_fit_generator(app_ids_and_labels[:ninety], batch_size):
@@ -76,7 +76,7 @@ def test_generator():
             yield icons, labels
 
 # write save each epoch
-filepath='dn_freezed_16_4-{epoch:03d}-loss-{loss:.2f}-acc-{acc:.2f}-vloss-{val_loss:.2f}-vacc-{val_acc:.2f}.hdf5'
+filepath='dn_conv_32_1_1-{epoch:03d}-loss-{loss:.2f}-acc-{acc:.2f}-vloss-{val_loss:.2f}-vacc-{val_acc:.2f}.hdf5'
 checkpoint = ModelCheckpoint(filepath, monitor='val_acc', save_best_only=False, verbose=1)
 # do it
 history = model.fit_generator(generator(),
