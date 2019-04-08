@@ -62,7 +62,8 @@ model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['acc'])
 
 # filepath='casino-ep-{epoch:03d}-loss-{loss:.2f}-acc-{acc:.2f}-vloss-{val_loss:.2f}-vacc-{val_acc:.2f}.hdf5'
 # checkpoint = ModelCheckpoint(filepath, monitor='val_acc', save_best_only=False, verbose=0)
-model.fit(xtrain, ytrain, validation_data=(xtest,ytest), epochs=999, batch_size=32)
+pwc = PlotWeightsCallback()
+model.fit(xtrain, ytrain, validation_data=(xtest,ytest), epochs=999, batch_size=32, callbacks=[pwc])
 # model.fit(xtrain, ytrain, validation_data=(xtest,ytest), epochs=999, batch_size=32,callbacks=[checkpoint])
 
 
