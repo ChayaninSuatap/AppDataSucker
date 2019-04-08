@@ -59,7 +59,7 @@ class PlotWeightsCallback(Callback):
         weights_this_epoch = _get_weights_of_layers(self.model)
         diff_weights = []
         for old, new in zip(self.weights_last_epoch, weights_this_epoch):
-            diff_weights.append(np.absolute(old-new).sum())
+            diff_weights.append(np.absolute(old-new).mean())
         print('weight diff',diff_weights)
         self.weights_last_epoch = weights_this_epoch
 
