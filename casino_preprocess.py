@@ -40,20 +40,19 @@ for x,y in zip(df.x.values, df.y.values):
     except:
         pass
 X = np.array(X)
+X = X.astype('float32')
+X/=255
 Y = to_categorical(Y,2)
 xtrain, xtest,  ytrain, ytest = train_test_split(X, Y, test_size=0.2)
 
 input_layer = Input(shape=(128, 128, 3))
-x = Conv2D(32,(3,3), activation='relu', name='my_model_conv_1', kernel_initializer='glorot_uniform')(input_layer)
-# x = MaxPooling2D((2,2), name='my_model_max_pooling_1')(x)
-# x = Dropout(0.1, name='my_model_dropout_1')(x)
-x = Conv2D(64,(3,3), activation='relu', name='my_model_conv_2', kernel_initializer='glorot_uniform')(x)
+x = Conv2D(8,(3,3), activation='relu', name='my_model_conv_1', kernel_initializer='glorot_uniform')(input_layer)
+x = MaxPooling2D((2,2), name='my_model_max_pooling_1')(x)
+x = Conv2D(16,(3,3), activation='relu', name='my_model_conv_2', kernel_initializer='glorot_uniform')(x)
 x = MaxPooling2D((2,2), name='my_model_max_pooling_2')(x)
-# x = Dropout(0.1, name='my_model_dropout_2')(x)
-# x = Conv2D(32,(3,3), activation='relu', name='my_model_conv_3', kernel_initializer='glorot_uniform')(x)
-# x = MaxPooling2D((2,2), name='my_model_max_pooling_3')(x)
-# x = Dropout(0.1, name='my_model_dropout_3')(x)
-# x = Conv2D(64,(3,3), activation='relu', name='my_model_conv_4', kernel_initializer='glorot_uniform')(x)
+x = Conv2D(32,(3,3), activation='relu', name='my_model_conv_3', kernel_initializer='glorot_uniform')(x)
+x = MaxPooling2D((2,2), name='my_model_max_pooling_3')(x)
+x = Conv2D(64,(3,3), activation='relu', name='my_model_conv_4', kernel_initializer='glorot_uniform')(x)
 x = Flatten(name='my_model_flatten')(x)
 x = Dense(2, activation='softmax', name='my_model_dense_1', kernel_initializer='glorot_uniform')(x)
 # x = Dense(, activation='softmax', name='my_model_dense_2', kernel_initializer='glorot_uniform')(x)

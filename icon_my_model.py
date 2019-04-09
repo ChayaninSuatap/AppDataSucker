@@ -48,25 +48,21 @@ print('test dist', dist)
 
 #make model
 input_layer = Input(shape=(128, 128, 3))
-x = Conv2D(8,(3,3), activation='tanh', name='my_model_conv_1', kernel_initializer='glorot_uniform')(input_layer)
+x = Conv2D(16,(3,3), activation='relu', name='my_model_conv_1', kernel_initializer='glorot_uniform')(input_layer)
 x = MaxPooling2D((2,2), name='my_model_max_pooling_1')(x)
-x = Dropout(0.1, name='my_model_dropout_1')(x)
-x = Conv2D(16,(3,3), activation='tanh', name='my_model_conv_2', kernel_initializer='glorot_uniform')(x)
+x = Conv2D(32,(3,3), activation='relu', name='my_model_conv_2', kernel_initializer='glorot_uniform')(x)
 x = MaxPooling2D((2,2), name='my_model_max_pooling_2')(x)
-x = Dropout(0.1, name='my_model_dropout_2')(x)
-x = Conv2D(32,(3,3), activation='tanh', name='my_model_conv_3', kernel_initializer='glorot_uniform')(x)
+x = Conv2D(64,(3,3), activation='relu', name='my_model_conv_3', kernel_initializer='glorot_uniform')(x)
 x = MaxPooling2D((2,2), name='my_model_max_pooling_3')(x)
-x = Dropout(0.1, name='my_model_dropout_3')(x)
-x = Conv2D(64,(3,3), activation='tanh', name='my_model_conv_4', kernel_initializer='glorot_uniform')(x)
+x = Conv2D(128,(3,3), activation='relu', name='my_model_conv_4', kernel_initializer='glorot_uniform')(x)
 x = Flatten(name='my_model_flatten')(x)
-x = Dense(16, activation='tanh', name='my_model_dense_1', kernel_initializer='glorot_uniform')(x)
+x = Dense(16, activation='relu', name='my_model_dense_1', kernel_initializer='glorot_uniform')(x)
 x = Dense(4, activation='softmax', name='my_model_dense_2', kernel_initializer='he_uniform')(x)
 model = Model(input=input_layer, output=x)
 from keras.optimizers import SGD
 sgd = \
     SGD(lr=0.05, decay=1e-6, momentum=0.9, nesterov=True)
-adam = Adam(lr=0.1)
-model.compile(loss='categorical_crossentropy', optimizer=adam, metrics=['acc'])
+model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['acc'])
 
 #generator
 epochs = 999
@@ -86,6 +82,8 @@ def generator():
                     # print('icon error:', app_id)
                     pass
             icons = np.asarray(icons)
+            icons = icons.astype('float32')
+            icons /= 255
             labels = to_categorical(labels, 4)
             yield icons, labels
 
@@ -104,11 +102,13 @@ def test_generator():
                     # print('icon error:', app_id)
                     pass
             icons = np.asarray(icons)
+            icons = icons.astype('float32')
+            icons /= 255
             labels = to_categorical(labels, 4)
             yield icons, labels
 
 # write save each epoch
-filepath='armnet_16_tanh_attemp_0-ep-{epoch:03d}-loss-{loss:.2f}-acc-{acc:.2f}-vloss-{val_loss:.2f}-vacc-{val_acc:.2f}.hdf5'
+filepath='armnet_1.0-v2-ep-{epoch:03d}-loss-{loss:.2f}-acc-{acc:.2f}-vloss-{val_loss:.2f}-vacc-{val_acc:.2f}.hdf5'
 checkpoint = ModelCheckpoint(filepath, monitor='val_acc', save_best_only=False, verbose=0)
 # do it
 history = model.fit_generator(generator(),
