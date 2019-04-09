@@ -63,5 +63,58 @@ class PlotWeightsCallback(Callback):
         print('weight diff',diff_weights)
         self.weights_last_epoch = weights_this_epoch
 
+import matplotlib.pyplot as plt
+class PlotAccLossCallback(Callback):
+    def on_train_begin(self, logs={}):
+        self.log_loss = []
+        self.log_vloss = []
+        self.log_acc = []
+        self.log_vacc = []
+        self.log_weights = []
+        grid = plt.GridSpec(2,2)
+        self.fig = plt.figure()
+        self.loss_plt = plt.subplot(grid[0,0])
+        self.acc_plt = plt.subplot(grid[0,1])
+        self.weights_plt = plt.subplot(grid[1,0:])
+        self.weights_last_epoch = _get_weights_of_layers(self.model)
+        plt.get_current_fig_manager().window.state('zoomed')
+    def on_epoch_end(self, epoch, logs={}):
+        #update data
+        self.log_loss.append(logs['loss'])
+        self.log_vloss.append(logs['val_loss'])
+        self.log_acc.append(logs['acc'])
+        self.log_vacc.append(logs['val_acc'])
+        #update weights data
+        weights_this_epoch = _get_weights_of_layers(self.model)
+        diff_weights = []
+        for old, new in zip(self.weights_last_epoch, weights_this_epoch):
+            diff_weights.append(np.absolute(old-new).mean())
+        self.log_weights.append(diff_weights)
+        self.weights_last_epoch = weights_this_epoch
+        #plot loss
+        self.loss_plt.cla()
+        self.loss_plt.plot(self.log_loss)
+        self.loss_plt.plot(self.log_vloss)
+        self.loss_plt.set(xlabel='epoch',ylabel='loss')
+        self.loss_plt.legend(['train','test'], loc='upper left')
+        self.loss_plt.set_title('loss')
+        #plot acc
+        self.acc_plt.cla()
+        self.acc_plt.plot(self.log_acc)
+        self.acc_plt.plot(self.log_vacc)
+        self.acc_plt.set(xlabel='epoch',ylabel='acc')
+        self.acc_plt.legend(['train','test'], loc='upper left')
+        self.acc_plt.set_title('accuracy')
+        #plot weights adjustment
+        self.weights_plt.cla()
+        npw = np.array(self.log_weights)
+        for ilayer in range(len(self.log_weights[0])):
+            self.weights_plt.plot(npw[:,ilayer])
+
+        self.weights_plt.set_title('weigts adjustment')
+        plt.savefig('plots/%.03d.png' % (epoch,))
+        plt.draw()
+        plt.pause(0.01)
+
 
 

@@ -8,7 +8,7 @@ from keras.utils import to_categorical
 from keras.layers import Dense, Conv2D, Input, MaxPooling2D, Flatten, Dropout
 from keras.callbacks import ModelCheckpoint
 from keras.models import Model
-from keras_util import PlotWeightsCallback
+from keras_util import PlotWeightsCallback, PlotAccLossCallback
 
 #query
 conn = db_util.connect_db()
@@ -62,7 +62,8 @@ model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['acc'])
 # filepath='casino-ep-{epoch:03d}-loss-{loss:.2f}-acc-{acc:.2f}-vloss-{val_loss:.2f}-vacc-{val_acc:.2f}.hdf5'
 # checkpoint = ModelCheckpoint(filepath, monitor='val_acc', save_best_only=False, verbose=0)
 pwc = PlotWeightsCallback()
-model.fit(xtrain, ytrain, validation_data=(xtest,ytest), epochs=999, batch_size=32, callbacks=[pwc])
+palc = PlotAccLossCallback()
+model.fit(xtrain, ytrain, validation_data=(xtest,ytest), epochs=999, batch_size=32, callbacks=[palc])
 # model.fit(xtrain, ytrain, validation_data=(xtest,ytest), epochs=999, batch_size=32,callbacks=[checkpoint])
 
 
