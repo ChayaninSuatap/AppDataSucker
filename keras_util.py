@@ -108,8 +108,11 @@ class PlotAccLossCallback(Callback):
         #plot weights adjustment
         self.weights_plt.cla()
         npw = np.array(self.log_weights)
+        legends=[]
         for ilayer in range(len(self.log_weights[0])):
+            legends.append('layer '+str(ilayer))
             self.weights_plt.plot(npw[:,ilayer])
+        self.weights_plt.legend(legends, loc='upper right') 
 
         self.weights_plt.set_title('weigts adjustment')
         plt.savefig('plots/%.03d.png' % (epoch,))

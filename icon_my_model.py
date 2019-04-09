@@ -1,7 +1,7 @@
 import numpy as np
 import db_util
 import random
-from keras_util import compute_class_weight, group_for_fit_generator
+from keras_util import compute_class_weight, group_for_fit_generator, PlotAccLossCallback
 from keras.layers import Dense, Conv2D, Input, MaxPooling2D, Flatten, Dropout
 from keras.models import Model
 from datetime import datetime
@@ -20,6 +20,7 @@ for x in dat:
 #random shuffle 
 time_seed = int(datetime.now().microsecond)
 random.seed(time_seed)
+random.seed(21)
 # random.seed(859818)
 print('time_seed',time_seed)
 random.shuffle(app_ids_and_labels)
@@ -86,7 +87,6 @@ def generator():
             icons /= 255
             labels = to_categorical(labels, 4)
             yield icons, labels
-
 def test_generator():
     for i in range(epochs):
         for g in group_for_fit_generator(app_ids_and_labels[ninety:], batch_size):
@@ -108,11 +108,12 @@ def test_generator():
             yield icons, labels
 
 # write save each epoch
-filepath='armnet_1.0-v2-ep-{epoch:03d}-loss-{loss:.2f}-acc-{acc:.2f}-vloss-{val_loss:.2f}-vacc-{val_acc:.2f}.hdf5'
+filepath='armnet_1.0-ex-1-ep-{epoch:03d}-loss-{loss:.2f}-acc-{acc:.2f}-vloss-{val_loss:.2f}-vacc-{val_acc:.2f}.hdf5'
 checkpoint = ModelCheckpoint(filepath, monitor='val_acc', save_best_only=False, verbose=0)
+palc = PlotAccLossCallback()
 # do it
 history = model.fit_generator(generator(),
     steps_per_epoch=math.ceil(len(app_ids_and_labels[:ninety])/batch_size),
     validation_data=test_generator(), max_queue_size=1,
     validation_steps=math.ceil(len(app_ids_and_labels[ninety:])/batch_size),
-    epochs=epochs , callbacks=[checkpoint], verbose=1, class_weight=class_weight)
+    epochs=epochs , callbacks=[checkpoint, palc], verbose=1, class_weight=class_weight)
