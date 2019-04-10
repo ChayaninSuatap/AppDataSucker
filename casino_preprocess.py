@@ -59,11 +59,11 @@ x = Dense(2, activation='softmax', name='my_model_dense_1', kernel_initializer='
 model = Model(input=input_layer, output=x)
 model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['acc'])
 
-# filepath='casino-ep-{epoch:03d}-loss-{loss:.2f}-acc-{acc:.2f}-vloss-{val_loss:.2f}-vacc-{val_acc:.2f}.hdf5'
-# checkpoint = ModelCheckpoint(filepath, monitor='val_acc', save_best_only=False, verbose=0)
+filepath='casino-ep-{epoch:03d}-loss-{loss:.2f}-acc-{acc:.2f}-vloss-{val_loss:.2f}-vacc-{val_acc:.2f}.hdf5'
+checkpoint = ModelCheckpoint(filepath, monitor='val_acc', save_best_only=True, verbose=0)
 pwc = PlotWeightsCallback()
 palc = PlotAccLossCallback()
-model.fit(xtrain, ytrain, validation_data=(xtest,ytest), epochs=999, batch_size=32, callbacks=[palc])
+model.fit(xtrain, ytrain, validation_data=(xtest,ytest), epochs=999, batch_size=32, callbacks=[palc, checkpoint])
 # model.fit(xtrain, ytrain, validation_data=(xtest,ytest), epochs=999, batch_size=32,callbacks=[checkpoint])
 
 

@@ -6,7 +6,7 @@ import db_util
 import icon_util
 import numpy as np
 from keras.utils import to_categorical
-model_path = 'armnet_8_seed_time_shuffle-ep-005-loss-2.93-acc-0.53-vloss-7.66-vacc-0.53.hdf5'
+model_path = 'armnet_1.0-ex-10-attemp2-ep-018-loss-0.05-acc-0.94-vloss-4.91-vacc-0.39.hdf5'
 
 
 # prepare x y
@@ -37,8 +37,10 @@ for app_id, label in app_ids_and_labels:
     except:
         pass
 xs = np.array(xs)
+xs = xs.astype('float32')
+xs /= 255
 ys = to_categorical(ys, 4)
 plot_confusion_matrix(model_path, (xs,ys), 
-    batch_size=32, fn_postfix='armnet_seed_time_shuffle_local_class_3')
+    batch_size=32, fn_postfix='armnet_fixed_ex11_attemp2_ep18')
 
 
