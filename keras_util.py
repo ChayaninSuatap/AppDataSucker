@@ -1,3 +1,4 @@
+import os
 def compute_class_weight(labels):
     #make class_freq
     class_freq={}
@@ -115,7 +116,10 @@ class PlotAccLossCallback(Callback):
         self.weights_plt.legend(legends, loc='upper right') 
 
         self.weights_plt.set_title('weigts adjustment')
-        plt.savefig('plots/%.03d.png' % (epoch+1,))
+        fig_name = 'plots/%.03d.png' % (epoch+1,)
+        if os.path.isfile(fig_name):
+            os.remove(fig_name)
+        plt.savefig(fig_name)
         plt.draw()
         plt.pause(0.01)
 
