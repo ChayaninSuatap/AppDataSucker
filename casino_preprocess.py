@@ -8,8 +8,9 @@ from keras.utils import to_categorical
 from keras.layers import Dense, Conv2D, Input, MaxPooling2D, Flatten, Dropout
 from keras.callbacks import ModelCheckpoint
 from keras.models import Model
-from keras_util import PlotWeightsCallback, PlotAccLossCallback
-
+from keras_util import PlotWeightsCallback, PlotAccLossCallback, compute_class_weight, group_for_fit_generator
+import math
+from plt_util import plot_confusion_matrix
 #query
 conn = db_util.connect_db()
 dat = conn.execute('select app_id, category from app_data')
@@ -19,31 +20,95 @@ for x in dat: #remove null
         # assign class label
         label = 1 if 'CASINO' in x[1] else 0
         array.append( (x[0] , label))
-# random.seed(21)
-random.shuffle(array)
-# np.random.seed(21)
+random.seed(21)
+np.random.seed(21)
 df = pd.DataFrame(array, columns=['x','y'])
 
 #sample non casino with # equal casino
-df_casino = df[df.y==1]
-casino_n = len(df_casino)
-df_non_casino = df[df.y!=1].sample(casino_n)
-df = pd.concat([df_casino, df_non_casino])
-#split
-X = []
-Y = []
-for x,y in zip(df.x.values, df.y.values):
-    try:
-        icon = icon_util.load_icon_by_app_id(x, 128, 128)
-        X.append(icon)
-        Y.append(y)
-    except:
-        pass
-X = np.array(X)
-X = X.astype('float32')
-X/=255
-Y = to_categorical(Y,2)
-xtrain, xtest,  ytrain, ytest = train_test_split(X, Y, test_size=0.2)
+# df_casino = df[df.y==1]
+# casino_n = len(df_casino)
+# df_non_casino = df[df.y!=1].sample(casino_n)
+# df = pd.concat([df_casino, df_non_casino])
+
+#train with class weights
+class_weights = compute_class_weight(df.y.values)
+print('class_weights', class_weights)
+
+#split train without generator
+# X = []
+# Y = []
+# for x,y in zip(df.x.values, df.y.values):
+#     try:
+#         icon = icon_util.load_icon_by_app_id(x, 128, 128)
+#         X.append(icon)
+#         Y.append(y)
+#     except:
+#         pass
+# X = np.array(X)
+# X = X.astype('float32')
+# X/=255
+# Y = to_categorical(Y,2)
+xtrain, xtest,  ytrain, ytest = train_test_split(df.x.values, df.y.values, test_size=0.2)
+print('count',np.unique(ytest, return_counts=True))
+input()
+#generator
+epochs = 999
+batch_size = 64
+def generator():
+    for i in range(epochs):
+        for g in group_for_fit_generator(zip(xtrain, ytrain), batch_size):
+            icons = []
+            labels = []
+            #prepare chrunk
+            for app_id, label in g:
+                try:
+                    icon = icon_util.load_icon_by_app_id(app_id, 128, 128)
+                    icons.append(icon)
+                    labels.append(label)
+                except:
+                    # print('icon error:', app_id)
+                    pass
+            icons = np.asarray(icons)
+            icons = icons.astype('float32')
+            icons /= 255
+            labels = to_categorical(labels, 2)
+            yield icons, labels
+def test_generator():
+    for i in range(epochs):
+        for g in group_for_fit_generator(zip(xtest, ytest), batch_size):
+            icons = []
+            labels = []
+            #prepare chrunk
+            for app_id, label in g:
+                try:
+                    icon = icon_util.load_icon_by_app_id(app_id, 128,128)
+                    icons.append(icon)
+                    labels.append(label)
+                except:
+                    # print('icon error:', app_id)
+                    pass
+            icons = np.asarray(icons)
+            icons = icons.astype('float32')
+            icons /= 255
+            labels = to_categorical(labels, 2)
+            yield icons, labels
+
+#evaluate
+# xs = []
+# ys = []
+# for app_id, label in zip(xtest, ytest):
+#     try:
+#         icon = icon_util.load_icon_by_app_id(app_id, 128, 128)
+#         xs.append(np.array(icon))
+#         ys.append(label)
+#     except:
+#         pass
+# xs = np.array(xs)
+# xs = xs.astype('float32')
+# xs /= 255
+# ys = to_categorical(ys, 2)
+# plot_confusion_matrix('casino-class_weights-ep-016-loss-0.01-acc-0.97-vloss-0.38-vacc-0.94.hdf5',(xs,ys),64)
+# input()
 
 input_layer = Input(shape=(128, 128, 3))
 x = Conv2D(8,(3,3), activation='relu', name='my_model_conv_1', kernel_initializer='glorot_uniform')(input_layer)
@@ -59,12 +124,16 @@ x = Dense(2, activation='softmax', name='my_model_dense_1', kernel_initializer='
 model = Model(input=input_layer, output=x)
 model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['acc'])
 
-filepath='casino-ep-{epoch:03d}-loss-{loss:.2f}-acc-{acc:.2f}-vloss-{val_loss:.2f}-vacc-{val_acc:.2f}.hdf5'
+filepath='casino-class_weights-ep-{epoch:03d}-loss-{loss:.2f}-acc-{acc:.2f}-vloss-{val_loss:.2f}-vacc-{val_acc:.2f}.hdf5'
 checkpoint = ModelCheckpoint(filepath, monitor='val_acc', save_best_only=True, verbose=0)
 pwc = PlotWeightsCallback()
 palc = PlotAccLossCallback()
-model.fit(xtrain, ytrain, validation_data=(xtest,ytest), epochs=999, batch_size=32, callbacks=[palc, checkpoint])
-# model.fit(xtrain, ytrain, validation_data=(xtest,ytest), epochs=999, batch_size=32,callbacks=[checkpoint])
+# model.fit(xtrain, ytrain, validation_data=(xtest,ytest), epochs=999, batch_size=64, callbacks=[palc, checkpoint], class_weight=class_weights)
+model.fit_generator(generator(),
+        steps_per_epoch=math.ceil(xtrain.shape[0]/batch_size),
+        validation_data=test_generator(), max_queue_size=1,
+        validation_steps=math.ceil(xtest.shape[0]/batch_size),
+        epochs=epochs, callbacks=[checkpoint, palc], class_weight=class_weights)
 
 
 

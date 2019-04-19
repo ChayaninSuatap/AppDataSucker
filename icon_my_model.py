@@ -2,7 +2,7 @@ import numpy as np
 import db_util
 import random
 from keras_util import compute_class_weight, group_for_fit_generator, PlotAccLossCallback
-from keras.layers import Dense, Conv2D, Input, MaxPooling2D, Flatten, Dropout
+from keras.layers import Dense, Conv2D, Input, MaxPooling2D, Flatten, Dropout, BatchNormalization, Dropout, ReLU
 from keras.models import Model
 from datetime import datetime
 import icon_util
@@ -10,6 +10,7 @@ from keras.utils import to_categorical
 from keras.callbacks import ModelCheckpoint
 from keras.optimizers import Adam
 import math
+from keras.metrics import categorical_accuracy
 
 conn = db_util.connect_db()
 app_ids_and_labels = []
@@ -21,7 +22,8 @@ for x in dat:
 time_seed = int(datetime.now().microsecond)
 random.seed(time_seed)
 random.seed(21)
-# random.seed(859818)
+np.random.seed(21)
+
 print('time_seed',time_seed)
 random.shuffle(app_ids_and_labels)
 ninety = int(len(app_ids_and_labels)*80/100)
@@ -53,9 +55,13 @@ input_layer = Input(shape=(128, 128, 3))
 # x = MaxPooling2D((2,2), name='my_model_max_pooling_0')(x)
 # x = Conv2D(16,(3,3), activation='relu', name='my_model_conv_1', kernel_initializer='glorot_uniform')(input_layer)
 # x = MaxPooling2D((2,2), name='my_model_max_pooling_1')(x)
-x = Conv2D(32,(3,3), activation='relu', name='my_model_conv_2', kernel_initializer='glorot_uniform')(input_layer)
+x = Conv2D(32,(3,3), name='my_model_conv_2', kernel_initializer='glorot_uniform')(input_layer)
+x = ReLU()(x)
+x = BatchNormalization()(x)
 # x = MaxPooling2D((2,2), name='my_model_max_pooling_2')(x)
-x = Conv2D(64,(3,3), activation='relu', name='my_model_conv_3', kernel_initializer='glorot_uniform')(x)
+x = Conv2D(64,(3,3), name='my_model_conv_3', kernel_initializer='glorot_uniform')(x)
+x = ReLU()(x)
+x = BatchNormalization()(x)
 x = MaxPooling2D((2,2), name='my_model_max_pooling_3')(x)
 # x = Conv2D(128,(3,3), activation='relu', name='my_model_conv_4', kernel_initializer='glorot_uniform')(x)
 # x = MaxPooling2D((2,2), name='my_model_max_pooling_4')(x)
@@ -71,10 +77,10 @@ model.compile(loss='categorical_crossentropy', optimizer=adam, metrics=['acc'])
 
 #generator
 epochs = 999
-batch_size = 32
+batch_size = 48
 def generator():
     for i in range(epochs):
-        for g in group_for_fit_generator(app_ids_and_labels[:ninety], batch_size):
+        for g in group_for_fit_generator(app_ids_and_labels[:ninety], batch_size, shuffle=True):
             icons = []
             labels = []
             #prepare chrunk
@@ -112,8 +118,8 @@ def test_generator():
             yield icons, labels
 
 # write save each epoch
-filepath='armnet_1.0-ex-11-ep-{epoch:03d}-loss-{loss:.2f}-acc-{acc:.2f}-vloss-{val_loss:.2f}-vacc-{val_acc:.2f}.hdf5'
-checkpoint = ModelCheckpoint(filepath, monitor='val_acc', save_best_only=False, verbose=0)
+filepath='armnet_bn_after_relu-ep-{epoch:03d}-loss-{loss:.2f}-acc-{acc:.2f}-vloss-{val_loss:.2f}-vacc-{val_acc:.2f}.hdf5'
+checkpoint = ModelCheckpoint(filepath, monitor='val_acc', save_best_only=False, verbose=0, period=5)
 palc = PlotAccLossCallback()
 # do it
 history = model.fit_generator(generator(),

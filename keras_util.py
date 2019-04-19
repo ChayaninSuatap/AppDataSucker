@@ -1,4 +1,5 @@
 import os
+import random
 def compute_class_weight(labels):
     #make class_freq
     class_freq={}
@@ -15,9 +16,10 @@ def compute_class_weight(labels):
         class_weight[k] = minfreq/v
     return class_weight
 
-def group_for_fit_generator(xs, n):
+def group_for_fit_generator(xs, n, shuffle=False):
     i = 0
     out = []
+    if shuffle : random.shuffle(xs)
     for x in xs:
         i+=1
         out.append(x)
@@ -47,9 +49,13 @@ def _get_weights_of_layers(model):
     for layer in model.layers:
         w_and_b = layer.get_weights()
         if w_and_b != []:
-            weights = w_and_b[0].flatten()
-            biases = w_and_b[1].flatten()
-            output.append( np.append(weights,biases))
+            if len(w_and_b)>1: #bias valid
+                weights = w_and_b[0].flatten()
+                biases = w_and_b[1].flatten()
+                output.append( np.append(weights,biases))
+            else:
+                weights = w_and_b[0].flatten()
+                output.append( weights)
     return output
 
 class PlotWeightsCallback(Callback):
