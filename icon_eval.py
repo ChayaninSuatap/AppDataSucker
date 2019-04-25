@@ -8,8 +8,7 @@ import numpy as np
 from keras.utils import to_categorical
 from sklearn.model_selection import train_test_split
 model_path = \
-'armnet_bn_after_relu-ep-055-loss-2.92-acc-0.32-vloss-11.00-vacc-0.32.hdf5'
-
+'armnet_bn_after_relu_cont-166-loss-2.944-acc-0.528-vloss-7.437-vacc-0.539.hdf5'
 
 # prepare x y
 conn = db_util.connect_db()
@@ -44,8 +43,7 @@ ys = []
 #         pass
 
 # split with myself
-app_ids_and_labels = app_ids_and_labels[ninety:]
-for app_id, label in app_ids_and_labels:
+for app_id, label in app_ids_and_labels[ninety:]:
     try:
         icon = icon_util.load_icon_by_app_id(app_id, 128, 128)
         xs.append(np.array(icon))

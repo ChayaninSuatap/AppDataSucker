@@ -104,14 +104,14 @@ class PlotAccLossCallback(Callback):
         self.loss_plt.plot(self.log_vloss)
         self.loss_plt.set(xlabel='epoch',ylabel='loss')
         self.loss_plt.legend(['train','test'], loc='upper left')
-        self.loss_plt.set_title('loss')
+        self.loss_plt.set_title('loss ep %d' % (epoch+1,))
         #plot acc
         self.acc_plt.cla()
         self.acc_plt.plot(self.log_acc)
         self.acc_plt.plot(self.log_vacc)
         self.acc_plt.set(xlabel='epoch',ylabel='acc')
         self.acc_plt.legend(['train','test'], loc='upper left')
-        self.acc_plt.set_title('accuracy')
+        self.acc_plt.set_title('accuracy ep %d' % (epoch+1,))
         #plot weights adjustment
         self.weights_plt.cla()
         npw = np.array(self.log_weights)
@@ -121,7 +121,7 @@ class PlotAccLossCallback(Callback):
             self.weights_plt.plot(npw[:,ilayer])
         self.weights_plt.legend(legends, loc='upper right') 
 
-        self.weights_plt.set_title('weigts adjustment')
+        self.weights_plt.set_title('weigts adjustment ep %d' % (epoch+1,))
         fig_name = 'plots/%.03d.png' % (epoch+1,)
         if os.path.isfile(fig_name):
             os.remove(fig_name)

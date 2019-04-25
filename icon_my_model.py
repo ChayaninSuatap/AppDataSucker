@@ -2,7 +2,7 @@ import numpy as np
 import db_util
 import random
 from keras_util import compute_class_weight, group_for_fit_generator, PlotAccLossCallback
-from keras.layers import Dense, Conv2D, Input, MaxPooling2D, Flatten, Dropout, BatchNormalization, Dropout, ReLU
+from keras.layers import Dense, Conv2D, Input, MaxPooling2D, Flatten, Dropout, BatchNormalization, ReLU
 from keras.models import Model
 from datetime import datetime
 import icon_util
@@ -35,6 +35,8 @@ for i in range(len(app_ids_and_labels)):
     elif float(rating) > 4.0 and float(rating) <= 4.5: rating = 2
     else: rating = 3
     app_ids_and_labels[i] = app_id, rating
+#over sampling class
+
 #class weight
 class_weight = compute_class_weight(x for _,x in app_ids_and_labels)
 print(class_weight)
@@ -48,7 +50,6 @@ dist = {0:0,1:0,2:0,3:0}
 for _,x in app_ids_and_labels[ninety:]:
     dist[x]+=1
 print('test dist', dist)
-
 #make model
 input_layer = Input(shape=(128, 128, 3))
 # x = Conv2D(8,(3,3), activation='relu', name='my_model_conv_0', kernel_initializer='glorot_uniform')(input_layer)
@@ -57,11 +58,11 @@ input_layer = Input(shape=(128, 128, 3))
 # x = MaxPooling2D((2,2), name='my_model_max_pooling_1')(x)
 x = Conv2D(32,(3,3), name='my_model_conv_2', kernel_initializer='glorot_uniform')(input_layer)
 x = ReLU()(x)
-x = BatchNormalization()(x)
 # x = MaxPooling2D((2,2), name='my_model_max_pooling_2')(x)
+x = Dropout(0.1)(x)
 x = Conv2D(64,(3,3), name='my_model_conv_3', kernel_initializer='glorot_uniform')(x)
 x = ReLU()(x)
-x = BatchNormalization()(x)
+x = Dropout(0.1)(x)
 x = MaxPooling2D((2,2), name='my_model_max_pooling_3')(x)
 # x = Conv2D(128,(3,3), activation='relu', name='my_model_conv_4', kernel_initializer='glorot_uniform')(x)
 # x = MaxPooling2D((2,2), name='my_model_max_pooling_4')(x)
@@ -77,7 +78,8 @@ model.compile(loss='categorical_crossentropy', optimizer=adam, metrics=['acc'])
 
 #generator
 epochs = 999
-batch_size = 48
+batch_size = 32
+
 def generator():
     for i in range(epochs):
         for g in group_for_fit_generator(app_ids_and_labels[:ninety], batch_size, shuffle=True):
@@ -118,7 +120,7 @@ def test_generator():
             yield icons, labels
 
 # write save each epoch
-filepath='armnet_bn_after_relu-ep-{epoch:03d}-loss-{loss:.2f}-acc-{acc:.2f}-vloss-{val_loss:.2f}-vacc-{val_acc:.2f}.hdf5'
+filepath='armnet_dropout_0.1-ep-{epoch:03d}-loss-{loss:.3f}-acc-{acc:.3f}-vloss-{val_loss:.3f}-vacc-{val_acc:.3f}.hdf5'
 checkpoint = ModelCheckpoint(filepath, monitor='val_acc', save_best_only=False, verbose=0, period=5)
 palc = PlotAccLossCallback()
 # do it
