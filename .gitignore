@@ -48,3 +48,5 @@ models_overall/
 models_descs/
 
 *.png
+
+*.txt
