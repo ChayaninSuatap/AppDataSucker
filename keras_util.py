@@ -1,5 +1,6 @@
 import os
 import random
+import icon_util
 def compute_class_weight(labels):
     #make class_freq
     class_freq={}

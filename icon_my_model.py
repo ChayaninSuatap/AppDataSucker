@@ -35,19 +35,20 @@ for i in range(len(app_ids_and_labels)):
     elif float(rating) > 4.0 and float(rating) <= 4.5: rating = 2
     else: rating = 3
     app_ids_and_labels[i] = app_id, rating
-#over sampling class
-
+#split train test
+app_ids_and_labels_train = app_ids_and_labels[:ninety]
+app_ids_and_labels_test = app_ids_and_labels[ninety:]
+icon_util.oversample_image(app_ids_and_labels_train)
 #class weight
-class_weight = compute_class_weight(x for _,x in app_ids_and_labels)
+class_weight = compute_class_weight(x for _,x in app_ids_and_labels_train)
 print(class_weight)
-
 #train test label distribution
 dist = {0:0,1:0,2:0,3:0}
-for _,x in app_ids_and_labels[:ninety]:
+for _,x in app_ids_and_labels_train:
     dist[x]+=1
 print('train dist', dist)
 dist = {0:0,1:0,2:0,3:0}
-for _,x in app_ids_and_labels[ninety:]:
+for _,x in app_ids_and_labels_test:
     dist[x]+=1
 print('test dist', dist)
 #make model
@@ -82,7 +83,7 @@ batch_size = 32
 
 def generator():
     for i in range(epochs):
-        for g in group_for_fit_generator(app_ids_and_labels[:ninety], batch_size, shuffle=True):
+        for g in group_for_fit_generator(app_ids_and_labels_train, batch_size, shuffle=True):
             icons = []
             labels = []
             #prepare chrunk
@@ -101,7 +102,7 @@ def generator():
             yield icons, labels
 def test_generator():
     for i in range(epochs):
-        for g in group_for_fit_generator(app_ids_and_labels[ninety:], batch_size):
+        for g in group_for_fit_generator(app_ids_and_labels_test, batch_size):
             icons = []
             labels = []
             #prepare chrunk
@@ -120,12 +121,12 @@ def test_generator():
             yield icons, labels
 
 # write save each epoch
-filepath='armnet_dropout_0.1-ep-{epoch:03d}-loss-{loss:.3f}-acc-{acc:.3f}-vloss-{val_loss:.3f}-vacc-{val_acc:.3f}.hdf5'
-checkpoint = ModelCheckpoint(filepath, monitor='val_acc', save_best_only=False, verbose=0, period=5)
+filepath='armnet_dropout_0.1_oversample-ep-{epoch:03d}-loss-{loss:.3f}-acc-{acc:.3f}-vloss-{val_loss:.3f}-vacc-{val_acc:.3f}.hdf5'
+checkpoint = ModelCheckpoint(filepath, monitor='val_acc', save_best_only=False, verbose=0, period=1)
 palc = PlotAccLossCallback()
 # do it
 history = model.fit_generator(generator(),
-    steps_per_epoch=math.ceil(len(app_ids_and_labels[:ninety])/batch_size),
+    steps_per_epoch=math.ceil(len(app_ids_and_labels_train)/batch_size),
     validation_data=test_generator(), max_queue_size=1,
-    validation_steps=math.ceil(len(app_ids_and_labels[ninety:])/batch_size),
+    validation_steps=math.ceil(len(app_ids_and_labels_test)/batch_size),
     epochs=epochs , callbacks=[checkpoint, palc], verbose=1, class_weight=class_weight)
