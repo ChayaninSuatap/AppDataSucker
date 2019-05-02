@@ -12,6 +12,8 @@ from keras.optimizers import Adam
 import math
 from keras.metrics import categorical_accuracy
 from keras import backend as K
+from keras.layers import Activation
+from keras.utils.generic_utils import get_custom_objects
 IS_REGRESSION = True
 conn = db_util.connect_db()
 app_ids_and_labels = []
@@ -79,8 +81,11 @@ x = MaxPooling2D((2,2), name='my_model_max_pooling_3')(x)
 # x = Conv2D(256,(3,3), activation='relu', name='my_model_conv_5', kernel_initializer='glorot_uniform')(x)
 x = Flatten(name='my_model_flatten')(x)
 def my_sigmoid(x): return (K.sigmoid(x)*5)
+act = Activation(my_sigmoid)
+act.__name__ = 'my_sigmoid'
+get_custom_objects().update({'my_sigmoid':act})
 if IS_REGRESSION:
-    x = Dense(1, activation=my_sigmoid, name='my_model_regress_1')(x)
+    x = Dense(1, activation='my_sigmoid', name='my_model_regress_1')(x)
 else:
     x = Dense(4, activation='softmax', name='my_model_dense_2', kernel_initializer='glorot_uniform')(x)
 model = Model(input=input_layer, output=x)
@@ -113,6 +118,7 @@ def generator():
             icons /= 255
             if IS_REGRESSION:
                 labels = np.array(labels)
+                # print(labels)
             else: labels = to_categorical(labels, 4)
             yield icons, labels
 def test_generator():

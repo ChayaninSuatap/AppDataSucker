@@ -9,7 +9,7 @@ from keras.utils import to_categorical
 from sklearn.model_selection import train_test_split
 IS_REGRESSION = True
 model_path = \
-'armnet_regression-ep-002-loss-0.760-vloss-0.791-vmas-0.766.hdf5'
+'armnet_regression-ep-007-loss-0.760-vloss-0.791-vmas-0.766.hdf5'
 
 # prepare x y
 conn = db_util.connect_db()
@@ -33,7 +33,7 @@ for i in range(len(app_ids_and_labels)):
 xs = []
 ys = []
 # split with myself
-for app_id, label in app_ids_and_labels[ninety:]:
+for app_id, label in app_ids_and_labels[:ninety]:
     try:
         icon = icon_util.load_icon_by_app_id(app_id, 128, 128)
         xs.append(np.array(icon))

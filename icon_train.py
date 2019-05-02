@@ -21,6 +21,7 @@ for x in dat:
       app_ids_and_labels.append( (x[0], x[1]))  
 random.seed(21)
 np.random.seed(21)
+IS_REGRESSION = False
 #calculate label class
 for i in range(len(app_ids_and_labels)):
     app_id , rating = app_ids_and_labels[i]
@@ -28,6 +29,7 @@ for i in range(len(app_ids_and_labels)):
     elif float(rating) > 3.5 and float(rating) <= 4.0: rating = 1
     elif float(rating) > 4.0 and float(rating) <= 4.5: rating = 2
     else: rating = 3
+    if IS_REGRESSION: rating = float(app_ids_and_labels[i][1])
     app_ids_and_labels[i] = app_id, rating
 random.shuffle(app_ids_and_labels)
 ninety = int(len(app_ids_and_labels)*80/100)
@@ -63,7 +65,8 @@ def generator():
             icons = np.asarray(icons)
             icons = icons.astype('float32')
             icons /= 255
-            labels = to_categorical(labels, 4)
+            if IS_REGRESSION: labels = np.array(labels)
+            else : labels = to_categorical(labels, 4)
             yield icons, labels
 
 def test_generator():
@@ -84,7 +87,8 @@ def test_generator():
             icons = np.asarray(icons)
             icons = icons.astype('float32')
             icons /= 255
-            labels = to_categorical(labels, 4)
+            if IS_REGRESSION: labels = np.array(labels) 
+            else: labels = to_categorical(labels, 4)
             yield icons, labels
 
 #train test label distribution
@@ -98,6 +102,8 @@ for _,x in app_ids_and_labels[ninety:]:
 print('test dist', dist)
 # write save each epoch
 filepath='armnet_dropout_0.1-ep-{epoch:03d}-loss-{loss:.3f}-acc-{acc:.3f}-vloss-{val_loss:.3f}-vacc-{val_acc:.3f}.hdf5'
+if IS_REGRESSION:
+    filepath='armnet_regression-ep-{epoch:03d}-loss-{loss:.3f}-vloss-{val_loss:.3f}-vmas-{val_mean_absolute_error:.3f}.hdf5'
 checkpoint = ModelCheckpoint(filepath, monitor='val_acc', save_best_only=False, verbose=1)
 palc = PlotAccLossCallback()
 # fit train test split
@@ -111,4 +117,6 @@ history = model.fit_generator(generator(),
     steps_per_epoch=math.ceil(len(app_ids_and_labels[:ninety])/batch_size),
     validation_data=test_generator(), max_queue_size=1,
     validation_steps=math.ceil(len(app_ids_and_labels[ninety:])/batch_size),
-    epochs=epochs , callbacks=[checkpoint, palc], verbose=1, class_weight=class_weight, initial_epoch=30)
+    epochs=epochs , callbacks=[checkpoint, palc], verbose=1,
+    class_weight=None if IS_REGRESSION else class_weight,
+    initial_epoch=30)
