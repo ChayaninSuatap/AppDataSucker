@@ -33,4 +33,3 @@ def oversample_image(app_ids_and_labels):
             #pick and app_id
             picked = random.choice(app_id_pool[label])
             app_ids_and_labels.append( picked)
-

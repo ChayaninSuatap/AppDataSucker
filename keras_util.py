@@ -130,5 +130,14 @@ class PlotAccLossCallback(Callback):
         plt.draw()
         plt.pause(0.01)
 
+from keras.preprocessing.image import ImageDataGenerator
+def create_image_data_gen():
+    datagen = ImageDataGenerator(
+    channel_shift_range=15,
+    rotation_range=7,
+    width_shift_range=0.035,
+    height_shift_range=0.035,
+    )
+    return datagen
 
 

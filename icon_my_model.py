@@ -1,7 +1,7 @@
 import numpy as np
 import db_util
 import random
-from keras_util import compute_class_weight, group_for_fit_generator, PlotAccLossCallback
+from keras_util import compute_class_weight, group_for_fit_generator, PlotAccLossCallback, create_image_data_gen
 from keras.layers import Dense, Conv2D, Input, MaxPooling2D, Flatten, Dropout, BatchNormalization, ReLU
 from keras.models import Model
 from datetime import datetime
@@ -14,7 +14,7 @@ from keras.metrics import categorical_accuracy
 from keras import backend as K
 from keras.layers import Activation
 from keras.utils.generic_utils import get_custom_objects
-IS_REGRESSION = True
+IS_REGRESSION = False
 conn = db_util.connect_db()
 app_ids_and_labels = []
 dat=conn.execute('select app_id, rating from app_data')
@@ -80,10 +80,12 @@ x = MaxPooling2D((2,2), name='my_model_max_pooling_3')(x)
 # x = MaxPooling2D((2,2), name='my_model_max_pooling_4')(x)
 # x = Conv2D(256,(3,3), activation='relu', name='my_model_conv_5', kernel_initializer='glorot_uniform')(x)
 x = Flatten(name='my_model_flatten')(x)
+# custom activation fn
 def my_sigmoid(x): return (K.sigmoid(x)*5)
 act = Activation(my_sigmoid)
 act.__name__ = 'my_sigmoid'
 get_custom_objects().update({'my_sigmoid':act})
+#output layer
 if IS_REGRESSION:
     x = Dense(1, activation='my_sigmoid', name='my_model_regress_1')(x)
 else:
@@ -100,7 +102,9 @@ epochs = 999
 batch_size = 32
 
 def generator():
+    datagen = create_image_data_gen()
     for i in range(epochs):
+        random.shuffle(app_ids_and_labels_train)
         for g in group_for_fit_generator(app_ids_and_labels_train, batch_size, shuffle=True):
             icons = []
             labels = []
@@ -110,10 +114,18 @@ def generator():
                     icon = icon_util.load_icon_by_app_id(app_id, 128, 128)
                     icons.append(icon)
                     labels.append(label)
+                    # if i == 0 : print(app_id)
                 except:
                     # print('icon error:', app_id)
                     pass
-            icons = np.asarray(icons)
+            icons_for_gen = np.asarray(icons)
+            labels_for_gen = np.asarray(labels)
+            #data gen
+            for xs, ys in datagen.flow(icons_for_gen,labels_for_gen, batch_size=icons_for_gen.shape[0]):
+                icons = xs
+                labels = ys
+                break
+            #normalize
             icons = icons.astype('float32')
             icons /= 255
             if IS_REGRESSION:
@@ -145,7 +157,7 @@ def test_generator():
             yield icons, labels
 
 # write save each epoch
-filepath='armnet_dropout_0.1_oversample-ep-{epoch:03d}-loss-{loss:.3f}-acc-{acc:.3f}-vloss-{val_loss:.3f}-vacc-{val_acc:.3f}.hdf5'
+filepath='armnet_oversample_augment-ep-{epoch:03d}-loss-{loss:.3f}-acc-{acc:.3f}-vloss-{val_loss:.3f}-vacc-{val_acc:.3f}.hdf5'
 if IS_REGRESSION:
     filepath='armnet_regression-ep-{epoch:03d}-loss-{loss:.3f}-vloss-{val_loss:.3f}-vmas-{val_mean_absolute_error:.3f}.hdf5'
 checkpoint = ModelCheckpoint(filepath, monitor='val_acc', save_best_only=False, verbose=0, period=1)
@@ -155,5 +167,5 @@ history = model.fit_generator(generator(),
     steps_per_epoch=math.ceil(len(app_ids_and_labels_train)/batch_size),
     validation_data=test_generator(), max_queue_size=1,
     validation_steps=math.ceil(len(app_ids_and_labels_test)/batch_size),
-    epochs=epochs , callbacks=[checkpoint], verbose=1,
+    epochs=epochs , callbacks=[checkpoint, palc], verbose=1,
     class_weight=None if IS_REGRESSION else class_weight)
