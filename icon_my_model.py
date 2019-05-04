@@ -65,21 +65,24 @@ else:
 #make model
 input_layer = Input(shape=(128, 128, 3))
 x = Conv2D(32,(3,3), name='my_model_conv_2')(input_layer)
-x = ReLU()(x)
+x = LeakyReLU()(x)
 x = Dropout(0.1)(x)
-# x = MaxPooling2D((2,2), name='my_model_max_pooling_2')(x)
 x = Conv2D(64,(3,3), name='my_model_conv_3')(x)
-x = ReLU()(x)
+x = LeakyReLU()(x)
+x = Dropout(0.1)(x)
+x = MaxPooling2D((2,2), name='my_model_max_pooling_2')(x)
+
+x = Conv2D(128,(3,3), name='my_model_conv_4')(x)
+x = LeakyReLU()(x)
+x = Dropout(0.1)(x)
+x = Conv2D(256,(3,3), name='my_model_conv_5')(x)
+x = LeakyReLU()(x)
 x = Dropout(0.1)(x)
 
-x = Conv2D(32,(1,1), name='my_model_conv_11')(x)
-x = ReLU()(x)
-
+x = Conv2D(64,(1,1), name='my_model_conv_11')(x)
+x = LeakyReLU()(x)
 x = MaxPooling2D((2,2), name='my_model_max_pooling_3')(x)
-# x = Conv2D(128,(3,3), name='my_model_conv_4')(x)
-# x = Dropout(0.1)(x)
-# x = Conv2D(256,(3,3), name='my_model_conv_5')(x)
-# x = Dropout(0.1)(x)
+
 # x = MaxPooling2D((2,2), name='my_model_max_pooling_4')(x)
 x = Flatten(name='my_model_flatten')(x)
 # custom activation fn
@@ -91,7 +94,8 @@ get_custom_objects().update({'my_sigmoid':act})
 if IS_REGRESSION:
     x = Dense(1, activation='my_sigmoid', name='my_model_regress_1')(x)
 else:
-    # x = Dense(16, activation='softmax', name='my_model_dense_2', kernel_initializer='glorot_uniform')(x)
+    x = Dense(16, name='my_model_dense_2', kernel_initializer='glorot_uniform')(x)
+    x = LeakyReLU()(x)
     x = Dense(4, activation='softmax', name='my_model_dense_3', kernel_initializer='glorot_uniform')(x)
 model = Model(input=input_layer, output=x)
 #compile
@@ -103,7 +107,7 @@ model.summary()
 input()
 #generator
 epochs = 999
-batch_size = 32
+batch_size = 16
 
 def generator():
     datagen = create_image_data_gen()
@@ -161,7 +165,7 @@ def test_generator():
             yield icons, labels
 
 # write save each epoch
-filepath='armnet_augment_dropout_conv11-ep-{epoch:03d}-loss-{loss:.3f}-acc-{acc:.3f}-vloss-{val_loss:.3f}-vacc-{val_acc:.3f}.hdf5'
+filepath='armnet_try-ep-{epoch:03d}-loss-{loss:.3f}-acc-{acc:.3f}-vloss-{val_loss:.3f}-vacc-{val_acc:.3f}.hdf5'
 if IS_REGRESSION:
     filepath='armnet_regression-ep-{epoch:03d}-loss-{loss:.3f}-vloss-{val_loss:.3f}-vmas-{val_mean_absolute_error:.3f}.hdf5'
 checkpoint = ModelCheckpoint(filepath, monitor='val_acc', save_best_only=False, verbose=0, period=1)
