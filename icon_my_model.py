@@ -24,8 +24,8 @@ for x in dat:
 #random shuffle 
 time_seed = int(datetime.now().microsecond)
 random.seed(time_seed)
-random.seed(7)
-np.random.seed(7)
+random.seed(21)
+np.random.seed(21)
 
 print('time_seed',time_seed)
 random.shuffle(app_ids_and_labels)
@@ -94,9 +94,9 @@ get_custom_objects().update({'my_sigmoid':act})
 if IS_REGRESSION:
     x = Dense(1, activation='my_sigmoid', name='my_model_regress_1')(x)
 else:
-    x = Dense(16, name='my_model_dense_2', kernel_initializer='glorot_uniform')(x)
+    x = Dense(16, name='my_model_dense_2')(x)
     x = LeakyReLU()(x)
-    x = Dense(4, activation='softmax', name='my_model_dense_3', kernel_initializer='glorot_uniform')(x)
+    x = Dense(4, activation='softmax', name='my_model_dense_3')(x)
 model = Model(input=input_layer, output=x)
 #compile
 if IS_REGRESSION:
