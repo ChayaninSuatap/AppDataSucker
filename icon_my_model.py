@@ -33,10 +33,10 @@ ninety = int(len(app_ids_and_labels)*80/100)
 #calculate label class
 for i in range(len(app_ids_and_labels)):
     app_id , rating = app_ids_and_labels[i]
-    if float(rating) <= 3.5: rating = 0
-    elif float(rating) > 3.5 and float(rating) <= 4.0: rating = 1
-    elif float(rating) > 4.0 and float(rating) <= 4.5: rating = 2
-    else: rating = 3
+    if float(rating) <= 3.9: rating = 0
+    elif float(rating) > 3.9 and float(rating) <= 4.4: rating = 1
+    # elif float(rating) > 4.0 and float(rating) <= 4.5: rating = 2
+    else: rating = 2
     if IS_REGRESSION: rating = float(app_ids_and_labels[i][1])
     app_ids_and_labels[i] = app_id, rating
 #split train test
@@ -48,11 +48,11 @@ if not IS_REGRESSION:
     class_weight = compute_class_weight(x for _,x in app_ids_and_labels_train)
     print(class_weight)
     #train test label distribution
-    dist = {0:0,1:0,2:0,3:0}
+    dist = {0:0,1:0,2:0}
     for _,x in app_ids_and_labels_train:
         dist[x]+=1
     print('train dist', dist)
-    dist = {0:0,1:0,2:0,3:0}
+    dist = {0:0,1:0,2:0}
     for _,x in app_ids_and_labels_test:
         dist[x]+=1
     print('test dist', dist)
@@ -96,7 +96,7 @@ if IS_REGRESSION:
 else:
     x = Dense(16, name='my_model_dense_2')(x)
     x = LeakyReLU()(x)
-    x = Dense(4, activation='softmax', name='my_model_dense_3')(x)
+    x = Dense(3, activation='softmax', name='my_model_dense_3')(x)
 model = Model(input=input_layer, output=x)
 #compile
 if IS_REGRESSION:
@@ -104,7 +104,6 @@ if IS_REGRESSION:
 else:
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['acc'])
 model.summary()
-input()
 #generator
 epochs = 999
 batch_size = 16
@@ -139,7 +138,7 @@ def generator():
             if IS_REGRESSION:
                 labels = np.array(labels)
                 # print(labels)
-            else: labels = to_categorical(labels, 4)
+            else: labels = to_categorical(labels, 3)
             yield icons, labels
 def test_generator():
     for i in range(epochs):
@@ -161,11 +160,11 @@ def test_generator():
             if IS_REGRESSION:
                 labels = np.array(labels)
             else: 
-                labels = to_categorical(labels, 4)
+                labels = to_categorical(labels, 3)
             yield icons, labels
 
 # write save each epoch
-filepath='armnet_try-ep-{epoch:03d}-loss-{loss:.3f}-acc-{acc:.3f}-vloss-{val_loss:.3f}-vacc-{val_acc:.3f}.hdf5'
+filepath='armnet_3_class-ep-{epoch:03d}-loss-{loss:.3f}-acc-{acc:.3f}-vloss-{val_loss:.3f}-vacc-{val_acc:.3f}.hdf5'
 if IS_REGRESSION:
     filepath='armnet_regression-ep-{epoch:03d}-loss-{loss:.3f}-vloss-{val_loss:.3f}-vmas-{val_mean_absolute_error:.3f}.hdf5'
 checkpoint = ModelCheckpoint(filepath, monitor='val_acc', save_best_only=False, verbose=0, period=1)
