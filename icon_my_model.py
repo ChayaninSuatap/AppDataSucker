@@ -14,7 +14,12 @@ from keras.metrics import categorical_accuracy
 from keras import backend as K
 from keras.layers import Activation
 from keras.utils.generic_utils import get_custom_objects
+
+#pre setting
 IS_REGRESSION = False
+CLASS_NUM = 3
+
+
 conn = db_util.connect_db()
 app_ids_and_labels = []
 dat=conn.execute('select app_id, rating from app_data')
@@ -24,8 +29,8 @@ for x in dat:
 #random shuffle 
 time_seed = int(datetime.now().microsecond)
 random.seed(time_seed)
-random.seed(21)
-np.random.seed(21)
+random.seed(7)
+np.random.seed(7)
 
 print('time_seed',time_seed)
 random.shuffle(app_ids_and_labels)
@@ -72,14 +77,14 @@ x = LeakyReLU()(x)
 x = Dropout(0.1)(x)
 x = MaxPooling2D((2,2), name='my_model_max_pooling_2')(x)
 
-x = Conv2D(128,(3,3), name='my_model_conv_4')(x)
-x = LeakyReLU()(x)
-x = Dropout(0.1)(x)
-x = Conv2D(256,(3,3), name='my_model_conv_5')(x)
-x = LeakyReLU()(x)
-x = Dropout(0.1)(x)
+# x = Conv2D(128,(3,3), name='my_model_conv_4')(x)
+# x = LeakyReLU()(x)
+# x = Dropout(0.1)(x)
+# x = Conv2D(256,(3,3), name='my_model_conv_5')(x)
+# x = LeakyReLU()(x)
+# x = Dropout(0.1)(x)
 
-x = Conv2D(64,(1,1), name='my_model_conv_11')(x)
+x = Conv2D(32,(1,1), name='my_model_conv_11')(x)
 x = LeakyReLU()(x)
 x = MaxPooling2D((2,2), name='my_model_max_pooling_3')(x)
 
@@ -106,7 +111,7 @@ else:
 model.summary()
 #generator
 epochs = 999
-batch_size = 16
+batch_size = 32
 
 def generator():
     datagen = create_image_data_gen()
