@@ -14,7 +14,7 @@ from keras.metrics import categorical_accuracy
 from keras import backend as K
 from keras.layers import Activation
 from keras.utils.generic_utils import get_custom_objects
-
+from sklearn.model_selection import KFold
 #pre setting
 IS_REGRESSION = False
 CLASS_NUM = 3
@@ -45,9 +45,19 @@ for i in range(len(app_ids_and_labels)):
     if IS_REGRESSION: rating = float(app_ids_and_labels[i][1])
     app_ids_and_labels[i] = app_id, rating
 #split train test
-app_ids_and_labels_train = app_ids_and_labels[:ninety]
-app_ids_and_labels_test = app_ids_and_labels[ninety:]
+app_ids_and_labels_train = []
+app_ids_and_labels_test = []
 
+#train k fold
+kf = KFold(n_splits=10, shuffle=False)
+kf_pass = 4
+for i,(train_idxs, test_idxs) in enumerate(kf.split(app_ids_and_labels)):
+    if i == kf_pass:
+        for idx in train_idxs:
+            app_ids_and_labels_train.append( app_ids_and_labels[idx])
+        for idx in test_idxs:
+            app_ids_and_labels_test.append( app_ids_and_labels[idx])
+        break
 #oversample
 # if not IS_REGRESSION: icon_util.oversample_image(app_ids_and_labels_train)
 
@@ -178,7 +188,7 @@ def test_generator():
             yield icons, labels
 
 # write save each epoch
-filepath='armnet_3_class_init_filer_64-ep-{epoch:03d}-loss-{loss:.3f}-acc-{acc:.3f}-vloss-{val_loss:.3f}-vacc-{val_acc:.3f}.hdf5'
+filepath='armnet_3_class_k_4-ep-{epoch:03d}-loss-{loss:.3f}-acc-{acc:.3f}-vloss-{val_loss:.3f}-vacc-{val_acc:.3f}.hdf5'
 if IS_REGRESSION:
     filepath='armnet_regression-ep-{epoch:03d}-loss-{loss:.3f}-vloss-{val_loss:.3f}-vmas-{val_mean_absolute_error:.3f}.hdf5'
 checkpoint = ModelCheckpoint(filepath, monitor='val_acc', save_best_only=False, verbose=0, period=1)
