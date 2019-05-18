@@ -50,7 +50,7 @@ app_ids_and_labels_test = []
 
 #train k fold
 kf = KFold(n_splits=10, shuffle=False)
-kf_pass = 4
+kf_pass = 6
 for i,(train_idxs, test_idxs) in enumerate(kf.split(app_ids_and_labels)):
     if i == kf_pass:
         for idx in train_idxs:
@@ -188,7 +188,7 @@ def test_generator():
             yield icons, labels
 
 # write save each epoch
-filepath='armnet_3_class_k_4-ep-{epoch:03d}-loss-{loss:.3f}-acc-{acc:.3f}-vloss-{val_loss:.3f}-vacc-{val_acc:.3f}.hdf5'
+filepath='armnet_3_class_k_6-ep-{epoch:03d}-loss-{loss:.3f}-acc-{acc:.3f}-vloss-{val_loss:.3f}-vacc-{val_acc:.3f}.hdf5'
 if IS_REGRESSION:
     filepath='armnet_regression-ep-{epoch:03d}-loss-{loss:.3f}-vloss-{val_loss:.3f}-vmas-{val_mean_absolute_error:.3f}.hdf5'
 checkpoint = ModelCheckpoint(filepath, monitor='val_acc', save_best_only=False, verbose=0, period=1)
