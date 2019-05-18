@@ -16,7 +16,7 @@ from keras.layers import Activation
 from keras.utils.generic_utils import get_custom_objects
 from sklearn.model_selection import KFold
 #pre setting
-IS_REGRESSION = False
+IS_REGRESSION = True
 CLASS_NUM = 3
 
 
@@ -35,6 +35,7 @@ np.random.seed(7)
 print('time_seed',time_seed)
 random.shuffle(app_ids_and_labels)
 ninety = int(len(app_ids_and_labels)*80/100)
+
 #calculate label class
 for i in range(len(app_ids_and_labels)):
     app_id , rating = app_ids_and_labels[i]
@@ -44,20 +45,24 @@ for i in range(len(app_ids_and_labels)):
     else: rating = 2
     if IS_REGRESSION: rating = float(app_ids_and_labels[i][1])
     app_ids_and_labels[i] = app_id, rating
+
 #split train test
-app_ids_and_labels_train = []
-app_ids_and_labels_test = []
+app_ids_and_labels_train = app_ids_and_labels[:ninety]
+app_ids_and_labels_test = app_ids_and_labels[ninety:]
 
 #train k fold
-kf = KFold(n_splits=10, shuffle=False)
-kf_pass = 6
-for i,(train_idxs, test_idxs) in enumerate(kf.split(app_ids_and_labels)):
-    if i == kf_pass:
-        for idx in train_idxs:
-            app_ids_and_labels_train.append( app_ids_and_labels[idx])
-        for idx in test_idxs:
-            app_ids_and_labels_test.append( app_ids_and_labels[idx])
-        break
+# app_ids_and_labels_train = []
+# app_ids_and_labels_test = []
+# kf = KFold(n_splits=10, shuffle=False)
+# kf_pass = 6
+# for i,(train_idxs, test_idxs) in enumerate(kf.split(app_ids_and_labels)):
+#     if i == kf_pass:
+#         for idx in train_idxs:
+#             app_ids_and_labels_train.append( app_ids_and_labels[idx])
+#         for idx in test_idxs:
+#             app_ids_and_labels_test.append( app_ids_and_labels[idx])
+#         break
+
 #oversample
 # if not IS_REGRESSION: icon_util.oversample_image(app_ids_and_labels_train)
 
@@ -80,6 +85,7 @@ else:
     #     for _,x in app_ids_and_labels_train:
     #         f.write(str(x) + '\n')
     # input()
+
 #make model
 input_layer = Input(shape=(128, 128, 3))
 # x = Conv2D(32,(3,3), name='my_model_conv_2')(input_layer)
@@ -105,19 +111,23 @@ x = LeakyReLU()(x)
 
 # x = MaxPooling2D((2,2), name='my_model_max_pooling_4')(x)
 x = Flatten(name='my_model_flatten')(x)
+
 # custom activation fn
 def my_sigmoid(x): return (K.sigmoid(x)*5)
 act = Activation(my_sigmoid)
 act.__name__ = 'my_sigmoid'
 get_custom_objects().update({'my_sigmoid':act})
+
 #output layer
 if IS_REGRESSION:
+    x = Dense(16, name='my_model_dense_2')(x)
     x = Dense(1, activation='my_sigmoid', name='my_model_regress_1')(x)
 else:
     x = Dense(16, name='my_model_dense_2')(x)
     x = LeakyReLU()(x)
     x = Dense(3, activation='softmax', name='my_model_dense_3')(x)
 model = Model(input=input_layer, output=x)
+
 #compile
 if IS_REGRESSION:
     model.compile(loss='mse', optimizer='adam', metrics=['mae'])
@@ -190,7 +200,7 @@ def test_generator():
 # write save each epoch
 filepath='armnet_3_class_k_6-ep-{epoch:03d}-loss-{loss:.3f}-acc-{acc:.3f}-vloss-{val_loss:.3f}-vacc-{val_acc:.3f}.hdf5'
 if IS_REGRESSION:
-    filepath='armnet_regression-ep-{epoch:03d}-loss-{loss:.3f}-vloss-{val_loss:.3f}-vmas-{val_mean_absolute_error:.3f}.hdf5'
+    filepath='armnet_reg_try_fix-ep-{epoch:03d}-loss-{loss:.3f}-vloss-{val_loss:.3f}-vmas-{val_mean_absolute_error:.3f}.hdf5'
 checkpoint = ModelCheckpoint(filepath, monitor='val_acc', save_best_only=False, verbose=0, period=1)
 palc = PlotAccLossCallback()
 # do it
@@ -198,5 +208,5 @@ history = model.fit_generator(generator(),
     steps_per_epoch=math.ceil(len(app_ids_and_labels_train)/batch_size),
     validation_data=test_generator(), max_queue_size=1,
     validation_steps=math.ceil(len(app_ids_and_labels_test)/batch_size),
-    epochs=epochs , callbacks=[checkpoint, palc], verbose=1,
+    epochs=epochs , callbacks=[checkpoint] if IS_REGRESSION else [checkpoint, palc], verbose=1,
     class_weight=None if IS_REGRESSION else class_weight)

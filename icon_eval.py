@@ -7,9 +7,9 @@ import icon_util
 import numpy as np
 from keras.utils import to_categorical
 from sklearn.model_selection import train_test_split
-IS_REGRESSION = False
+IS_REGRESSION = True
 model_path = \
-'armnet_3_class_4_layers-ep-080-loss-0.033-acc-0.980-vloss-3.774-vacc-0.429.hdf5'
+'armnet_reg_try_fix-ep-003-loss-0.768-vloss-0.758-vmas-0.753.hdf5'
 
 # prepare x y
 conn = db_util.connect_db()
@@ -44,17 +44,18 @@ xs = []
 ys = []
 
 #show dist
-dist = {0:0,1:0,2:0,3:0}
-for _,x in app_ids_and_labels[:ninety]:
-    dist[x]+=1
-print('train dist', dist)
-dist = {0:0,1:0,2:0,3:0}
-for _,x in app_ids_and_labels[ninety:]:
-    dist[x]+=1
-print('test dist', dist)
+if not IS_REGRESSION:
+    dist = {0:0,1:0,2:0,3:0}
+    for _,x in app_ids_and_labels[:ninety]:
+        dist[x]+=1
+    print('train dist', dist)
+    dist = {0:0,1:0,2:0,3:0}
+    for _,x in app_ids_and_labels[ninety:]:
+        dist[x]+=1
+    print('test dist', dist)
 
 #load image
-for app_id, label in app_ids_and_labels[ninety:]:
+for app_id, label in app_ids_and_labels[:ninety]:
     try:
         icon = icon_util.load_icon_by_app_id(app_id, 128, 128)
         xs.append(np.array(icon))
@@ -81,7 +82,6 @@ else:
     act = Activation(my_sigmoid)
     act.__name__ = 'my_sigmoid'
     get_custom_objects().update({'my_sigmoid': act})
-
 
     model = load_model(model_path)
     pred = model.predict(xs, batch_size=64)    
