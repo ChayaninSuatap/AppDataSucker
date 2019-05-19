@@ -94,20 +94,20 @@ input_layer = Input(shape=(128, 128, 3))
 x = Conv2D(64,(3,3), name='my_model_conv_3')(input_layer)
 x = LeakyReLU()(x)
 x = Dropout(0.1)(x)
-x = MaxPooling2D((2,2), name='my_model_max_pooling_2')(x)
+# x = MaxPooling2D((2,2), name='my_model_max_pooling_2')(x)
 
 x = Conv2D(128,(3,3), name='my_model_conv_4')(x)
 x = LeakyReLU()(x)
 x = Dropout(0.1)(x)
-x = MaxPooling2D((2,2), name='my_model_max_pooling_4')(x)
+# x = MaxPooling2D((2,2), name='my_model_max_pooling_4')(x)
 
-x = Conv2D(256,(3,3), name='my_model_conv_5')(x)
-x = LeakyReLU()(x)
-x = Dropout(0.1)(x)
+# x = Conv2D(256,(3,3), name='my_model_conv_5')(x)
+# x = LeakyReLU()(x)
+# x = Dropout(0.1)(x)
 
-x = Conv2D(128,(1,1), name='my_model_conv_11')(x)
+x = Conv2D(64,(1,1), name='my_model_conv_11')(x)
 x = LeakyReLU()(x)
-# x = MaxPooling2D((2,2), name='my_model_max_pooling_3')(x)
+x = MaxPooling2D((2,2), name='my_model_max_pooling_3')(x)
 
 # x = MaxPooling2D((2,2), name='my_model_max_pooling_4')(x)
 x = Flatten(name='my_model_flatten')(x)
@@ -120,7 +120,7 @@ get_custom_objects().update({'my_sigmoid':act})
 
 #output layer
 if IS_REGRESSION:
-    x = Dense(16, name='my_model_dense_2')(x)
+    x = Dense(4, name='my_model_dense_2')(x)
     x = Dense(1, activation='my_sigmoid', name='my_model_regress_1')(x)
 else:
     x = Dense(16, name='my_model_dense_2')(x)
@@ -136,7 +136,7 @@ else:
 model.summary()
 #generator
 epochs = 999
-batch_size = 32
+batch_size = 16
 
 def generator():
     datagen = create_image_data_gen()
@@ -173,6 +173,7 @@ def generator():
                 labels = np.array(labels)
                 # print(labels)
             else: labels = to_categorical(labels, 3)
+            print(labels)
             yield icons, labels
 def test_generator():
     for i in range(epochs):
@@ -200,7 +201,7 @@ def test_generator():
 # write save each epoch
 filepath='armnet_3_class_k_6-ep-{epoch:03d}-loss-{loss:.3f}-acc-{acc:.3f}-vloss-{val_loss:.3f}-vacc-{val_acc:.3f}.hdf5'
 if IS_REGRESSION:
-    filepath='armnet_reg_try_fix-ep-{epoch:03d}-loss-{loss:.3f}-vloss-{val_loss:.3f}-vmas-{val_mean_absolute_error:.3f}.hdf5'
+    filepath='armnet_reg_try_fix_simple_layer-ep-{epoch:03d}-loss-{loss:.3f}-vloss-{val_loss:.3f}-vmas-{val_mean_absolute_error:.3f}.hdf5'
 checkpoint = ModelCheckpoint(filepath, monitor='val_acc', save_best_only=False, verbose=0, period=1)
 palc = PlotAccLossCallback()
 # do it
