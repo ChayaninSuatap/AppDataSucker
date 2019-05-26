@@ -93,34 +93,41 @@ input_layer = Input(shape=(128, 128, 3))
 # x = Dropout(0.1)(x)
 x = Conv2D(64,(3,3), name='my_model_conv_3')(input_layer)
 x = LeakyReLU()(x)
-x = Dropout(0.1)(x)
-# x = MaxPooling2D((2,2), name='my_model_max_pooling_2')(x)
+x = BatchNormalization()(x)
+x = Dropout(0.2)(x)
+x = MaxPooling2D((2,2), name='my_model_max_pooling_2')(x)
 
 x = Conv2D(128,(3,3), name='my_model_conv_4')(x)
 x = LeakyReLU()(x)
-x = Dropout(0.1)(x)
-# x = MaxPooling2D((2,2), name='my_model_max_pooling_4')(x)
-
-# x = Conv2D(256,(3,3), name='my_model_conv_5')(x)
-# x = LeakyReLU()(x)
-# x = Dropout(0.1)(x)
-
-x = Conv2D(64,(1,1), name='my_model_conv_11')(x)
-x = LeakyReLU()(x)
+x = BatchNormalization()(x)
+x = Dropout(0.2)(x)
 x = MaxPooling2D((2,2), name='my_model_max_pooling_3')(x)
+
+x = Conv2D(256,(3,3), name='my_model_conv_5')(x)
+x = LeakyReLU()(x)
+x = BatchNormalization()(x)
+x = Dropout(0.2)(x)
+x = MaxPooling2D((2,2), name='my_model_max_pooling_4')(x)
+
+x = Conv2D(128,(1,1), name='my_model_conv_11')(x)
+x = LeakyReLU()(x)
+x = BatchNormalization()(x)
+x = Dropout(0.2)(x)
+x = MaxPooling2D((2,2), name='my_model_max_pooling_5')(x)
 
 # x = MaxPooling2D((2,2), name='my_model_max_pooling_4')(x)
 x = Flatten(name='my_model_flatten')(x)
 
-# custom activation fn
-def my_sigmoid(x): return (K.sigmoid(x)*5)
-act = Activation(my_sigmoid)
-act.__name__ = 'my_sigmoid'
-get_custom_objects().update({'my_sigmoid':act})
-
 #output layer
 if IS_REGRESSION:
-    # x = Dense(4, name='my_model_dense_2')(x)
+    x = Dense(16, name='my_model_dense_1')(x)
+    x = LeakyReLU()(x)
+    x = Dropout(0.2)(x)
+
+    x = Dense(4, name='my_model_dense_2')(x)
+    x = LeakyReLU()(x)
+    x = Dropout(0.2)(x)
+
     x = Dense(1, activation='linear', name='my_model_regress_1')(x)
 else:
     x = Dense(16, name='my_model_dense_2')(x)
@@ -136,7 +143,7 @@ else:
 model.summary()
 #generator
 epochs = 999
-batch_size = 64
+batch_size = 16
 
 def generator():
     datagen = create_image_data_gen()
@@ -198,9 +205,9 @@ def test_generator():
             yield icons, labels
 
 # write save each epoch
-filepath='armnet_3_class_k_6-ep-{epoch:03d}-loss-{loss:.3f}-acc-{acc:.3f}-vloss-{val_loss:.3f}-vacc-{val_acc:.3f}.hdf5'
+filepath='armnet_-ep-{epoch:03d}-loss-{loss:.3f}-acc-{acc:.3f}-vloss-{val_loss:.3f}-vacc-{val_acc:.3f}.hdf5'
 if IS_REGRESSION:
-    filepath='armnet_reg_try_fix_simple_layer-ep-{epoch:03d}-loss-{loss:.3f}-vloss-{val_loss:.3f}-vmas-{val_mean_absolute_error:.3f}.hdf5'
+    filepath='armnet_reg_linear_bn-ep-{epoch:03d}-loss-{loss:.3f}-vloss-{val_loss:.3f}-vmape-{val_mean_absolute_percentage_error:.3f}.hdf5'
 checkpoint = ModelCheckpoint(filepath, monitor='val_acc', save_best_only=False, verbose=0, period=1)
 palc = PlotAccLossCallback()
 # do it
@@ -208,5 +215,5 @@ history = model.fit_generator(generator(),
     steps_per_epoch=math.ceil(len(app_ids_and_labels_train)/batch_size),
     validation_data=test_generator(), max_queue_size=1,
     validation_steps=math.ceil(len(app_ids_and_labels_test)/batch_size),
-    epochs=epochs , callbacks=[checkpoint] if IS_REGRESSION else [checkpoint, palc], verbose=1,
+    epochs=epochs , callbacks=[checkpoint, palc], verbose=1,
     class_weight=None if IS_REGRESSION else class_weight)
