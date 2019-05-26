@@ -120,8 +120,8 @@ get_custom_objects().update({'my_sigmoid':act})
 
 #output layer
 if IS_REGRESSION:
-    x = Dense(4, name='my_model_dense_2')(x)
-    x = Dense(1, activation='my_sigmoid', name='my_model_regress_1')(x)
+    # x = Dense(4, name='my_model_dense_2')(x)
+    x = Dense(1, activation='linear', name='my_model_regress_1')(x)
 else:
     x = Dense(16, name='my_model_dense_2')(x)
     x = LeakyReLU()(x)
@@ -130,13 +130,13 @@ model = Model(input=input_layer, output=x)
 
 #compile
 if IS_REGRESSION:
-    model.compile(loss='mse', optimizer='adam', metrics=['mae'])
+    model.compile(loss='mse', optimizer='adam', metrics=['mean_absolute_percentage_error'])
 else:
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['acc'])
 model.summary()
 #generator
 epochs = 999
-batch_size = 16
+batch_size = 64
 
 def generator():
     datagen = create_image_data_gen()
@@ -173,7 +173,6 @@ def generator():
                 labels = np.array(labels)
                 # print(labels)
             else: labels = to_categorical(labels, 3)
-            print(labels)
             yield icons, labels
 def test_generator():
     for i in range(epochs):

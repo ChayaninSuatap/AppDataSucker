@@ -90,8 +90,13 @@ class PlotAccLossCallback(Callback):
         #update data
         self.log_loss.append(logs['loss'])
         self.log_vloss.append(logs['val_loss'])
-        self.log_acc.append(logs['acc'])
-        self.log_vacc.append(logs['val_acc'])
+        try:
+            self.log_acc.append(logs['acc'])
+            self.log_vacc.append(logs['val_acc'])
+        except:
+            self.log_acc.append(logs['mean_absolute_percentage_error'])
+            self.log_vacc.append(logs['val_mean_absolute_percentage_error'])
+            IS_REGRESSION = True
         #update weights data
         weights_this_epoch = _get_weights_of_layers(self.model)
         diff_weights = []
@@ -112,7 +117,9 @@ class PlotAccLossCallback(Callback):
         self.acc_plt.plot(self.log_vacc)
         self.acc_plt.set(xlabel='epoch',ylabel='acc')
         self.acc_plt.legend(['train','test'], loc='upper left')
-        self.acc_plt.set_title('accuracy ep %d' % (epoch+1,))
+        if IS_REGRESSION:
+            self.acc_plt.set_title('mae percentage ep %d' % (epoch+1,))
+        else: self.acc_plt.set_title('accuracy ep %d' % (epoch+1,))
         #plot weights adjustment
         self.weights_plt.cla()
         npw = np.array(self.log_weights)

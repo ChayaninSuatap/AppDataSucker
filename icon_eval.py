@@ -9,7 +9,7 @@ from keras.utils import to_categorical
 from sklearn.model_selection import train_test_split
 IS_REGRESSION = True
 model_path = \
-'armnet_reg_try_fix-ep-003-loss-0.768-vloss-0.758-vmas-0.753.hdf5'
+'armnet_reg_try_fix_range_1-ep-001-loss-0.029-vloss-0.029-vmas-0.170.hdf5'
 
 # prepare x y
 conn = db_util.connect_db()
@@ -55,7 +55,7 @@ if not IS_REGRESSION:
     print('test dist', dist)
 
 #load image
-for app_id, label in app_ids_and_labels[:ninety]:
+for app_id, label in app_ids_and_labels[ninety:]:
     try:
         icon = icon_util.load_icon_by_app_id(app_id, 128, 128)
         xs.append(np.array(icon))
