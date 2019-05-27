@@ -50,6 +50,18 @@ for i in range(len(app_ids_and_labels)):
 app_ids_and_labels_train = app_ids_and_labels[:ninety]
 app_ids_and_labels_test = app_ids_and_labels[ninety:]
 
+#base line
+total = 0
+for _,rating in app_ids_and_labels_test:
+    total += rating
+avg = total / len(app_ids_and_labels_test)
+print('avg',avg)
+total_mse = 0
+for _,rating in app_ids_and_labels_test:
+    total_mse += (rating - avg) ** 2
+mse = total_mse / len(app_ids_and_labels_test)
+print('mse',mse)
+
 #train k fold
 # app_ids_and_labels_train = []
 # app_ids_and_labels_test = []
