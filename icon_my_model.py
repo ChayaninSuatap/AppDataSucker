@@ -99,60 +99,8 @@ else:
     # input()
 
 #make model
-input_layer = Input(shape=(128, 128, 3))
-# x = Conv2D(32,(3,3), name='my_model_conv_2')(input_layer)
-# x = LeakyReLU()(x)
-# x = Dropout(0.1)(x)
-x = Conv2D(64,(3,3), name='my_model_conv_3')(input_layer)
-x = LeakyReLU()(x)
-x = BatchNormalization()(x)
-x = Dropout(0.2)(x)
-x = MaxPooling2D((2,2), name='my_model_max_pooling_2')(x)
+model = icon_util.create_model(IS_REGRESSION)
 
-x = Conv2D(128,(3,3), name='my_model_conv_4')(x)
-x = LeakyReLU()(x)
-x = BatchNormalization()(x)
-x = Dropout(0.2)(x)
-x = MaxPooling2D((2,2), name='my_model_max_pooling_3')(x)
-
-x = Conv2D(256,(3,3), name='my_model_conv_5')(x)
-x = LeakyReLU()(x)
-x = BatchNormalization()(x)
-x = Dropout(0.2)(x)
-x = MaxPooling2D((2,2), name='my_model_max_pooling_4')(x)
-
-x = Conv2D(128,(1,1), name='my_model_conv_11')(x)
-x = LeakyReLU()(x)
-x = BatchNormalization()(x)
-x = Dropout(0.2)(x)
-x = MaxPooling2D((2,2), name='my_model_max_pooling_5')(x)
-
-# x = MaxPooling2D((2,2), name='my_model_max_pooling_4')(x)
-x = Flatten(name='my_model_flatten')(x)
-
-#output layer
-if IS_REGRESSION:
-    x = Dense(16, name='my_model_dense_1')(x)
-    x = LeakyReLU()(x)
-    x = Dropout(0.2)(x)
-
-    x = Dense(4, name='my_model_dense_2')(x)
-    x = LeakyReLU()(x)
-    x = Dropout(0.2)(x)
-
-    x = Dense(1, activation='linear', name='my_model_regress_1')(x)
-else:
-    x = Dense(16, name='my_model_dense_2')(x)
-    x = LeakyReLU()(x)
-    x = Dense(3, activation='softmax', name='my_model_dense_3')(x)
-model = Model(input=input_layer, output=x)
-
-#compile
-if IS_REGRESSION:
-    model.compile(loss='mse', optimizer='adam', metrics=['mean_absolute_percentage_error'])
-else:
-    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['acc'])
-model.summary()
 #generator
 epochs = 999
 batch_size = 16
