@@ -73,6 +73,10 @@ class PlotWeightsCallback(Callback):
 
 import matplotlib.pyplot as plt
 class PlotAccLossCallback(Callback):
+    def __init__(self, is_regression=False, is_cate=False):
+        self.is_regression = is_regression
+        self.is_cate = is_cate
+
     def on_train_begin(self, logs={}):
         self.log_loss = []
         self.log_vloss = []
@@ -88,15 +92,23 @@ class PlotAccLossCallback(Callback):
         plt.get_current_fig_manager().window.state('zoomed')
     def on_epoch_end(self, epoch, logs={}):
         #update data
-        self.log_loss.append(logs['loss'])
-        self.log_vloss.append(logs['val_loss'])
-        try:
+        
+        if not self.is_regression and not self.is_cate :
+            self.log_loss.append(logs['loss'])
+            self.log_vloss.append(logs['val_loss'])
             self.log_acc.append(logs['acc'])
             self.log_vacc.append(logs['val_acc'])
-        except:
+        elif self.is_regression:
+            self.log_loss.append(logs['loss'])
+            self.log_vloss.append(logs['val_loss'])
             self.log_acc.append(logs['mean_absolute_percentage_error'])
             self.log_vacc.append(logs['val_mean_absolute_percentage_error'])
-            IS_REGRESSION = True
+        elif self.is_cate:
+            self.log_loss.append(logs['my_model_regress_1_loss'])
+            self.log_vloss.append(logs['val_my_model_regress_1_loss'])
+            self.log_acc.append(logs['my_model_regress_1_mean_absolute_percentage_error'])
+            self.log_vacc.append(logs['val_my_model_regress_1_mean_absolute_percentage_error'])
+
         #update weights data
         weights_this_epoch = _get_weights_of_layers(self.model)
         diff_weights = []
@@ -117,7 +129,7 @@ class PlotAccLossCallback(Callback):
         self.acc_plt.plot(self.log_vacc)
         self.acc_plt.set(xlabel='epoch',ylabel='acc')
         self.acc_plt.legend(['train','test'], loc='upper left')
-        if IS_REGRESSION:
+        if self.is_regression or self.is_cate:
             self.acc_plt.set_title('mae percentage ep %d' % (epoch+1,))
         else: self.acc_plt.set_title('accuracy ep %d' % (epoch+1,))
         #plot weights adjustment

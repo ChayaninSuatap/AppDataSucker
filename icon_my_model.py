@@ -15,10 +15,10 @@ from keras import backend as K
 from keras.layers import Activation
 from keras.utils.generic_utils import get_custom_objects
 from sklearn.model_selection import KFold
+import preprocess_util
 #pre setting
 IS_REGRESSION = True
 CLASS_NUM = 3
-
 
 conn = db_util.connect_db()
 app_ids_and_labels = []
@@ -99,7 +99,7 @@ else:
     # input()
 
 #make model
-model = icon_util.create_model(IS_REGRESSION)
+model = icon_util.create_model(IS_REGRESSION)['model']
 
 #generator
 epochs = 999

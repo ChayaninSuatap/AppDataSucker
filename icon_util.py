@@ -36,7 +36,7 @@ def oversample_image(app_ids_and_labels):
             picked = random.choice(app_id_pool[label])
             app_ids_and_labels.append( picked)
 
-def create_model(IS_REGRESSION):
+def create_model(IS_REGRESSION, summary=False):
     def add_conv(layer, filter_n, kernel_size=(3,3), dropout=0.2):
         x = Conv2D(filter_n ,kernel_size)(layer)
         x = LeakyReLU()(x)
@@ -51,6 +51,7 @@ def create_model(IS_REGRESSION):
     x = add_conv(x, 256)
     x = add_conv(x, 128, kernel_size=(1,1))
     x = Flatten(name='my_model_flatten')(x)
+    flatten_layer = x
 
     #output layer
     if IS_REGRESSION:
@@ -62,17 +63,19 @@ def create_model(IS_REGRESSION):
         x = LeakyReLU()(x)
         x = Dropout(0.2)(x)
 
-        x = Dense(1, activation='linear', name='my_model_regress_1')(x)
+        output_layer = Dense(1, activation='linear', name='my_model_regress_1')(x)
     else:
         x = Dense(16, name='my_model_dense_2')(x)
         x = LeakyReLU()(x)
-        x = Dense(3, activation='softmax', name='my_model_dense_3')(x)
-    model = Model(input=input_layer, output=x)
+        output_layer = Dense(3, activation='softmax', name='my_model_dense_3')(x)
+    model = Model(input=input_layer, output=output_layer)
 
     #compile
     if IS_REGRESSION:
         model.compile(loss='mse', optimizer='adam', metrics=['mean_absolute_percentage_error'])
     else:
         model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['acc'])
-    model.summary()
-    return model
+    if summary : model.summary()
+
+    return {'model':model, 'flatten_layer':flatten_layer, 'input_layer':input_layer, 'output_layer':output_layer}
+
