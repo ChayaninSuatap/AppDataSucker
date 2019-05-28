@@ -78,8 +78,10 @@ class PlotAccLossCallback(Callback):
         self.is_cate = is_cate
         self.use_colab = use_colab
         self.proj = proj
-        if not self.use_colab:
-            plt.get_current_fig_manager().window.state('zoomed')
+        from matplotlib.pyplot import rcParams
+        rcParams['figure.figsize'] = 14, 8
+        # if not self.use_colab:
+            # plt.get_current_fig_manager().window.state('zoomed')
 
     def on_train_begin(self, logs={}):
         self.log_loss = []
