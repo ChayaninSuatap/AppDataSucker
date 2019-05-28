@@ -91,7 +91,7 @@ class PlotAccLossCallback(Callback):
         self.acc_plt = plt.subplot(grid[0,1])
         self.weights_plt = plt.subplot(grid[1,0:])
         self.weights_last_epoch = _get_weights_of_layers(self.model)
-        if self.use_colab:
+        if not self.use_colab:
             plt.get_current_fig_manager().window.state('zoomed')
     
     def on_epoch_end(self, epoch, logs={}):
