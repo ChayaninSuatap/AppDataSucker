@@ -72,6 +72,7 @@ class PlotWeightsCallback(Callback):
         self.weights_last_epoch = weights_this_epoch
 
 import matplotlib.pyplot as plt
+import matplotlib
 class PlotAccLossCallback(Callback):
     def __init__(self, is_regression=False, is_cate=False, use_colab=False, proj=''):
         self.is_regression = is_regression
@@ -80,6 +81,7 @@ class PlotAccLossCallback(Callback):
         self.proj = proj
         from matplotlib.pyplot import rcParams
         rcParams['figure.figsize'] = 14, 8
+        if self.use_colab: matplotlib.use('TkAgg')
         # if not self.use_colab:
             # plt.get_current_fig_manager().window.state('zoomed')
 
