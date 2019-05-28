@@ -81,9 +81,6 @@ class PlotAccLossCallback(Callback):
         self.proj = proj
         from matplotlib.pyplot import rcParams
         rcParams['figure.figsize'] = 14, 8
-        if self.use_colab: matplotlib.use('TkAgg')
-        # if not self.use_colab:
-            # plt.get_current_fig_manager().window.state('zoomed')
 
     def on_train_begin(self, logs={}):
         self.log_loss = []
