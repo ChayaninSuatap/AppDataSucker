@@ -73,10 +73,11 @@ class PlotWeightsCallback(Callback):
 
 import matplotlib.pyplot as plt
 class PlotAccLossCallback(Callback):
-    def __init__(self, is_regression=False, is_cate=False, use_colab=False):
+    def __init__(self, is_regression=False, is_cate=False, use_colab=False, proj=''):
         self.is_regression = is_regression
         self.is_cate = is_cate
         self.use_colab = use_colab
+        self.proj = proj
 
     def on_train_begin(self, logs={}):
         self.log_loss = []
@@ -92,6 +93,7 @@ class PlotAccLossCallback(Callback):
         self.weights_last_epoch = _get_weights_of_layers(self.model)
         if self.use_colab:
             plt.get_current_fig_manager().window.state('zoomed')
+    
     def on_epoch_end(self, epoch, logs={}):
         #update data
         
@@ -144,12 +146,18 @@ class PlotAccLossCallback(Callback):
         self.weights_plt.legend(legends, loc='upper right') 
 
         self.weights_plt.set_title('weigts adjustment ep %d' % (epoch+1,))
-        fig_name = 'plots/%.03d.png' % (epoch+1,)
-        if os.path.isfile(fig_name):
-            os.remove(fig_name)
-        plt.savefig(fig_name)
-        plt.draw()
-        plt.pause(0.01)
+        
+        #save fig
+        if self.use_colab:
+            fig_name = '/content/drive/My Drive/%s/%.03d.png' % (self.proj, epoch+1,)
+            plt.savefig(fig_name)
+        else:
+            fig_name = 'plots/%.03d.png' % (epoch+1,)
+            if os.path.isfile(fig_name):
+                os.remove(fig_name)
+            plt.savefig(fig_name)
+            plt.draw()
+            plt.pause(0.01)
 
 from keras.preprocessing.image import ImageDataGenerator
 def create_image_data_gen():
