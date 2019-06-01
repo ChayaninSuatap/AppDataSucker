@@ -37,8 +37,9 @@ def oversample_image(app_ids_and_labels):
             app_ids_and_labels.append( picked)
 
 def create_model(IS_REGRESSION, summary=False):
-    def add_conv(layer, filter_n, kernel_size=(3,3), dropout=0.2):
-        x = Conv2D(filter_n ,kernel_size)(layer)
+    def add_conv(layer, filter_n, kernel_size=(3,3), dropout=0.2, padding_same=False):
+        padding = 'same' if padding_same else 'valid'
+        x = Conv2D(filter_n ,kernel_size, padding=padding)(layer)
         x = LeakyReLU()(x)
         x = BatchNormalization()(x)
         x = Dropout(dropout)(x)
@@ -46,10 +47,10 @@ def create_model(IS_REGRESSION, summary=False):
         return x
     #make model
     input_layer = Input(shape=(128, 128, 3))
-    x = add_conv(input_layer, 64)
-    x = add_conv(x, 128)
-    x = add_conv(x, 256)
-    x = add_conv(x, 128, kernel_size=(1,1))
+    x = add_conv(input_layer, 64, padding_same=True)
+    x = add_conv(x, 128, padding_same=True)
+    x = add_conv(x, 256, padding_same=True)
+    # x = add_conv(x, 128, padding_same=True, kernel_size=(1,1))
     x = Flatten(name='my_model_flatten')(x)
     flatten_layer = x
 

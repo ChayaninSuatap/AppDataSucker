@@ -21,7 +21,7 @@ epochs = 999
 gen_train = icon_cate_util.datagenerator(aial_train, batch_size, epochs)
 gen_test = icon_cate_util.datagenerator(aial_test, batch_size, epochs)
 
-filepath='armnet_reg_cate-ep-{epoch:03d}-loss-{my_model_regress_1_loss:.3f}-vloss-{val_my_model_regress_1_loss:.3f}-vmape-{val_my_model_regress_1_mean_absolute_percentage_error:.3f}.hdf5'
+filepath='armnet_reg_cate_padding_same-ep-{epoch:03d}-loss-{my_model_regress_1_loss:.3f}-vloss-{val_my_model_regress_1_loss:.3f}-vmape-{val_my_model_regress_1_mean_absolute_percentage_error:.3f}.hdf5'
 checkpoint = ModelCheckpoint(filepath, monitor='val_acc', save_best_only=False, verbose=0, period=1)
 palc = PlotAccLossCallback(is_cate=True)
 model.fit_generator(gen_train,
