@@ -1,6 +1,7 @@
 import os
 import random
 import icon_util
+from sklearn.model_selection import KFold
 def compute_class_weight(labels):
     #make class_freq
     class_freq={}
@@ -170,7 +171,19 @@ def create_image_data_gen():
     )
     return datagen
 
-# def split_class(app_ids_and_labels, class_num):
+def gen_k_fold_pass(aial, kf_pass, n_splits):
+    app_ids_and_labels_train = []
+    app_ids_and_labels_test = []
+    kf = KFold(n_splits=n_splits, shuffle=False)
+    kf_pass = kf_pass
+    for i,(train_idxs, test_idxs) in enumerate(kf.split(aial)):
+        if i == kf_pass:
+            for idx in train_idxs:
+                app_ids_and_labels_train.append( aial[idx])
+            for idx in test_idxs:
+                app_ids_and_labels_test.append( aial[idx])
+            break
+    return app_ids_and_labels_train, app_ids_and_labels_test
 
 
 

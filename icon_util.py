@@ -50,7 +50,7 @@ def create_model(IS_REGRESSION, summary=False):
     x = add_conv(input_layer, 64, padding_same=True)
     x = add_conv(x, 128, padding_same=True)
     x = add_conv(x, 256, padding_same=True)
-    # x = add_conv(x, 128, padding_same=True, kernel_size=(1,1))
+    x = add_conv(x, 128, padding_same=True, kernel_size=(1,1))
     x = Flatten(name='my_model_flatten')(x)
     flatten_layer = x
 
@@ -58,10 +58,12 @@ def create_model(IS_REGRESSION, summary=False):
     if IS_REGRESSION:
         x = Dense(16, name='my_model_dense_1')(x)
         x = LeakyReLU()(x)
+        x = BatchNormalization()(x)
         x = Dropout(0.2)(x)
 
         x = Dense(4, name='my_model_dense_2')(x)
         x = LeakyReLU()(x)
+        x = BatchNormalization()(x)
         x = Dropout(0.2)(x)
 
         output_layer = Dense(1, activation='linear', name='my_model_regress_1')(x)

@@ -14,6 +14,7 @@ def create_icon_cate_model():
     #jump
     x = Dense(32)(flatten_layer)
     x = LeakyReLU()(x)
+    x = BatchNormalization()(x)
     x = Dropout(0.2)(x)
 
     output_cate = Dense(18, activation='sigmoid')(x)
