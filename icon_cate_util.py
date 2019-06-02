@@ -5,6 +5,18 @@ from keras_util import group_for_fit_generator
 import random
 import numpy as np
 
+def compute_baseline(aial):
+    total = 0
+    for _,x,_ in aial:
+        total += x
+    avg = total / len(aial)
+
+    total_mse = 0
+    for _,x,_ in aial:
+        total_mse = (x-avg) ** 2
+    return avg, total_mse
+
+
 def create_icon_cate_model():
     o = icon_util.create_model(IS_REGRESSION=True)
     input_layer = o['input_layer']

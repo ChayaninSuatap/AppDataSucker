@@ -13,8 +13,8 @@ random.shuffle(aial)
 ninety = int(len(aial)*80/100)
 aial_train = aial[:ninety]
 aial_test = aial[ninety:]
-aial_train, aial_test = gen_k_fold_pass(aial, kf_pass=1, n_splits=10)
-print('train len', len(aial_train), 'test len', len(aial_test))
+aial_train, aial_test = gen_k_fold_pass(aial, kf_pass=0, n_splits=10)
+print(icon_cate_util.compute_baseline(aial_test))
 
 model = icon_cate_util.create_icon_cate_model()
 
