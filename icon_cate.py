@@ -13,7 +13,7 @@ random.shuffle(aial)
 ninety = int(len(aial)*80/100)
 aial_train = aial[:ninety]
 aial_test = aial[ninety:]
-aial_train, aial_test = gen_k_fold_pass(aial, kf_pass=0, n_splits=10)
+aial_train, aial_test = gen_k_fold_pass(aial, kf_pass=2, n_splits=10)
 print(icon_cate_util.compute_baseline(aial_test))
 
 model = icon_cate_util.create_icon_cate_model()
@@ -23,7 +23,7 @@ epochs = 999
 gen_train = icon_cate_util.datagenerator(aial_train, batch_size, epochs)
 gen_test = icon_cate_util.datagenerator(aial_test, batch_size, epochs)
 
-filepath='reg_cate_padding_same_k1-ep-{epoch:03d}-loss-{my_model_regress_1_loss:.3f}-vloss-{val_my_model_regress_1_loss:.3f}-vmape-{val_my_model_regress_1_mean_absolute_percentage_error:.3f}.hdf5'
+filepath='reg_cate_padding_same_k2-ep-{epoch:03d}-loss-{my_model_regress_1_loss:.3f}-vloss-{val_my_model_regress_1_loss:.3f}-vmape-{val_my_model_regress_1_mean_absolute_percentage_error:.3f}.hdf5'
 checkpoint = ModelCheckpoint(filepath, monitor='val_acc', save_best_only=False, verbose=0, period=1)
 palc = PlotAccLossCallback(is_cate=True)
 model.fit_generator(gen_train,

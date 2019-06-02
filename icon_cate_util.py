@@ -13,7 +13,7 @@ def compute_baseline(aial):
 
     total_mse = 0
     for _,x,_ in aial:
-        total_mse = (x-avg) ** 2
+        total_mse += (x-avg) ** 2
     return avg, total_mse
 
 
