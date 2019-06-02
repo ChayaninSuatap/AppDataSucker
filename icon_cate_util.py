@@ -14,7 +14,7 @@ def compute_baseline(aial):
     total_mse = 0
     for _,x,_ in aial:
         total_mse += (x-avg) ** 2
-    return avg, total_mse
+    return avg, total_mse/ len(aial)
 
 
 def create_icon_cate_model():
