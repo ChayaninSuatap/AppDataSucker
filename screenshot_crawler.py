@@ -4,6 +4,13 @@ import scrapy_util
 import mypath
 import requests
 from scrapy.crawler import CrawlerProcess
+import os
+
+def make_downloaded_app_id_dict():
+    d = {}
+    for x in os.listdir('screenshots'):
+        d[x[:-6]]=1
+    return d
 
 class ScreenshotCrawler( scrapy.Spider):
     name = 'screenshot_crawler'
@@ -13,8 +20,13 @@ class ScreenshotCrawler( scrapy.Spider):
     
     def start_requests(self):
         main_url = 'https://play.google.com/store/apps/details?id='
-        for app_id in db_util.get_all_app_id(self.conn_db):
+        all_app_ids = db_util.get_all_app_id(self.conn_db)
+        downloaded_dict = make_downloaded_app_id_dict()
+
+        for i, app_id in enumerate(all_app_ids):
+            if app_id in downloaded_dict: continue
             link = main_url + app_id
+            print('progress %.3f' % (i*100/len(all_app_ids)))
             yield scrapy.Request(link, self.parse)
 
     def parse(self, resp):
