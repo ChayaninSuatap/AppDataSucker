@@ -4,17 +4,21 @@ from keras.models import Model
 from keras_util import group_for_fit_generator
 import random
 import numpy as np
+import math
 
-def compute_baseline(aial):
+def compute_baseline(aial, aial_test):
     total = 0
     for _,x,_ in aial:
         total += x
     avg = total / len(aial)
 
     total_mse = 0
-    for _,x,_ in aial:
+    total_mae = 0
+    for _,x,_ in aial_test:
         total_mse += (x-avg) ** 2
-    return avg, total_mse/ len(aial)
+        total_mae += math.fabs(x-avg)*100/x
+
+    return avg, total_mse/ len(aial_test), total_mae/len(aial_test)
 
 
 def create_icon_cate_model():
