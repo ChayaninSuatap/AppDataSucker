@@ -134,12 +134,13 @@ def fn():
     import random
     answer_list = []
     MAX = 10
-    for seed_value in range(476,477):
+    for seed_value in range(0,1000):
         print('seed',seed_value)
         random.seed(seed_value)
         np.random.seed(seed_value)
         #prepare data
         aial = preprocess_util.prep_rating_category_scamount_download()
+        aial = preprocess_util.remove_low_rating_amount(aial, 100)
         random.shuffle(aial)
         fd=makeFoldData(aial)
         fds = []

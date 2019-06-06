@@ -49,6 +49,14 @@ def prep_rating_category_scamount_download():
     
     return app_ids_and_labels
 
+def remove_low_rating_amount(aial, threshold):
+    newaial = []
+    for x in aial:
+        if x[5] > threshold:
+            newaial.append(x)
+    return newaial
+
+
 if __name__ == '__main__':
     prep_rating_category()
     
