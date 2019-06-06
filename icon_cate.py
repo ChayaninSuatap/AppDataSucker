@@ -6,16 +6,19 @@ import math
 from keras.callbacks import ModelCheckpoint
 from keras_util import PlotAccLossCallback, gen_k_fold_pass
 
-aial = preprocess_util.prep_rating_category()
-random.seed(7)
-np.random.seed(7)
+random.seed(281)
+np.random.seed(281)
+aial = preprocess_util.prep_rating_category_scamount_download()
+#filter only rating cate
+newaial = []
+for x in aial:
+    newaial.append( (x[0], x[1], x[2]))
+aial = newaial
 random.shuffle(aial)
-ninety = int(len(aial)*80/100)
-aial_train = aial[:ninety]
-aial_test = aial[ninety:]
-# aial_train, aial_test = gen_k_fold_pass(aial, kf_pass=2, n_splits=10)
+
+aial_train, aial_test = gen_k_fold_pass(aial, kf_pass=0, n_splits=4)
 print(icon_cate_util.compute_baseline(aial_train, aial_test))
-input()
+
 model = icon_cate_util.create_icon_cate_model()
 
 batch_size = 24
