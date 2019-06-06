@@ -71,21 +71,23 @@ def datagenerator(aial, batch_size, epochs):
             yield icons, [labels, cate_labels]
 
 class FoldData:
-    def __init__(self, onehot, avg_rating, std_rating, scamount, total_app, download_dict):
+    def __init__(self, onehot, avg_rating, std_rating, scamount, total_app, download_dict, rating_amount_dict):
         self.onehot = onehot
         self.avg_rating = avg_rating
         self.std_rating = std_rating
         self.scamount = scamount
         self.total_app = total_app
         self.download_dict = download_dict
+        self.rating_amount_dict = rating_amount_dict
     def show(self):
-        print(self.onehot, self.avg_rating, self.std_rating, self.scamount, self.total_app, self.download_dict)
+        print(self.onehot, self.avg_rating, self.std_rating, self.scamount, self.total_app, self.download_dict, self.rating_amount_dict)
 def fn():
     def makeFoldData(aial):
         onehots = [0] * 18
         total_scamount = 0
         download_dict = [0,0,0,0]
-        for app_id,rating,onehot, scamount, download in aial:
+        rating_amount_dict = [0,0,0,0]
+        for app_id,rating,onehot, scamount, download, rating_amount in aial:
             total_scamount += scamount
             for i in range(len(onehot)):
                 if onehot[i] == 1:
@@ -95,8 +97,13 @@ def fn():
             elif download >= 1_00_000: download_dict[2] +=1
             elif download >= 5_000: download_dict[1] +=1
             else: download_dict[0] += 1
+            #rating amount
+            if rating_amount >= 5000: rating_amount_dict[3] += 1
+            elif rating_amount >= 500: rating_amount_dict[2] += 1
+            elif rating_amount >= 100: rating_amount_dict[1] += 1
+            else: rating_amount_dict[0] += 1
         avg , std = avg_rating(aial)
-        return FoldData(onehots, avg, std, total_scamount, len(aial), download_dict)
+        return FoldData(onehots, avg, std, total_scamount, len(aial), download_dict, rating_amount_dict)
     
     def computeObjValue(fds):
         #onehot

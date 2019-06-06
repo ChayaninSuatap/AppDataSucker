@@ -24,25 +24,28 @@ def prep_rating_category():
 def prep_rating_category_scamount_download():
     conn = db_util.connect_db()
     app_ids_and_labels = []
-    dat=conn.execute('select app_id, rating, category, screenshots_amount, download_amount  from app_data')
+    dat=conn.execute('select app_id, rating, category, screenshots_amount, download_amount, rating_amount  from app_data')
     for x in dat:
-        if x[1] != None and x[2] != None and x[3] != None and x[4] != None:
-            app_ids_and_labels.append( (x[0], x[1], x[2], x[3], x[4])) 
+        if x[1] != None and x[2] != None and x[3] != None and x[4] != None and x[5] != None:
+            app_ids_and_labels.append( (x[0], x[1], x[2], x[3], x[4], x[5])) 
 
     #rating str to float
     for i in range(len(app_ids_and_labels)):
-        app_id , rating, cate, scamount, download = app_ids_and_labels[i]
+        app_id , rating, cate, scamount, download, rating_amount = app_ids_and_labels[i]
         rating = float(app_ids_and_labels[i][1])
         scamount = float(app_ids_and_labels[i][3])
         #download 
         download = app_ids_and_labels[i][4].replace(',','').replace('+','')
         download = int(download)
-        app_ids_and_labels[i] = app_id, rating, cate, scamount, download
+        #rating amount
+        rating_amount = app_ids_and_labels[i][5].replace(',','')
+        rating_amount = int(rating_amount)
+        app_ids_and_labels[i] = app_id, rating, cate, scamount, download, rating_amount
     
     #prep category
     for i,x in enumerate(app_ids_and_labels):
         onehot = _extract_category(x[2])
-        app_ids_and_labels[i] = x[0], x[1], onehot, x[3], x[4]
+        app_ids_and_labels[i] = x[0], x[1], onehot, x[3], x[4], x[5]
     
     return app_ids_and_labels
 
