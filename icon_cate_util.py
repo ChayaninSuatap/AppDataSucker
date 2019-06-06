@@ -71,25 +71,32 @@ def datagenerator(aial, batch_size, epochs):
             yield icons, [labels, cate_labels]
 
 class FoldData:
-    def __init__(self, onehot, avg_rating, std_rating, scamount, total_app):
+    def __init__(self, onehot, avg_rating, std_rating, scamount, total_app, download_dict):
         self.onehot = onehot
         self.avg_rating = avg_rating
         self.std_rating = std_rating
         self.scamount = scamount
         self.total_app = total_app
+        self.download_dict = download_dict
     def show(self):
-        print(self.onehot, self.avg_rating, self.std_rating, self.scamount, self.total_app)
+        print(self.onehot, self.avg_rating, self.std_rating, self.scamount, self.total_app, self.download_dict)
 def fn():
     def makeFoldData(aial):
         onehots = [0] * 18
         total_scamount = 0
-        for app_id,rating,onehot, scamount in aial:
+        download_dict = [0,0,0,0]
+        for app_id,rating,onehot, scamount, download in aial:
             total_scamount += scamount
             for i in range(len(onehot)):
                 if onehot[i] == 1:
                     onehots[i]+=1
+            #download
+            if download >= 1_000_000: download_dict[3] +=1
+            elif download >= 1_00_000: download_dict[2] +=1
+            elif download >= 5_000: download_dict[1] +=1
+            else: download_dict[0] += 1
         avg , std = avg_rating(aial)
-        return FoldData(onehots, avg, std, total_scamount, len(aial))
+        return FoldData(onehots, avg, std, total_scamount, len(aial), download_dict)
     
     def computeObjValue(fds):
         #onehot
@@ -114,7 +121,7 @@ def fn():
         return total_onehot_loss * 0.001 + avg_rating_loss * 10 + std_rating_loss * 10 + scamount_loss * 0.0001
 
     def avg_rating(aial):
-        a = np.array([rating for _,rating,_,_ in aial])
+        a = np.array([x[1] for x in aial])
         return a.mean() , a.std()
 
     import random
@@ -125,8 +132,9 @@ def fn():
         random.seed(seed_value)
         np.random.seed(seed_value)
         #prepare data
-        aial = preprocess_util.prep_rating_category_scamount()
+        aial = preprocess_util.prep_rating_category_scamount_download()
         random.shuffle(aial)
+        fd=makeFoldData(aial)
         fds = []
         for i in range(4):
             train, test = keras_util.gen_k_fold_pass(aial, i, 4)
