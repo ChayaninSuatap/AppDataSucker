@@ -22,7 +22,7 @@ def compute_baseline(aial, aial_test):
 
     return avg, total_mse/ len(aial_test), total_mae/len(aial_test)
 
-def create_icon_cate_model():
+def create_icon_cate_model(cate_only=False):
     o = icon_util.create_model(IS_REGRESSION=True)
     input_layer = o['input_layer']
     flatten_layer = o['flatten_layer']
@@ -35,15 +35,20 @@ def create_icon_cate_model():
     x = Dropout(0.2)(x)
 
     output_cate = Dense(18, activation='sigmoid')(x)
-
-    model = Model(input=input_layer, output=[output_layer, output_cate])
-    model.compile(optimizer='adam',
-        loss={'my_model_regress_1':'mse','dense_2':'binary_crossentropy'},
-        metrics={'my_model_regress_1':'mean_absolute_percentage_error'})
+    model_output = output_cate if cate_only else [output_layer, output_cate]
+    model = Model(input=input_layer, output=model_output)
+    if cate_only:
+        model.compile(optimizer='adam',
+            loss='binary_crossentropy',
+            metrics=['acc'])
+    else:
+        model.compile(optimizer='adam',
+            loss={'my_model_regress_1':'mse','dense_2':'binary_crossentropy'},
+            metrics={'my_model_regress_1':'mean_absolute_percentage_error'})
     model.summary()
     return model
 
-def datagenerator(aial, batch_size, epochs):
+def datagenerator(aial, batch_size, epochs, cate_only=False):
 
     for i in range(epochs):
         random.shuffle(aial)
@@ -68,8 +73,11 @@ def datagenerator(aial, batch_size, epochs):
             icons /= 255
             labels = np.array(labels)
             cate_labels = np.array(cate_labels)
-            yield icons, [labels, cate_labels]
-
+            if cate_only:
+                yield icons, cate_labels
+            else:
+                yield icons, [labels, cate_labels]
+                
 class FoldData:
     def __init__(self, onehot, avg_rating, std_rating, scamount, total_app, download_dict, rating_amount_dict):
         self.onehot = onehot
@@ -134,6 +142,17 @@ def fn():
     import random
     answer_list = []
     MAX = 10
+    # check manualy
+    # random.seed(281)
+    # np.random.seed(281)
+    # #prepare data
+    # aial = preprocess_util.prep_rating_category_scamount_download()
+    # aial = preprocess_util.remove_low_rating_amount(aial, 100)
+    # random.shuffle(aial)
+    # train, test = keras_util.gen_k_fold_pass(aial, 0, 4)
+    # fd=makeFoldData(test)
+    # fd.show()
+    # input()
     for seed_value in range(0,1000):
         print('seed',seed_value)
         random.seed(seed_value)
