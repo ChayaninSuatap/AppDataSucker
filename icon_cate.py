@@ -12,17 +12,19 @@ random.seed(281)
 np.random.seed(281)
 aial = preprocess_util.prep_rating_category_scamount_download()
 aial = preprocess_util.remove_low_rating_amount(aial, 100)
+random.shuffle(aial)
+print('aial loss',icon_cate_util.compute_aial_loss(aial))
 #filter only rating cate
 newaial = []
 for x in aial:
     newaial.append( (x[0], x[1], x[2]))
 aial = newaial
-random.shuffle(aial)
 
 aial_train, aial_test = gen_k_fold_pass(aial, kf_pass=0, n_splits=4)
 print(icon_cate_util.compute_baseline(aial_train, aial_test))
 
 model = icon_cate_util.create_icon_cate_model(cate_only=True)
+model = load_model('reg_cate_only_k0-ep-013-loss-0.119-acc0.957-vloss-0.201-vacc-0.940.hdf5')
 
 batch_size = 24
 epochs = 999
@@ -57,4 +59,4 @@ model.fit_generator(gen_train,
     steps_per_epoch=math.ceil(len(aial_train)/batch_size),
     validation_data=gen_test, max_queue_size=1,
     validation_steps=math.ceil(len(aial_test)/batch_size),
-    callbacks=[checkpoint, palc], epochs=epochs)
+    callbacks=[checkpoint, palc], epochs=epochs, initial_epoch=13)

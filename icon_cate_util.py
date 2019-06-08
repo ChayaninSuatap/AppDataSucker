@@ -89,56 +89,64 @@ class FoldData:
         self.rating_amount_dict = rating_amount_dict
     def show(self):
         print(self.onehot, self.avg_rating, self.std_rating, self.scamount, self.total_app, self.download_dict, self.rating_amount_dict)
+def _makeFoldData(aial):
+    onehots = [0] * 18
+    total_scamount = 0
+    download_dict = [0,0,0,0]
+    rating_amount_dict = [0,0,0,0]
+    for app_id,rating,onehot, scamount, download, rating_amount in aial:
+        total_scamount += scamount
+        for i in range(len(onehot)):
+            if onehot[i] == 1:
+                onehots[i]+=1
+        #download
+        if download >= 1_000_000: download_dict[3] +=1
+        elif download >= 1_00_000: download_dict[2] +=1
+        elif download >= 5_000: download_dict[1] +=1
+        else: download_dict[0] += 1
+        #rating amount
+        if rating_amount >= 5000: rating_amount_dict[3] += 1
+        elif rating_amount >= 500: rating_amount_dict[2] += 1
+        elif rating_amount >= 100: rating_amount_dict[1] += 1
+        else: rating_amount_dict[0] += 1
+    avg , std = _avg_rating(aial)
+    return FoldData(onehots, avg, std, total_scamount, len(aial), download_dict, rating_amount_dict)
+
+def _computeObjValue(fds):
+    #onehot
+    total_onehot_loss = 0
+    for i in range(18):
+        maxv = max([fd.onehot[i] for fd in fds])
+        minv = min([fd.onehot[i] for fd in fds])
+        total_onehot_loss += maxv - minv
+    #screenshot
+    maxv = max(fd.scamount for fd in fds)
+    minv = min(fd.scamount for fd in fds)
+    scamount_loss = maxv - minv
+    #avg rating
+    maxv = max(fd.avg_rating for fd in fds)
+    minv = min(fd.avg_rating for fd in fds)
+    avg_rating_loss = maxv - minv 
+    #std rating
+    maxv = max(fd.std_rating for fd in fds)
+    minv = min(fd.std_rating for fd in fds)
+    std_rating_loss = maxv - minv
+    # print(total_onehot_loss, avg_rating_loss, std_rating_loss, scamount_loss)
+    return total_onehot_loss * 0.001 + avg_rating_loss * 10 + std_rating_loss * 10 + scamount_loss * 0.0001
+
+def _avg_rating(aial):
+    a = np.array([x[1] for x in aial])
+    return a.mean() , a.std()
+def _make_fds(aial):
+    fds = []
+    for i in range(4):
+        train, test = keras_util.gen_k_fold_pass(aial, i, 4)
+        fd = _makeFoldData(test)
+        fds.append(fd)
+    return fds
+def compute_aial_loss(aial):
+    return _computeObjValue(_make_fds(aial))
 def fn():
-    def makeFoldData(aial):
-        onehots = [0] * 18
-        total_scamount = 0
-        download_dict = [0,0,0,0]
-        rating_amount_dict = [0,0,0,0]
-        for app_id,rating,onehot, scamount, download, rating_amount in aial:
-            total_scamount += scamount
-            for i in range(len(onehot)):
-                if onehot[i] == 1:
-                    onehots[i]+=1
-            #download
-            if download >= 1_000_000: download_dict[3] +=1
-            elif download >= 1_00_000: download_dict[2] +=1
-            elif download >= 5_000: download_dict[1] +=1
-            else: download_dict[0] += 1
-            #rating amount
-            if rating_amount >= 5000: rating_amount_dict[3] += 1
-            elif rating_amount >= 500: rating_amount_dict[2] += 1
-            elif rating_amount >= 100: rating_amount_dict[1] += 1
-            else: rating_amount_dict[0] += 1
-        avg , std = avg_rating(aial)
-        return FoldData(onehots, avg, std, total_scamount, len(aial), download_dict, rating_amount_dict)
-    
-    def computeObjValue(fds):
-        #onehot
-        total_onehot_loss = 0
-        for i in range(18):
-            maxv = max([fd.onehot[i] for fd in fds])
-            minv = min([fd.onehot[i] for fd in fds])
-            total_onehot_loss += maxv - minv
-        #screenshot
-        maxv = max(fd.scamount for fd in fds)
-        minv = min(fd.scamount for fd in fds)
-        scamount_loss = maxv - minv
-        #avg rating
-        maxv = max(fd.avg_rating for fd in fds)
-        minv = min(fd.avg_rating for fd in fds)
-        avg_rating_loss = maxv - minv 
-        #std rating
-        maxv = max(fd.std_rating for fd in fds)
-        minv = min(fd.std_rating for fd in fds)
-        std_rating_loss = maxv - minv
-        # print(total_onehot_loss, avg_rating_loss, std_rating_loss, scamount_loss)
-        return total_onehot_loss * 0.001 + avg_rating_loss * 10 + std_rating_loss * 10 + scamount_loss * 0.0001
-
-    def avg_rating(aial):
-        a = np.array([x[1] for x in aial])
-        return a.mean() , a.std()
-
     import random
     answer_list = []
     MAX = 10
@@ -161,14 +169,14 @@ def fn():
         aial = preprocess_util.prep_rating_category_scamount_download()
         aial = preprocess_util.remove_low_rating_amount(aial, 100)
         random.shuffle(aial)
-        fd=makeFoldData(aial)
+        fd=_makeFoldData(aial)
         fds = []
         for i in range(4):
             train, test = keras_util.gen_k_fold_pass(aial, i, 4)
-            fd = makeFoldData(test)
+            fd = _makeFoldData(test)
             fds.append(fd)
         #optimize
-        loss = computeObjValue(fds)
+        loss = _computeObjValue(fds)
         if len(answer_list) == 0: answer_list.append((fds,seed_value, loss))
         elif len(answer_list) == MAX: #full pop if better
             if answer_list[-1][2] > loss:
