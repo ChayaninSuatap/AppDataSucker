@@ -22,7 +22,7 @@ def compute_baseline(aial, aial_test):
 
     return avg, total_mse/ len(aial_test), total_mae/len(aial_test)
 
-def create_icon_cate_model(cate_only=False):
+def create_icon_cate_model(cate_only=False, is_softmax=False):
     o = icon_util.create_model(IS_REGRESSION=True)
     input_layer = o['input_layer']
     flatten_layer = o['flatten_layer']
@@ -34,16 +34,19 @@ def create_icon_cate_model(cate_only=False):
     x = BatchNormalization()(x)
     x = Dropout(0.2)(x)
 
-    output_cate = Dense(18, activation='sigmoid')(x)
+    if is_softmax:
+        output_cate = Dense(18, activation='softmax')(x)
+    else:
+        output_cate = Dense(18, activation='sigmoid')(x)
     model_output = output_cate if cate_only else [output_layer, output_cate]
     model = Model(input=input_layer, output=model_output)
     if cate_only:
         model.compile(optimizer='adam',
-            loss='binary_crossentropy',
+            loss='categorical_crossentropy' if is_softmax else 'binary_crossentropy',
             metrics=['acc'])
     else:
         model.compile(optimizer='adam',
-            loss={'my_model_regress_1':'mse','dense_2':'binary_crossentropy'},
+            loss={'my_model_regress_1':'mse','dense_2':'categorical_crossentropy' if is_softmax else 'binary_crossentropy'},
             metrics={'my_model_regress_1':'mean_absolute_percentage_error'})
     model.summary()
     return model
@@ -166,7 +169,7 @@ def fn():
         random.seed(seed_value)
         np.random.seed(seed_value)
         #prepare data
-        aial = preprocess_util.prep_rating_category_scamount_download()
+        aial = preprocess_util.prep_rating_category_scamount_download(for_softmax=True)
         aial = preprocess_util.remove_low_rating_amount(aial, 100)
         random.shuffle(aial)
         fd=_makeFoldData(aial)

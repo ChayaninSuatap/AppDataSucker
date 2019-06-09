@@ -8,12 +8,19 @@ from keras.callbacks import ModelCheckpoint
 from keras_util import PlotAccLossCallback, gen_k_fold_pass
 from keras.models import load_model
 
-random.seed(281)
-np.random.seed(281)
-aial = preprocess_util.prep_rating_category_scamount_download()
+random.seed(859)
+np.random.seed(859)
+aial = preprocess_util.prep_rating_category_scamount_download(for_softmax=True)
 aial = preprocess_util.remove_low_rating_amount(aial, 100)
 random.shuffle(aial)
 print('aial loss',icon_cate_util.compute_aial_loss(aial))
+fds = icon_cate_util._make_fds(aial)
+for x in fds: x.show()
+for x in aial:
+    if all(y==0 for y in x[2]): print('all zero')
+    if sum(x[2])>1: print('shit')
+input('done')
+
 #filter only rating cate
 newaial = []
 for x in aial:
@@ -23,8 +30,7 @@ aial = newaial
 aial_train, aial_test = gen_k_fold_pass(aial, kf_pass=0, n_splits=4)
 print(icon_cate_util.compute_baseline(aial_train, aial_test))
 
-model = icon_cate_util.create_icon_cate_model(cate_only=True)
-model = load_model('reg_cate_only_k0-ep-013-loss-0.119-acc0.957-vloss-0.201-vacc-0.940.hdf5')
+model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True)
 
 batch_size = 24
 epochs = 999
@@ -32,9 +38,10 @@ gen_train = icon_cate_util.datagenerator(aial_train, batch_size, epochs, cate_on
 gen_test = icon_cate_util.datagenerator(aial_test, batch_size, epochs, cate_only=True)
 
 #predict
-# model = load_model('reg_cate_only_k0-ep-006-loss-0.173-acc0.946-vloss-0.186-vacc-0.945.hdf5')
-# f = open('pred.txt', 'w')
-# f2 = open('real.txt', 'w')
+#last ep 6
+# model = load_model('cate_only_multilabel-ep-020-loss-0.078-acc0.971-vloss-0.204-vacc-0.943.hdf5')
+# f = open('pred_ep_20.txt', 'w')
+# f2 = open('real_ep_20.txt', 'w')
 # for x in aial_test:
 #     app_id = x[0]
 #     answer = x[2]
@@ -49,8 +56,9 @@ gen_test = icon_cate_util.datagenerator(aial_test, batch_size, epochs, cate_only
 #         pred = model.predict(icons)
 #         f.writelines(str(pred[0].tolist()) + '\n')
 #         f2.writelines(str(answer) + '\n')
+# input('done')
 
-filepath='reg_cate_only_k0-ep-{epoch:03d}-loss-{loss:.3f}-acc{acc:.3f}-vloss-{val_loss:.3f}-vacc-{val_acc:.3f}.hdf5'
+filepath='reg_cate_only_softmax_k0-ep-{epoch:03d}-loss-{loss:.3f}-acc{acc:.3f}-vloss-{val_loss:.3f}-vacc-{val_acc:.3f}.hdf5'
 ### save for predict rating + cate
 # filepath='reg_cate_only_k0-ep-{epoch:03d}-loss-{my_model_regress_1_loss:.3f}-vloss-{val_my_model_regress_1_loss:.3f}-vmape-{val_my_model_regress_1_mean_absolute_percentage_error:.3f}.hdf5'
 checkpoint = ModelCheckpoint(filepath, monitor='val_acc', save_best_only=False, verbose=0, period=1)
@@ -59,4 +67,4 @@ model.fit_generator(gen_train,
     steps_per_epoch=math.ceil(len(aial_train)/batch_size),
     validation_data=gen_test, max_queue_size=1,
     validation_steps=math.ceil(len(aial_test)/batch_size),
-    callbacks=[checkpoint, palc], epochs=epochs, initial_epoch=13)
+    callbacks=[checkpoint, palc], epochs=epochs)
