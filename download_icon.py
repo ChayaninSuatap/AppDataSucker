@@ -9,8 +9,8 @@ from time import sleep
 
 def download_icon(app_id, resp):
     try :
-        t = resp.css("div.dQrBL").css('img.T75of.ujDFqe').extract()[0]
-        t = t.split('"')[1]
+        t = resp.css("div.xSyT2c").css('img.T75of.sHb2Xb').extract()[0]
+        t = t.split('"')[1].split('=')[0]
         #get icon file
         with open(mypath.icon_folder + app_id + '.png' , 'wb') as handle:
             t = requests.get(t, stream = True)

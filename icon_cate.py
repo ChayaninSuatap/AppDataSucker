@@ -27,7 +27,7 @@ for x in aial:
     newaial.append( (x[0], x[1], x[2]))
 aial = newaial
 
-aial_train, aial_test = gen_k_fold_pass(aial, kf_pass=0, n_splits=4)
+aial_train, aial_test = gen_k_fold_pass(aial, kf_pass=2, n_splits=4)
 print(icon_cate_util.compute_baseline(aial_train, aial_test))
 
 model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True)
@@ -58,7 +58,7 @@ gen_test = icon_cate_util.datagenerator(aial_test, batch_size, epochs, cate_only
 #         f2.writelines(str(answer) + '\n')
 # input('done')
 
-filepath='reg_cate_only_softmax_k0-ep-{epoch:03d}-loss-{loss:.3f}-acc{acc:.3f}-vloss-{val_loss:.3f}-vacc-{val_acc:.3f}.hdf5'
+filepath='reg_cate_only_softmax_k2-ep-{epoch:03d}-loss-{loss:.3f}-acc{acc:.3f}-vloss-{val_loss:.3f}-vacc-{val_acc:.3f}.hdf5'
 ### save for predict rating + cate
 # filepath='reg_cate_only_k0-ep-{epoch:03d}-loss-{my_model_regress_1_loss:.3f}-vloss-{val_my_model_regress_1_loss:.3f}-vmape-{val_my_model_regress_1_mean_absolute_percentage_error:.3f}.hdf5'
 checkpoint = ModelCheckpoint(filepath, monitor='val_acc', save_best_only=False, verbose=0, period=1)
