@@ -22,22 +22,25 @@ def compute_baseline(aial, aial_test):
 
     return avg, total_mse/ len(aial_test), total_mae/len(aial_test)
 
-def create_icon_cate_model(cate_only=False, is_softmax=False):
-    o = icon_util.create_model(IS_REGRESSION=True)
+def create_icon_cate_model(cate_only=False, is_softmax=False, use_gap=False):
+    o = icon_util.create_model(IS_REGRESSION=True, use_gap=use_gap)
     input_layer = o['input_layer']
     flatten_layer = o['flatten_layer']
     output_layer = o['output_layer']
 
     #jump
-    x = Dense(32)(flatten_layer)
-    x = LeakyReLU()(x)
-    x = BatchNormalization()(x)
-    x = Dropout(0.2)(x)
-
-    if is_softmax:
-        output_cate = Dense(18, activation='softmax')(x)
+    if use_gap and is_softmax:
+        output_cate = Dense(18, activation='softmax')(flatten_layer)
     else:
-        output_cate = Dense(18, activation='sigmoid')(x)
+        x = Dense(32)(flatten_layer)
+        x = LeakyReLU()(x)
+        x = BatchNormalization()(x)
+        x = Dropout(0.2)(x)
+        if is_softmax:
+            output_cate = Dense(18, activation='softmax')(x)
+        else:
+            output_cate = Dense(18, activation='sigmoid')(x)
+    
     model_output = output_cate if cate_only else [output_layer, output_cate]
     model = Model(input=input_layer, output=model_output)
     if cate_only:

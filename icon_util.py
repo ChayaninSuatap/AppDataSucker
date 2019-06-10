@@ -2,7 +2,7 @@ import numpy as np
 from PIL import Image
 import mypath
 import random
-from keras.layers import Dense, Conv2D, Input, MaxPooling2D, Flatten, Dropout, BatchNormalization, ReLU, LeakyReLU
+from keras.layers import Dense, Conv2D, Input, MaxPooling2D, Flatten, Dropout, BatchNormalization, ReLU, LeakyReLU, GlobalAveragePooling2D, AveragePooling2D
 from keras.models import Model
 
 def load_icon_by_app_id(app_id, resizeW, resizeH):
@@ -36,7 +36,7 @@ def oversample_image(app_ids_and_labels):
             picked = random.choice(app_id_pool[label])
             app_ids_and_labels.append( picked)
 
-def create_model(IS_REGRESSION, summary=False):
+def create_model(IS_REGRESSION, summary=False, use_gap=False):
     def add_conv(layer, filter_n, kernel_size=(3,3), dropout=0.2, padding_same=False):
         padding = 'same' if padding_same else 'valid'
         x = Conv2D(filter_n ,kernel_size, padding=padding)(layer)
@@ -50,7 +50,10 @@ def create_model(IS_REGRESSION, summary=False):
     x = add_conv(input_layer, 64, padding_same=True)
     x = add_conv(x, 128, padding_same=True)
     x = add_conv(x, 256, padding_same=True)
-    x = add_conv(x, 128, padding_same=True, kernel_size=(1,1))
+    if not use_gap:
+        x = add_conv(x, 128, padding_same=True, kernel_size=(1,1))
+    if use_gap:
+        x = AveragePooling2D((16,16))(x)
     x = Flatten(name='my_model_flatten')(x)
     flatten_layer = x
 

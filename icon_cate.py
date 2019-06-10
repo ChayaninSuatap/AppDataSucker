@@ -7,6 +7,8 @@ import math
 from keras.callbacks import ModelCheckpoint
 from keras_util import PlotAccLossCallback, gen_k_fold_pass
 from keras.models import load_model
+import keras
+import functools
 
 random.seed(859)
 np.random.seed(859)
@@ -27,10 +29,10 @@ for x in aial:
     newaial.append( (x[0], x[1], x[2]))
 aial = newaial
 
-aial_train, aial_test = gen_k_fold_pass(aial, kf_pass=2, n_splits=4)
+aial_train, aial_test = gen_k_fold_pass(aial, kf_pass=0, n_splits=4)
 print(icon_cate_util.compute_baseline(aial_train, aial_test))
 
-model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True)
+model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True, use_gap=True)
 
 batch_size = 24
 epochs = 999
@@ -39,7 +41,7 @@ gen_test = icon_cate_util.datagenerator(aial_test, batch_size, epochs, cate_only
 
 #predict
 #last ep 6
-# model = load_model('cate_only_multilabel-ep-020-loss-0.078-acc0.971-vloss-0.204-vacc-0.943.hdf5')
+# model = load_model('cate_only_softmax-ep-211-loss-0.067-acc-0.979-vloss-5.002-vacc-0.292.hdf5')
 # f = open('pred_ep_20.txt', 'w')
 # f2 = open('real_ep_20.txt', 'w')
 # for x in aial_test:
@@ -58,7 +60,17 @@ gen_test = icon_cate_util.datagenerator(aial_test, batch_size, epochs, cate_only
 #         f2.writelines(str(answer) + '\n')
 # input('done')
 
-filepath='reg_cate_only_softmax_k2-ep-{epoch:03d}-loss-{loss:.3f}-acc{acc:.3f}-vloss-{val_loss:.3f}-vacc-{val_acc:.3f}.hdf5'
+#eval top k
+model = load_model('cate_only_softmax-ep-050-loss-0.204-acc-0.935-vloss-3.892-vacc-0.287.hdf5')
+top_3 = functools.partial(keras.metrics.top_k_categorical_accuracy, k=3)
+top_5 = functools.partial(keras.metrics.top_k_categorical_accuracy, k=5)
+top_3.__name__ = 'top_3'
+top_5.__name__ = 'top_5'
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['acc', top_3, top_5])
+print(model.evaluate_generator(gen_test,steps=math.ceil(len(aial_test)/batch_size)))
+input()
+
+filepath='reg_cate_only_softmax_gap_k0-ep-{epoch:03d}-loss-{loss:.3f}-acc{acc:.3f}-vloss-{val_loss:.3f}-vacc-{val_acc:.3f}.hdf5'
 ### save for predict rating + cate
 # filepath='reg_cate_only_k0-ep-{epoch:03d}-loss-{my_model_regress_1_loss:.3f}-vloss-{val_my_model_regress_1_loss:.3f}-vmape-{val_my_model_regress_1_mean_absolute_percentage_error:.3f}.hdf5'
 checkpoint = ModelCheckpoint(filepath, monitor='val_acc', save_best_only=False, verbose=0, period=1)

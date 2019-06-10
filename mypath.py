@@ -1,5 +1,5 @@
 data_db = 'data.db'
 crawlstate_txt = 'crawlstate.txt'
 chrome_driver = 'chromedriver.exe'
-icon_folder = 'icons/'
+icon_folder = 'icons.backup/'
 screenshot_folder = 'screenshots/'
