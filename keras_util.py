@@ -2,6 +2,8 @@ import os
 import random
 import icon_util
 from sklearn.model_selection import KFold
+import functools
+import keras
 def compute_class_weight(labels):
     #make class_freq
     class_freq={}
@@ -185,5 +187,8 @@ def gen_k_fold_pass(aial, kf_pass, n_splits):
             break
     return app_ids_and_labels_train, app_ids_and_labels_test
 
-
+def metric_top_k(k):
+    o = functools.partial(keras.metrics.top_k_categorical_accuracy, k=k)
+    o.__name__ = 'top_' + str(k)
+    return o
 

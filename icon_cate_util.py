@@ -1,6 +1,6 @@
 import icon_util
 from keras.layers import Dense, Conv2D, Input, MaxPooling2D, Flatten, Dropout, BatchNormalization, ReLU, LeakyReLU
-from keras.models import Model
+from keras.models import Model, load_model
 from keras_util import group_for_fit_generator
 import random
 import numpy as np
@@ -208,6 +208,20 @@ def check_aial_error(aial):
     for x in aial:
         if all(y==0 for y in x[2]): print('all zero')
         if sum(x[2])>1: print('shit')
+
+def eval_top_k(gen_test, steps):
+    import os
+    from keras_util import metric_top_k
+    for fn in os.listdir('eval_top_k'):
+        path = 'eval_top_k/' + fn
+        model = load_model(path)
+        model.compile(optimizer='adam',
+            loss='categorical_crossentropy',
+            metrics=['acc',metric_top_k(2),metric_top_k(3),metric_top_k(4), metric_top_k(5)])
+        print(path)
+        print(model.evaluate_generator(gen_test, steps=steps))
+        print("")
+    print('done')
+
 if __name__ == '__main__':
     fn()
-

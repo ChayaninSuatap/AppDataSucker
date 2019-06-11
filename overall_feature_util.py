@@ -119,6 +119,7 @@ def _extract_category(x):
                 one_hot_vec[index] = 1
         except:
             continue
+    one_hot_vec.pop(2)
     return one_hot_vec
 
 def _extract_rating_amount(x):
