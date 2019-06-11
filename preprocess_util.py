@@ -43,8 +43,6 @@ def prep_rating_category_scamount_download(for_softmax=False):
         rating_amount = int(rating_amount)
         #category
         cate = _extract_category(cate)
-        if for_softmax:
-            cate[2] = 0
         if all(y==0 for y in cate):
             continue
         output.append((app_id, rating, cate, scamount, download, rating_amount))

@@ -33,7 +33,7 @@ def create_icon_cate_model(cate_only=False, is_softmax=False, use_gap=False, tra
     if use_gap and is_softmax:
         output_cate = Dense(17, activation='softmax')(flatten_layer)
     else:
-        x = Dense(32)(flatten_layer)
+        x = Dense(34)(flatten_layer)
         x = LeakyReLU()(x)
         x = BatchNormalization()(x)
         x = Dropout(0.2)(x)
@@ -100,7 +100,7 @@ class FoldData:
     def show(self):
         print(self.onehot, self.avg_rating, self.std_rating, self.scamount, self.total_app, self.download_dict, self.rating_amount_dict)
 def _makeFoldData(aial):
-    onehots = [0] * 18
+    onehots = [0] * 17
     total_scamount = 0
     download_dict = [0,0,0,0]
     rating_amount_dict = [0,0,0,0]
@@ -125,7 +125,7 @@ def _makeFoldData(aial):
 def _computeObjValue(fds):
     #onehot
     total_onehot_loss = 0
-    for i in range(18):
+    for i in range(17):
         maxv = max([fd.onehot[i] for fd in fds])
         minv = min([fd.onehot[i] for fd in fds])
         total_onehot_loss += maxv - minv

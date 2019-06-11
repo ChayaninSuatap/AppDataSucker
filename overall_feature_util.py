@@ -105,7 +105,7 @@ def _extract_download_amount(x):
         x = int(x)
         return 0 if x == 0 else math.log(x)
 
-_all_game_category = ['GAME_BOARD', 'GAME_TRIVIA', 'FAMILY_BRAINGAMES', 'GAME_ARCADE', 'GAME_CARD', 'GAME_MUSIC', 'GAME_RACING',
+_all_game_category = ['GAME_BOARD', 'GAME_TRIVIA', 'GAME_ARCADE', 'GAME_CARD', 'GAME_MUSIC', 'GAME_RACING',
  'GAME_ACTION', 'GAME_PUZZLE', 'GAME_SIMULATION', 'GAME_STRATEGY', 'GAME_ROLE_PLAYING', 'GAME_SPORTS', 'GAME_ADVENTURE', 'GAME_CASINO', 'GAME_WORD', 'GAME_CASUAL', 'GAME_EDUCATIONAL']
 
 def _extract_category(x):
@@ -119,7 +119,6 @@ def _extract_category(x):
                 one_hot_vec[index] = 1
         except:
             continue
-    one_hot_vec.pop(2)
     return one_hot_vec
 
 def _extract_rating_amount(x):
