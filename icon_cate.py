@@ -21,7 +21,6 @@ for x in fds: x.show()
 for x in aial:
     if all(y==0 for y in x[2]): print('all zero')
     if sum(x[2])>1: print('shit')
-input('done')
 
 #filter only rating cate
 newaial = []
@@ -61,7 +60,7 @@ gen_test = icon_cate_util.datagenerator(aial_test, batch_size, epochs, cate_only
 # input('done')
 
 #eval top k
-model = load_model('cate_only_softmax-ep-050-loss-0.204-acc-0.935-vloss-3.892-vacc-0.287.hdf5')
+model = load_model('cate_only_softmax-ep-175-loss-0.087-acc-0.974-vloss-4.828-vacc-0.312.hdf5')
 top_3 = functools.partial(keras.metrics.top_k_categorical_accuracy, k=3)
 top_5 = functools.partial(keras.metrics.top_k_categorical_accuracy, k=5)
 top_3.__name__ = 'top_3'

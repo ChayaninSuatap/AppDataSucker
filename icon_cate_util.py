@@ -7,7 +7,8 @@ import numpy as np
 import math
 import preprocess_util
 import keras_util
-
+import matplotlib.pyplot as plt
+import mypath
 def compute_baseline(aial, aial_test):
     total = 0
     for _,x,_ in aial:
@@ -22,8 +23,8 @@ def compute_baseline(aial, aial_test):
 
     return avg, total_mse/ len(aial_test), total_mae/len(aial_test)
 
-def create_icon_cate_model(cate_only=False, is_softmax=False, use_gap=False):
-    o = icon_util.create_model(IS_REGRESSION=True, use_gap=use_gap)
+def create_icon_cate_model(cate_only=False, is_softmax=False, use_gap=False, train_sc=False):
+    o = icon_util.create_model(IS_REGRESSION=True, use_gap=use_gap, train_sc=train_sc)
     input_layer = o['input_layer']
     flatten_layer = o['flatten_layer']
     output_layer = o['output_layer']
@@ -54,7 +55,7 @@ def create_icon_cate_model(cate_only=False, is_softmax=False, use_gap=False):
     model.summary()
     return model
 
-def datagenerator(aial, batch_size, epochs, cate_only=False):
+def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False):
 
     for i in range(epochs):
         random.shuffle(aial)
@@ -65,12 +66,15 @@ def datagenerator(aial, batch_size, epochs, cate_only=False):
             #prepare chrunk
             for app_id, label, cate_label in g:
                 try:
-                    icon = icon_util.load_icon_by_app_id(app_id, 128, 128)
-                    icons.append(icon)
-                    labels.append(label)
-                    cate_labels.append(cate_label)
+                    if train_sc:
+                        icon = icon_util.load_icon_by_fn(mypath.screenshot_folder + app_id, 256, 160, rotate_for_sc=True)
+                    else:
+                        icon = icon_util.load_icon_by_app_id(app_id, 128, 128)
                 except:
-                    pass
+                    continue
+                icons.append(icon)
+                labels.append(label)
+                cate_labels.append(cate_label)     
 
             icons = np.asarray(icons)
 
@@ -198,7 +202,12 @@ def fn():
     for fds,seed,loss in answer_list:
         for x in fds: x.show()
         print(seed, loss)
-
+def check_aial_error(aial):
+    fds = _make_fds(aial)
+    for x in fds: x.show()
+    for x in aial:
+        if all(y==0 for y in x[2]): print('all zero')
+        if sum(x[2])>1: print('shit')
 if __name__ == '__main__':
     fn()
 

@@ -51,6 +51,12 @@ def prep_rating_category_scamount_download(for_softmax=False):
     
     return output
 
+def get_app_id_rating_cate_from_aial(aial):
+    newaial = []
+    for x in aial:
+        newaial.append( (x[0], x[1], x[2]))
+    return newaial
+
 def remove_low_rating_amount(aial, threshold):
     newaial = []
     for x in aial:

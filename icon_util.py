@@ -4,15 +4,23 @@ import mypath
 import random
 from keras.layers import Dense, Conv2D, Input, MaxPooling2D, Flatten, Dropout, BatchNormalization, ReLU, LeakyReLU, GlobalAveragePooling2D, AveragePooling2D
 from keras.models import Model
+import matplotlib.pyplot as plt
 
 def load_icon_by_app_id(app_id, resizeW, resizeH):
     return open_and_resize(mypath.icon_folder + app_id + '.png', resizeW, resizeH)
 
-def open_and_resize(fn, resizeW, resizeH):
-    return np.asarray( _convert_to_rgba(fn, resizeW, resizeH ))[:,:,:3]
+def load_icon_by_fn(fn, resizeW, resizeH, rotate_for_sc=False):
+    return open_and_resize(fn, resizeW, resizeH, rotate_for_sc)
 
-def _convert_to_rgba(fn, resizeW, resizeH):
+def open_and_resize(fn, resizeW, resizeH, rotate_for_sc=False):
+    return np.asarray( _convert_to_rgba(fn, resizeW, resizeH, rotate_for_sc))[:,:,:3]
+
+def _convert_to_rgba(fn, resizeW, resizeH, rotate_for_sc=False):
     png = Image.open(fn).convert('RGBA')
+    if rotate_for_sc:
+        w,h = png.size
+        if h > w:
+            png = png.rotate(90, expand=True)
     png = png.resize( (resizeW, resizeH))
     background = Image.new('RGBA', png.size, (255,255,255))
 
@@ -36,7 +44,7 @@ def oversample_image(app_ids_and_labels):
             picked = random.choice(app_id_pool[label])
             app_ids_and_labels.append( picked)
 
-def create_model(IS_REGRESSION, summary=False, use_gap=False):
+def create_model(IS_REGRESSION, summary=False, use_gap=False, train_sc=False):
     def add_conv(layer, filter_n, kernel_size=(3,3), dropout=0.2, padding_same=False):
         padding = 'same' if padding_same else 'valid'
         x = Conv2D(filter_n ,kernel_size, padding=padding)(layer)
@@ -46,7 +54,10 @@ def create_model(IS_REGRESSION, summary=False, use_gap=False):
         x = MaxPooling2D()(x) 
         return x
     #make model
-    input_layer = Input(shape=(128, 128, 3))
+    if train_sc:
+        input_layer = Input(shape=(160, 256, 3))
+    else:
+        input_layer = Input(shape=(128, 128, 3))
     x = add_conv(input_layer, 64, padding_same=True)
     x = add_conv(x, 128, padding_same=True)
     x = add_conv(x, 256, padding_same=True)
