@@ -31,16 +31,16 @@ def create_icon_cate_model(cate_only=False, is_softmax=False, use_gap=False, tra
 
     #jump
     if use_gap and is_softmax:
-        output_cate = Dense(18, activation='softmax')(flatten_layer)
+        output_cate = Dense(17, activation='softmax')(flatten_layer)
     else:
         x = Dense(32)(flatten_layer)
         x = LeakyReLU()(x)
         x = BatchNormalization()(x)
         x = Dropout(0.2)(x)
         if is_softmax:
-            output_cate = Dense(18, activation='softmax')(x)
+            output_cate = Dense(17, activation='softmax')(x)
         else:
-            output_cate = Dense(18, activation='sigmoid')(x)
+            output_cate = Dense(17, activation='sigmoid')(x)
     
     model_output = output_cate if cate_only else [output_layer, output_cate]
     model = Model(input=input_layer, output=model_output)
