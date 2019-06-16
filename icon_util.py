@@ -2,8 +2,9 @@ import numpy as np
 from PIL import Image
 import mypath
 import random
-from keras.layers import Dense, Conv2D, Input, MaxPooling2D, Flatten, Dropout, BatchNormalization, ReLU, LeakyReLU, GlobalAveragePooling2D, AveragePooling2D
-from keras.models import Model
+import tensorflow as tf
+from tensorflow.keras.layers import Dense, Conv2D, Input, MaxPooling2D, Flatten, Dropout, BatchNormalization, ReLU, LeakyReLU, GlobalAveragePooling2D, AveragePooling2D
+from tensorflow.keras.models import Model
 import matplotlib.pyplot as plt
 
 def load_icon_by_app_id(app_id, resizeW, resizeH):
@@ -85,7 +86,7 @@ def create_model(IS_REGRESSION, summary=False, use_gap=False, train_sc=False):
         x = Dense(16, name='my_model_dense_2')(x)
         x = LeakyReLU()(x)
         output_layer = Dense(3, activation='softmax', name='my_model_dense_3')(x)
-    model = Model(input=input_layer, output=output_layer)
+    model = Model(inputs=input_layer, outputs=output_layer)
 
     #compile
     if IS_REGRESSION:

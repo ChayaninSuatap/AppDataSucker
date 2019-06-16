@@ -6,7 +6,7 @@ import preprocess_util
 import icon_cate_util
 from keras_util import gen_k_fold_pass
 import sc_util
-from keras.callbacks import ModelCheckpoint
+from tensorflow.keras.callbacks import ModelCheckpoint
 from keras_util import PlotAccLossCallback
 import math
 

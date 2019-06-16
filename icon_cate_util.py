@@ -1,6 +1,7 @@
 import icon_util
-from keras.layers import Dense, Conv2D, Input, MaxPooling2D, Flatten, Dropout, BatchNormalization, ReLU, LeakyReLU
-from keras.models import Model, load_model
+import tensorflow as tf
+from tensorflow.keras.layers import Dense, Conv2D, Input, MaxPooling2D, Flatten, Dropout, BatchNormalization, ReLU, LeakyReLU
+from tensorflow.keras.models import Model, load_model
 from keras_util import group_for_fit_generator
 import random
 import numpy as np
@@ -43,7 +44,7 @@ def create_icon_cate_model(cate_only=False, is_softmax=False, use_gap=False, tra
             output_cate = Dense(17, activation='sigmoid')(x)
     
     model_output = output_cate if cate_only else [output_layer, output_cate]
-    model = Model(input=input_layer, output=model_output)
+    model = Model(inputs=input_layer, outputs=model_output)
     if cate_only:
         model.compile(optimizer='adam',
             loss='categorical_crossentropy' if is_softmax else 'binary_crossentropy',

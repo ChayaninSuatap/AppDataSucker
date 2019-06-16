@@ -4,7 +4,7 @@ import numpy as np
 import random
 import icon_util
 import math
-from keras.callbacks import ModelCheckpoint
+from tensorflow.keras.callbacks import ModelCheckpoint
 from keras_util import PlotAccLossCallback, gen_k_fold_pass, metric_top_k
 from keras.models import load_model
 import keras
@@ -25,6 +25,7 @@ aial_train, aial_test = gen_k_fold_pass(aial, kf_pass=3, n_splits=4)
 print(icon_cate_util.compute_baseline(aial_train, aial_test))
 
 model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True)
+print('worked')
 
 batch_size = 16
 epochs = 999
@@ -32,9 +33,11 @@ gen_train = icon_cate_util.datagenerator(aial_train, batch_size, epochs, cate_on
 gen_test = icon_cate_util.datagenerator(aial_test, batch_size, epochs, cate_only=True)
 
 #eval top k
-icon_cate_util.eval_top_k(gen_test, math.ceil(len(aial_test)/batch_size))
+# icon_cate_util.eval_top_k(gen_test, math.ceil(len(aial_test)/batch_size))
 # input()
-model = load_model('reg_cate_17_softmax_k3-ep-023-loss-0.548-acc0.818-vloss-3.618-vacc-0.284.hdf5')
+
+model.load_weights('reg_cate_17_softmax_k3-ep-023-loss-0.548-acc0.818-vloss-3.618-vacc-0.284.hdf5')
+# model = load_model('reg_cate_17_softmax_k3-ep-023-loss-0.548-acc0.818-vloss-3.618-vacc-0.284.hdf5')
 filepath='reg_cate_17_softmax_k3-ep-{epoch:03d}-loss-{loss:.3f}-acc{acc:.3f}-vloss-{val_loss:.3f}-vacc-{val_acc:.3f}.hdf5'
 ### save for predict rating + cate
 # filepath='reg_cate_only_k0-ep-{epoch:03d}-loss-{my_model_regress_1_loss:.3f}-vloss-{val_my_model_regress_1_loss:.3f}-vmape-{val_my_model_regress_1_mean_absolute_percentage_error:.3f}.hdf5'

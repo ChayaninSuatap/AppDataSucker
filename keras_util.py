@@ -4,6 +4,11 @@ import icon_util
 from sklearn.model_selection import KFold
 import functools
 import keras
+from plt_util import plot_confusion_matrix
+from tensorflow.keras.callbacks import Callback
+import numpy as np
+import math
+
 def compute_class_weight(labels):
     #make class_freq
     class_freq={}
@@ -34,10 +39,7 @@ def group_for_fit_generator(xs, n, shuffle=False):
     if out != []:
         yield out
 
-from plt_util import plot_confusion_matrix
-from keras.callbacks import Callback
-import numpy as np
-import math
+
 class PlotConfusionMatrixCallback(Callback):
     def set_postfix_name(self, name):
         self.postfix_name = name
