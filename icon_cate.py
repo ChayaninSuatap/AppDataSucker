@@ -26,15 +26,15 @@ print(icon_cate_util.compute_baseline(aial_train, aial_test))
 
 model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True)
 
-batch_size = 24
+batch_size = 16
 epochs = 999
 gen_train = icon_cate_util.datagenerator(aial_train, batch_size, epochs, cate_only=True)
 gen_test = icon_cate_util.datagenerator(aial_test, batch_size, epochs, cate_only=True)
 
 #eval top k
-# icon_cate_util.eval_top_k(gen_test, math.ceil(len(aial_test)/batch_size))
+icon_cate_util.eval_top_k(gen_test, math.ceil(len(aial_test)/batch_size))
 # input()
-
+model = load_model('reg_cate_17_softmax_k3-ep-023-loss-0.548-acc0.818-vloss-3.618-vacc-0.284.hdf5')
 filepath='reg_cate_17_softmax_k3-ep-{epoch:03d}-loss-{loss:.3f}-acc{acc:.3f}-vloss-{val_loss:.3f}-vacc-{val_acc:.3f}.hdf5'
 ### save for predict rating + cate
 # filepath='reg_cate_only_k0-ep-{epoch:03d}-loss-{my_model_regress_1_loss:.3f}-vloss-{val_my_model_regress_1_loss:.3f}-vmape-{val_my_model_regress_1_mean_absolute_percentage_error:.3f}.hdf5'
@@ -44,4 +44,4 @@ model.fit_generator(gen_train,
     steps_per_epoch=math.ceil(len(aial_train)/batch_size),
     validation_data=gen_test, max_queue_size=1,
     validation_steps=math.ceil(len(aial_test)/batch_size),
-    callbacks=[checkpoint, palc], epochs=epochs)
+    callbacks=[checkpoint, palc], epochs=epochs, initial_epoch=23)
