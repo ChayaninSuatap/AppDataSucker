@@ -194,3 +194,9 @@ def metric_top_k(k):
     o.__name__ = 'top_' + str(k)
     return o
 
+def eval_top_5(model, test_generator, steps):
+    gen = test_generator
+    model.compile(optimizer='adam',
+        loss='categorical_crossentropy',
+        metrics=['acc',metric_top_k(2),metric_top_k(3),metric_top_k(4), metric_top_k(5)])
+    print(model.evaluate_generator(gen, steps=steps))
