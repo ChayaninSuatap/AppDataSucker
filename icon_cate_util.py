@@ -56,11 +56,11 @@ def create_icon_cate_model(cate_only=False, is_softmax=False, use_gap=False, tra
     model.summary()
     return model
 
-def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False):
+def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shuffle=True):
 
     for i in range(epochs):
-        random.shuffle(aial)
-        for g in group_for_fit_generator(aial, batch_size, shuffle=True):
+        if shuffle: random.shuffle(aial)
+        for g in group_for_fit_generator(aial, batch_size, shuffle=shuffle):
             icons = []
             labels = []
             cate_labels = []
@@ -223,6 +223,12 @@ def eval_top_k(gen_test, steps):
         print(model.evaluate_generator(gen_test, steps=steps))
         print("")
     print('done')
+
+def plot_confusion_matrix_generator_icon_cate(model, test_gen_for_ground_truth, test_gen_for_predict, steps_per_epoch):
+    ground_truth = []
+    for _, labels in test_gen_for_ground_truth:
+        for label in labels: ground_truth.append(label)
+    keras_util.plot_confusion_matrix_generator(model, ground_truth, test_gen_for_predict, steps_per_epoch)
 
 if __name__ == '__main__':
     fn()

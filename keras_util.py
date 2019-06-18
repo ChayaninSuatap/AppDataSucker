@@ -200,3 +200,15 @@ def eval_top_5(model, test_generator, steps):
         loss='categorical_crossentropy',
         metrics=['acc',metric_top_k(2),metric_top_k(3),metric_top_k(4), metric_top_k(5)])
     print(model.evaluate_generator(gen, steps=steps))
+
+def plot_confusion_matrix_generator(model, ground_truth, test_gen_for_predict, steps_per_epoch):
+    from sklearn.metrics import confusion_matrix
+    from plt_util import _plot_confusion_matrix
+    #process ground truth
+    ys = np.array(ground_truth)
+    y = [x.argmax() for x in ys]
+    #predict
+    pred = model.predict_generator(test_gen_for_predict, steps_per_epoch)
+    #plot confusion
+    conmat = confusion_matrix( y, pred.argmax(axis=1))
+    _plot_confusion_matrix(conmat, [])
