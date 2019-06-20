@@ -45,7 +45,7 @@ def oversample_image(app_ids_and_labels):
             picked = random.choice(app_id_pool[label])
             app_ids_and_labels.append( picked)
 
-def create_model(IS_REGRESSION, summary=False, use_gap=False, train_sc=False):
+def create_model(IS_REGRESSION, summary=False, use_gap=False, train_sc=False, layers_filters = [64, 128, 256]):
     def add_conv(layer, filter_n, kernel_size=(3,3), dropout=0.2, padding_same=False):
         padding = 'same' if padding_same else 'valid'
         x = Conv2D(filter_n ,kernel_size, padding=padding)(layer)
@@ -55,15 +55,18 @@ def create_model(IS_REGRESSION, summary=False, use_gap=False, train_sc=False):
         x = MaxPooling2D()(x) 
         return x
     #make model
+    #define input layer
     if train_sc:
         input_layer = Input(shape=(160, 256, 3))
     else:
         input_layer = Input(shape=(128, 128, 3))
-    x = add_conv(input_layer, 64, padding_same=True)
-    x = add_conv(x, 128, padding_same=True)
-    x = add_conv(x, 256, padding_same=True)
+    #define conv layers
+    x = add_conv(input_layer, layers_filters[0], padding_same=True)
+    for i in range(1, len(layers_filters)):
+        x = add_conv(x, layers_filters[i], padding_same=True)
+    #connect with GAP or a conv1x1 layer
     if not use_gap:
-        x = add_conv(x, 128, padding_same=True, kernel_size=(1,1))
+        x = add_conv(x, layers_filters[-1]/2, padding_same=True, kernel_size=(1,1))
     if use_gap:
         x = AveragePooling2D((16,16))(x)
     x = Flatten(name='my_model_flatten')(x)
