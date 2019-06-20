@@ -66,7 +66,7 @@ def create_model(IS_REGRESSION, summary=False, use_gap=False, train_sc=False, la
         x = add_conv(x, layers_filters[i], padding_same=True)
     #connect with GAP or a conv1x1 layer
     if not use_gap:
-        x = add_conv(x, layers_filters[-1]/2, padding_same=True, kernel_size=(1,1))
+        x = add_conv(x, layers_filters[-1]//2, padding_same=True, kernel_size=(1,1))
     if use_gap:
         x = AveragePooling2D((16,16))(x)
     x = Flatten(name='my_model_flatten')(x)
