@@ -9,6 +9,7 @@ from keras_util import PlotAccLossCallback, gen_k_fold_pass, metric_top_k
 from keras.models import load_model
 import keras
 import functools
+import icon_cate_data_export
 
 random.seed(859)
 np.random.seed(859)
@@ -21,20 +22,25 @@ icon_cate_util.check_aial_error(aial)
 #filter only rating cate
 aial = preprocess_util.get_app_id_rating_cate_from_aial(aial)
 
-aial_train, aial_test = gen_k_fold_pass(aial, kf_pass=3, n_splits=4)
+aial_train, aial_test = gen_k_fold_pass(aial, kf_pass=0, n_splits=4)
 print(icon_cate_util.compute_baseline(aial_train, aial_test))
 
 model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True)
 print('worked')
 
+#export
+icon_cate_data_export.predict_for_spreadsheet('cate_only_softmax-ep-100-loss-0.113-acc-0.962-vloss-4.678-vacc-0.317.hdf5'
+, 0, aial_test, model)
+input()
+
 batch_size = 16
 epochs = 999
 gen_train = icon_cate_util.datagenerator(aial_train, batch_size, epochs, cate_only=True)
-gen_test = icon_cate_util.datagenerator(aial_test, batch_size, epochs, cate_only=True)
+gen_test = icon_cate_util.datagenerator(aial_test, batch_size, epochs, cate_only=True, shuffle=False)
 
 #eval top k
-# icon_cate_util.eval_top_k(gen_test, math.ceil(len(aial_test)/batch_size))
-# input()
+icon_cate_util.eval_top_k(gen_test, math.ceil(len(aial_test)/batch_size), model=model)
+input()
 
 model.load_weights('reg_cate_17_softmax_k3-ep-023-loss-0.548-acc0.818-vloss-3.618-vacc-0.284.hdf5')
 # model = load_model('reg_cate_17_softmax_k3-ep-023-loss-0.548-acc0.818-vloss-3.618-vacc-0.284.hdf5')

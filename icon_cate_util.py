@@ -210,12 +210,18 @@ def check_aial_error(aial):
         if all(y==0 for y in x[2]): print('all zero')
         if sum(x[2])>1: print('shit')
 
-def eval_top_k(gen_test, steps):
+def eval_top_k(gen_test, steps, model=None):
     import os
     from keras_util import metric_top_k
+    import keras
     for fn in os.listdir('eval_top_k'):
         path = 'eval_top_k/' + fn
-        model = load_model(path)
+        #load model or load weights
+        if model==None:
+            model = load_model(path)
+        else:
+            model.load_weights(path)
+        #compile and eval
         model.compile(optimizer='adam',
             loss='categorical_crossentropy',
             metrics=['acc',metric_top_k(2),metric_top_k(3),metric_top_k(4), metric_top_k(5)])
