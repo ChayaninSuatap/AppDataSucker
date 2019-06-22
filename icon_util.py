@@ -17,16 +17,25 @@ def open_and_resize(fn, resizeW, resizeH, rotate_for_sc=False):
     return np.asarray( _convert_to_rgba(fn, resizeW, resizeH, rotate_for_sc))[:,:,:3]
 
 def _convert_to_rgba(fn, resizeW, resizeH, rotate_for_sc=False):
-    png = Image.open(fn).convert('RGBA')
+    #train screenshot
     if rotate_for_sc:
+        png = Image.open(fn)
         w,h = png.size
+        #rotate
         if h > w:
             png = png.rotate(90, expand=True)
-    png = png.resize( (resizeW, resizeH))
-    background = Image.new('RGBA', png.size, (255,255,255))
-
-    alpha_composite = Image.alpha_composite(background, png)
-    return alpha_composite
+        #resize only when needed
+        if png.size == (resizeW, resizeH):
+            return png
+        else:
+            return png.resize( (resizeW, resizeH))
+    #train icon
+    else:
+        png = Image.open(fn).convert('RGBA')
+        png = png.resize( (resizeW, resizeH))
+        background = Image.new('RGBA', png.size, (255,255,255))
+        alpha_composite = Image.alpha_composite(background, png)
+        return alpha_composite
 
 def oversample_image(app_ids_and_labels):
     app_id_pool = {}
