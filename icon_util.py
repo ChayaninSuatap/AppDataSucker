@@ -14,12 +14,13 @@ def load_icon_by_fn(fn, resizeW, resizeH, rotate_for_sc=False):
     return open_and_resize(fn, resizeW, resizeH, rotate_for_sc)
 
 def open_and_resize(fn, resizeW, resizeH, rotate_for_sc=False):
-    return np.asarray( _convert_to_rgba(fn, resizeW, resizeH, rotate_for_sc))[:,:,:3]
+    converted = _convert_to_rgba(fn, resizeW, resizeH, rotate_for_sc)
+    return np.array(converted)[:,:,:3]
 
 def _convert_to_rgba(fn, resizeW, resizeH, rotate_for_sc=False):
     #train screenshot
     if rotate_for_sc:
-        png = Image.open(fn)
+        png = Image.open(fn).convert('RGB')
         w,h = png.size
         #rotate
         if h > w:

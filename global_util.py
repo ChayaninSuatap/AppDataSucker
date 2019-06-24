@@ -6,3 +6,7 @@ def save_pickle(obj, fn):
 def load_picle(fn):
     with open(fn, 'rb') as f:
         return pickle.load(f)
+
+def load_pickle(fn):
+    with open(fn, 'rb') as f:
+        return pickle.load(f)
