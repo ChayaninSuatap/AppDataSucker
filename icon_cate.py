@@ -5,11 +5,12 @@ import random
 import icon_util
 import math
 from tensorflow.keras.callbacks import ModelCheckpoint
-from keras_util import PlotAccLossCallback, gen_k_fold_pass, metric_top_k
+from keras_util import PlotAccLossCallback, gen_k_fold_pass, metric_top_k, eval_top_5
 from keras.models import load_model
 import keras
 import functools
 import icon_cate_data_export
+import global_util
 
 random.seed(859)
 np.random.seed(859)
@@ -25,22 +26,48 @@ aial = preprocess_util.get_app_id_rating_cate_from_aial(aial)
 aial_train, aial_test = gen_k_fold_pass(aial, kf_pass=0, n_splits=4)
 print(icon_cate_util.compute_baseline(aial_train, aial_test))
 
-model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True)
-print('worked')
+model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True, layers_filters=[64, 128, 256, 512])
+model.load_weights('cate_conv_512_k0-ep-379-loss-0.022-acc-0.994-vloss-4.943-vacc-0.353.hdf5')
+
+#eval for human test
+o = global_util.load_pickle('app_ids_for_human_test.obj')
+xs = []
+ys = []
+for app_id, class_num in o:
+    print(app_id, class_num)
+    icon = icon_util.load_icon_by_app_id(app_id, 128, 128)
+    icon = icon.astype('float32')
+    icon/=255
+    xs.append(icon)
+    y = [0] * 17
+    y[class_num] = 1
+    ys.append(y)
+xs = np.array(xs)
+ys = np.array(ys)
+print(xs.shape)
+print(model.evaluate(xs, ys))
+print('start pred')
+pred = model.predict(xs).argmax(axis=1)
+for x in pred:
+    print(x)
+input()
 
 #export
-icon_cate_data_export.predict_for_spreadsheet('cate_only_softmax-ep-100-loss-0.113-acc-0.962-vloss-4.678-vacc-0.317.hdf5'
-, 0, aial_test, model)
-input()
+# icon_cate_data_export.predict_for_spreadsheet('cate_only_softmax-ep-100-loss-0.113-acc-0.962-vloss-4.678-vacc-0.317.hdf5'
+# , 0, aial_test, model)
+# input()
 
 batch_size = 16
 epochs = 999
 gen_train = icon_cate_util.datagenerator(aial_train, batch_size, epochs, cate_only=True)
 gen_test = icon_cate_util.datagenerator(aial_test, batch_size, epochs, cate_only=True, shuffle=False)
 
-#eval top k
-icon_cate_util.eval_top_k(gen_test, math.ceil(len(aial_test)/batch_size), model=model)
+eval_top_5(model, gen_test, math.ceil(len(aial_test)/batch_size))
 input()
+#eval top k
+
+# icon_cate_util.eval_top_k(gen_test, math.ceil(len(aial_test)/batch_size), model=model)
+# input()
 
 model.load_weights('reg_cate_17_softmax_k3-ep-023-loss-0.548-acc0.818-vloss-3.618-vacc-0.284.hdf5')
 # model = load_model('reg_cate_17_softmax_k3-ep-023-loss-0.548-acc0.818-vloss-3.618-vacc-0.284.hdf5')

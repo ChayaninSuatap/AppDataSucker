@@ -45,15 +45,34 @@ for app_id, _, cate in aial_test:
 cate_counter = [0] * 17
 #get app_ids_for_human_test
 app_ids_for_human_test = []
+#dirty hardcode 
+from shutil import copyfile
+with open('ground_truth.txt', 'w') as ground_truth_f:
+    pass
+ground_truth_f = open('ground_truth.txt', 'a')
+##
 for app_id in valid_app_ids:
+    #this app_id is gone before downloading 512 size image
+    if app_id == 'com.spacegame.wordconnect2': continue
+    if app_id == 'com.square_enix.android_googleplay.FFV_GP' : continue
+    if app_id == 'com.square_enix.FFIXww.android_googleplay' : continue
     index = app_id_to_cate[app_id].index(1)
+    #skip if got 20 already
     if cate_counter[index] < 20:
-        app_ids_for_human_test.append(app_id)
+        app_ids_for_human_test.append((app_id, index))
+        #dirty hardcode
+        # copyfile('icons/' + app_id +'.png', 'icons_human_test/%d.png' % (fn_i,))
+        # ground_truth_f.writelines(str(index)+'\n')
+        # fn_i += 1
         cate_counter[index]+=1
-print(len(app_ids_for_human_test))
-print(app_ids_for_human_test)
-global_util.save_pickle(app_ids_for_human_test, 'app_ids_for_human_test.obj')
 
+random.shuffle(app_ids_for_human_test)
+global_util.save_pickle(app_ids_for_human_test, 'app_ids_for_human_test.obj')
+for i,(app_id, label) in enumerate(app_ids_for_human_test):
+    ground_truth_f.write(str(label)+'\n')
+    copyfile('icons/' + app_id +'.png', 'icons_human_test/%d.png' % (i,)) 
+print(app_ids_for_human_test)
+ground_truth_f.close()
 
 
 
