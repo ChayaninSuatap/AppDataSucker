@@ -4,10 +4,9 @@ import numpy as np
 import mypath
 import collections
 
-def predict_for_spreadsheet(model_path, k_iter, aial_test, sc_dict):
+def predict_for_spreadsheet(model, k_iter, aial_test, sc_dict):
     f = open('sc_fold' + str(k_iter) + '_testset.txt', 'w')
     f.close()
-    model = load_model(model_path)
     for app_id, _ , label in aial_test:
         if (app_id in sc_dict) == False: continue
         truth = np.array(label).argmax()
@@ -57,19 +56,19 @@ def compute_mode_from_spreadsheet_txt(k_iter):
                 prob_dict[class_label] += pred_prob
             #prob dict got total not average
         
-        #compute mode for 4 type
+        # compute mode for 4 type
         try:
             mode = max(prob_dict.items(), key = lambda x : x[1])[0]
         except:
             mode = -1
         
-        # compute mode for first 3 type
+        # #compute mode for first 3 type
         # #counter
         # counter = collections.Counter(labels)
         # ls = []
         # for elem, freq in counter.items():
         #     ls.append(( elem, freq))
-        # #make prob_dict average
+        # #make prob_dict average for 2 type
         # for k in prob_dict.keys():
         #     prob_dict[k] = prob_dict[k] / counter[k]
         # #get max pred occurrence
@@ -81,7 +80,7 @@ def compute_mode_from_spreadsheet_txt(k_iter):
         #         return -1
         #     elif len(ls_sorted) == 1:
         #         return ls_sorted[0][0]
-        #     #case top two freq is equal
+        #     #case top two freq is equal for type 1, 2, 3
         #     elif ls_sorted[0][1] == ls_sorted[1][1]: 
         #         elem0 = ls_sorted[0][0]
         #         elem1 = ls_sorted[1][0]
@@ -91,8 +90,9 @@ def compute_mode_from_spreadsheet_txt(k_iter):
         #         # else:
         #         #     return elem1
 
-        #         #decide by pred prob
-        #         if prob_dict[elem0] * occur_prob[elem0] > prob_dict[elem1] * occur_prob[elem1]:
+        #         #decide by pred prob for type 2, 3
+        #         # if prob_dict[elem0]  > prob_dict[elem1] : #for type 2
+        #         if prob_dict[elem0] * occur_prob[elem0] > prob_dict[elem1] * occur_prob[elem1]: #for type 3
         #             return elem0
         #         else:
         #             return elem1
@@ -103,9 +103,32 @@ def compute_mode_from_spreadsheet_txt(k_iter):
         #     else:
         #         return ls_sorted[0][0]
         # mode = compute_mode(ls_sorted)
+
+        #must have every case
         f_vote.writelines(str(mode)+'\n')
         print(mode)
     f_vote.close()
 
+def predict_for_spreadsheet_remove_prob():
+    f = open('sc_fold0_testset.txt')
+    f_save = open('sc_fold0_testset_remove_prob.txt', 'w')
+    f_save = open('sc_fold0_testset_remove_prob.txt', 'a')
+    for line in f:
+        s = line.split(' ')
+        tail = s[2:-1]
+        out = ''
+        # out = s[0] + ' ' +  s[1]
+        #
+        if len(tail) == 0:
+            pass
+        else:
+            for i in range(0, len(tail), 2):
+                out += ' ' + tail[i]
+        out += '\n'
+        print(out)
+        f_save.write(out)
+
+
 if __name__ == '__main__':
     compute_mode_from_spreadsheet_txt(0)
+    # predict_for_spreadsheet_remove_prob()

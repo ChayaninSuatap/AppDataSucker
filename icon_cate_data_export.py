@@ -3,11 +3,10 @@ import numpy as np
 import mypath
 import icon_util
 
-def predict_for_spreadsheet(model_path, k_iter, aial_test, model):
+def predict_for_spreadsheet(model, k_iter, aial_test):
     output_path = 'icon_fold' + str(k_iter) + '_testset.txt'
     f = open(output_path, 'w')
     f.close()
-    model.load_weights(model_path)
     for app_id, _ , label in aial_test:
         #output
         print(app_id, end=' ')

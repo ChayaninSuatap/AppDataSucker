@@ -29,6 +29,10 @@ print(icon_cate_util.compute_baseline(aial_train, aial_test))
 model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True, layers_filters=[64, 128, 256, 512])
 model.load_weights('cate_conv_512_k0-ep-379-loss-0.022-acc-0.994-vloss-4.943-vacc-0.353.hdf5')
 
+#export
+icon_cate_data_export.predict_for_spreadsheet(model, 0, aial_test)
+input()
+
 #eval for human test
 o = global_util.load_pickle('app_ids_for_human_test.obj')
 xs = []
@@ -52,10 +56,7 @@ for x in pred:
     print(x)
 input()
 
-#export
-# icon_cate_data_export.predict_for_spreadsheet('cate_only_softmax-ep-100-loss-0.113-acc-0.962-vloss-4.678-vacc-0.317.hdf5'
-# , 0, aial_test, model)
-# input()
+
 
 batch_size = 16
 epochs = 999
