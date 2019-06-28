@@ -26,12 +26,12 @@ aial = preprocess_util.get_app_id_rating_cate_from_aial(aial)
 aial_train, aial_test = gen_k_fold_pass(aial, kf_pass=0, n_splits=4)
 print(icon_cate_util.compute_baseline(aial_train, aial_test))
 
-model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True, layers_filters=[64, 128, 256, 512])
-model.load_weights('cate_conv_512_k0-ep-379-loss-0.022-acc-0.994-vloss-4.943-vacc-0.353.hdf5')
+model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True, layers_filters=[64, 128, 256, 512, 1024])
+model.load_weights('cate_conv_1024_k0-ep-609-loss-0.015-acc-0.995-vloss-5.739-vacc-0.361.hdf5')
 
 #export
-icon_cate_data_export.predict_for_spreadsheet(model, 0, aial_test)
-input()
+# icon_cate_data_export.predict_for_spreadsheet(model, 0, aial_test)
+# input()
 
 #eval for human test
 o = global_util.load_pickle('app_ids_for_human_test.obj')

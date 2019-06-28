@@ -39,6 +39,33 @@ gen_test=icon_cate_util.datagenerator(aial_test_sc,
 
 model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True, train_sc=True, layers_filters=[64,128,256,512])
 model.load_weights('sc_cate_conv_512_k0-ep-132-loss-0.097-acc-0.969-vloss-3.760-vacc-0.386.hdf5')
+
+#eval for human test
+import global_util
+import icon_util
+o = global_util.load_pickle('app_ids_for_human_test.obj')
+labels = [x for _,x in o]
+xs = []
+ys = []
+for i, class_num in enumerate(labels):
+    icon = icon_util.load_icon_by_fn('screenshots_human_test/' + str(i) + '.png', 256, 160, rotate_for_sc=True)
+    icon = icon.astype('float32')
+    icon/=255
+    xs.append(icon)
+    y = [0] * 17
+    y[class_num] = 1
+    ys.append(y)
+xs = np.array(xs)
+ys = np.array(ys)
+print(xs.shape)
+# print(model.evaluate(xs, ys))
+print('start pred')
+pred = model.predict(xs, batch_size=1).argmax(axis=1)
+for x in pred:
+    print(x)
+input()
+
+#export data
 sc_data_export.predict_for_spreadsheet(model ,
     k_iter=0, aial_test = aial_test, sc_dict= sc_dict)
 input('done')
