@@ -72,7 +72,7 @@ def create_model(IS_REGRESSION, summary=False, use_gap=False, train_sc=False, la
         x = BatchNormalization()(x)
         #regular dropout
         if sliding_dropout==None:
-            x = Dropout(dropout, name='do_' + str(filter_n) + '_' + str(dropout))(x)
+            x = Dropout(dropout, name='do_' + str(layer_index) + '_' + str(dropout))(x)
         #sliding dropout
         else:
             x = Dropout(current_dropout_value, name='do_' + str(filter_n) + '_' + str(current_dropout_value))(x)

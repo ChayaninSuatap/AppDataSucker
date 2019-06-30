@@ -26,7 +26,7 @@ aial = preprocess_util.get_app_id_rating_cate_from_aial(aial)
 aial_train, aial_test = gen_k_fold_pass(aial, kf_pass=0, n_splits=4)
 print(icon_cate_util.compute_baseline(aial_train, aial_test))
 
-model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True, layers_filters=[64, 128, 256, 512], sliding_dropout=(0.05, 0.1))
+model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True, layers_filters=[64, 128, 256, 512], sliding_dropout=None)
 # model.load_weights('cate_conv_1024_k0-ep-609-loss-0.015-acc-0.995-vloss-5.739-vacc-0.361.hdf5')
 
 #export
