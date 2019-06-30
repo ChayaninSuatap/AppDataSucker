@@ -59,7 +59,7 @@ def create_icon_cate_model(cate_only=False, is_softmax=False, use_gap=False, tra
     return model
 
 def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shuffle=True, enable_cache=False):
-    cache_dict = []
+    cache_dict = {}
     for i in range(epochs):
         if shuffle: random.shuffle(aial)
         for g in group_for_fit_generator(aial, batch_size, shuffle=shuffle):
