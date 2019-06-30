@@ -24,8 +24,10 @@ def compute_baseline(aial, aial_test):
 
     return avg, total_mse/ len(aial_test), total_mae/len(aial_test)
 
-def create_icon_cate_model(cate_only=False, is_softmax=False, use_gap=False, train_sc=False, layers_filters = [64, 128, 256], dropout=0.2):
-    o = icon_util.create_model(IS_REGRESSION=True, use_gap=use_gap, train_sc=train_sc, layers_filters=layers_filters, dropout=dropout)
+def create_icon_cate_model(cate_only=False, is_softmax=False, use_gap=False, train_sc=False, layers_filters = [64, 128, 256], dropout=0.2,
+    conv1x1_no_maxpool=False):
+    o = icon_util.create_model(IS_REGRESSION=True, use_gap=use_gap, train_sc=train_sc, layers_filters=layers_filters, dropout=dropout,
+        conv1x1_no_maxpool=conv1x1_no_maxpool)
     input_layer = o['input_layer']
     flatten_layer = o['flatten_layer']
     output_layer = o['output_layer']

@@ -55,14 +55,16 @@ def oversample_image(app_ids_and_labels):
             picked = random.choice(app_id_pool[label])
             app_ids_and_labels.append( picked)
 
-def create_model(IS_REGRESSION, summary=False, use_gap=False, train_sc=False, layers_filters = [64, 128, 256], dropout=0.2):
-    def add_conv(layer, filter_n, kernel_size=(3,3), dropout=0.2, padding_same=False):
+def create_model(IS_REGRESSION, summary=False, use_gap=False, train_sc=False, layers_filters = [64, 128, 256], dropout=0.2,
+    conv1x1_no_maxpool=False):
+    def add_conv(layer, filter_n, kernel_size=(3,3), dropout=0.2, padding_same=False, maxpool=True):
         padding = 'same' if padding_same else 'valid'
         x = Conv2D(filter_n ,kernel_size, padding=padding)(layer)
         x = LeakyReLU()(x)
         x = BatchNormalization()(x)
         x = Dropout(dropout)(x)
-        x = MaxPooling2D()(x) 
+        if maxpool:
+            x = MaxPooling2D()(x) 
         return x
     #make model
     #define input layer
@@ -76,7 +78,11 @@ def create_model(IS_REGRESSION, summary=False, use_gap=False, train_sc=False, la
         x = add_conv(x, layers_filters[i], padding_same=True, dropout=dropout)
     #connect with GAP or a conv1x1 layer
     if not use_gap:
-        x = add_conv(x, layers_filters[-1]//2, padding_same=True, kernel_size=(1,1), dropout=dropout)
+        if conv1x1_no_maxpool == False:
+            x = add_conv(x, layers_filters[-1]//2, padding_same=True, kernel_size=(1,1), dropout=dropout)
+        elif conv1x1_no_maxpool == True:
+            x = add_conv(x, layers_filters[-1]//2, padding_same=True, kernel_size=(1,1), dropout=dropout, maxpool=False)
+
     if use_gap:
         x = AveragePooling2D((16,16))(x)
     x = Flatten(name='my_model_flatten')(x)
