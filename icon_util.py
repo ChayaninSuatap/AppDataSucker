@@ -64,7 +64,7 @@ def create_model(IS_REGRESSION, summary=False, use_gap=False, train_sc=False, la
         global increase_dropout_value
         increase_dropout_value = sliding_dropout[1]
 
-    def add_conv(layer, filter_n, kernel_size=(3,3), dropout=0.2, padding_same=False, maxpool=True):
+    def add_conv(layer, filter_n, layer_index, kernel_size=(3,3), dropout=0.2, padding_same=False, maxpool=True):
         global current_dropout_value
         padding = 'same' if padding_same else 'valid'
         x = Conv2D(filter_n ,kernel_size, padding=padding)(layer)
@@ -72,7 +72,7 @@ def create_model(IS_REGRESSION, summary=False, use_gap=False, train_sc=False, la
         x = BatchNormalization()(x)
         #regular dropout
         if sliding_dropout==None:
-            x = Dropout(dropout, name='do_' + str(filter_n) + str(dropout))(x)
+            x = Dropout(dropout, name='do_' + str(filter_n) + '_' + str(dropout))(x)
         #sliding dropout
         else:
             x = Dropout(current_dropout_value, name='do_' + str(filter_n) + '_' + str(current_dropout_value))(x)
@@ -87,15 +87,15 @@ def create_model(IS_REGRESSION, summary=False, use_gap=False, train_sc=False, la
     else:
         input_layer = Input(shape=(128, 128, 3))
     #define conv layers
-    x = add_conv(input_layer, layers_filters[0], padding_same=True, dropout=dropout)
+    x = add_conv(input_layer, layers_filters[0], layer_index=0, padding_same=True, dropout=dropout)
     for i in range(1, len(layers_filters)):
-        x = add_conv(x, layers_filters[i], padding_same=True, dropout=dropout)
+        x = add_conv(x, layers_filters[i], layer_index=i, padding_same=True, dropout=dropout)
     #connect with GAP or a conv1x1 layer
     if not use_gap:
         if conv1x1_no_maxpool == False:
-            x = add_conv(x, layers_filters[-1]//2, padding_same=True, kernel_size=(1,1), dropout=dropout)
+            x = add_conv(x, layers_filters[-1]//2, layer_index=i+1, padding_same=True, kernel_size=(1,1), dropout=dropout)
         elif conv1x1_no_maxpool == True:
-            x = add_conv(x, layers_filters[-1]//2, padding_same=True, kernel_size=(1,1), dropout=dropout, maxpool=False)
+            x = add_conv(x, layers_filters[-1]//2, layer_index=i+1, padding_same=True, kernel_size=(1,1), dropout=dropout, maxpool=False)
         x = Flatten(name='my_model_flatten')(x)
         flatten_layer = x
     if use_gap:
