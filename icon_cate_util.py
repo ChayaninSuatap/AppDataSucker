@@ -58,8 +58,8 @@ def create_icon_cate_model(cate_only=False, is_softmax=False, use_gap=False, tra
     model.summary()
     return model
 
-def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shuffle=True):
-
+def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shuffle=True, enable_cache=False):
+    cache_dict = []
     for i in range(epochs):
         if shuffle: random.shuffle(aial)
         for g in group_for_fit_generator(aial, batch_size, shuffle=shuffle):
@@ -68,13 +68,20 @@ def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shu
             cate_labels = []
             #prepare chrunk
             for app_id, label, cate_label in g:
-                try:
-                    if train_sc:
-                        icon = icon_util.load_icon_by_fn(mypath.screenshot_folder + app_id, 256, 160, rotate_for_sc=True)
-                    else:
-                        icon = icon_util.load_icon_by_app_id(app_id, 128, 128)
-                except:
-                    continue
+                #get from cache
+                if enable_cache and app_id in cache_dict:
+                    icon = cache_dict[app_id]
+                else:
+                    try:
+                        if train_sc:
+                            icon = icon_util.load_icon_by_fn(mypath.screenshot_folder + app_id, 256, 160, rotate_for_sc=True)
+                        else:
+                            icon = icon_util.load_icon_by_app_id(app_id, 128, 128)
+                        #put in cache
+                        if enable_cache:
+                            cache_dict[app_id] = icon
+                    except:
+                        continue
                 icons.append(icon)
                 labels.append(label)
                 cate_labels.append(cate_label)     

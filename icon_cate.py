@@ -58,8 +58,8 @@ model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True, l
 
 batch_size = 16
 epochs = 999
-gen_train = icon_cate_util.datagenerator(aial_train, batch_size, epochs, cate_only=True)
-gen_test = icon_cate_util.datagenerator(aial_test, batch_size, epochs, cate_only=True, shuffle=False)
+gen_train = icon_cate_util.datagenerator(aial_train, batch_size, epochs, cate_only=True, enable_cache=True)
+gen_test = icon_cate_util.datagenerator(aial_test, batch_size, epochs, cate_only=True, shuffle=False, enable_cache=True)
 
 #eval top 5 acc
 # eval_top_5(model, gen_test, math.ceil(len(aial_test)/batch_size))
