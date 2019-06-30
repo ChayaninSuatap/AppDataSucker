@@ -56,13 +56,27 @@ def oversample_image(app_ids_and_labels):
             app_ids_and_labels.append( picked)
 
 def create_model(IS_REGRESSION, summary=False, use_gap=False, train_sc=False, layers_filters = [64, 128, 256], dropout=0.2,
-    conv1x1_no_maxpool=False):
+    conv1x1_no_maxpool=False, sliding_dropout=None):
+    #initial sliding dropout
+    if sliding_dropout != None:
+        global current_dropout_value
+        current_dropout_value = sliding_dropout[0]
+        global increase_dropout_value
+        increase_dropout_value = sliding_dropout[1]
+
     def add_conv(layer, filter_n, kernel_size=(3,3), dropout=0.2, padding_same=False, maxpool=True):
+        global current_dropout_value
         padding = 'same' if padding_same else 'valid'
         x = Conv2D(filter_n ,kernel_size, padding=padding)(layer)
         x = LeakyReLU()(x)
         x = BatchNormalization()(x)
-        x = Dropout(dropout)(x)
+        #regular dropout
+        if sliding_dropout==None:
+            x = Dropout(dropout, name='do_' + str(filter_n) + str(dropout))(x)
+        #sliding dropout
+        else:
+            x = Dropout(current_dropout_value, name='do_' + str(filter_n) + '_' + str(current_dropout_value))(x)
+            current_dropout_value += increase_dropout_value
         if maxpool:
             x = MaxPooling2D()(x) 
         return x
@@ -115,5 +129,9 @@ def create_model(IS_REGRESSION, summary=False, use_gap=False, train_sc=False, la
         model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['acc'])
     if summary : model.summary()
 
-    return {'model':model, 'flatten_layer':flatten_layer, 'input_layer':input_layer, 'output_layer':output_layer}
+    output_dict = {'model':model, 'flatten_layer':flatten_layer, 'input_layer':input_layer, 'output_layer':output_layer}
+    #add current_dropout_value
+    if sliding_dropout != None:
+        output_dict['current_dropout_value'] = current_dropout_value
+    return output_dict
 

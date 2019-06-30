@@ -25,9 +25,9 @@ def compute_baseline(aial, aial_test):
     return avg, total_mse/ len(aial_test), total_mae/len(aial_test)
 
 def create_icon_cate_model(cate_only=False, is_softmax=False, use_gap=False, train_sc=False, layers_filters = [64, 128, 256], dropout=0.2,
-    conv1x1_no_maxpool=False):
+    conv1x1_no_maxpool=False, sliding_dropout=None):
     o = icon_util.create_model(IS_REGRESSION=True, use_gap=use_gap, train_sc=train_sc, layers_filters=layers_filters, dropout=dropout,
-        conv1x1_no_maxpool=conv1x1_no_maxpool)
+        conv1x1_no_maxpool=conv1x1_no_maxpool, sliding_dropout=sliding_dropout)
     input_layer = o['input_layer']
     flatten_layer = o['flatten_layer']
     output_layer = o['output_layer']
@@ -39,7 +39,13 @@ def create_icon_cate_model(cate_only=False, is_softmax=False, use_gap=False, tra
         x = Dense(34)(flatten_layer)
         x = LeakyReLU()(x)
         x = BatchNormalization()(x)
-        x = Dropout(0.2)(x)
+        #regular dropout
+        if sliding_dropout==None:
+            x = Dropout(0.2, name='do_last_0.2')(x)
+        #increasing dropout value
+        else:
+            current_dropout_value = o['current_dropout_value']
+            x = Dropout(current_dropout_value, name='do_last_'+ str(current_dropout_value))(x)
         if is_softmax:
             output_cate = Dense(17, activation='softmax')(x)
         else:
