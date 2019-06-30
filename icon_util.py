@@ -82,11 +82,12 @@ def create_model(IS_REGRESSION, summary=False, use_gap=False, train_sc=False, la
             x = add_conv(x, layers_filters[-1]//2, padding_same=True, kernel_size=(1,1), dropout=dropout)
         elif conv1x1_no_maxpool == True:
             x = add_conv(x, layers_filters[-1]//2, padding_same=True, kernel_size=(1,1), dropout=dropout, maxpool=False)
-
+        x = Flatten(name='my_model_flatten')(x)
+        flatten_layer = x
     if use_gap:
-        x = AveragePooling2D((16,16))(x)
-    x = Flatten(name='my_model_flatten')(x)
-    flatten_layer = x
+        x = GlobalAveragePooling2D()(x)
+        # when use_gap link to gap instead
+        flatten_layer = x
 
     #output layer
     if IS_REGRESSION:
