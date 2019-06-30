@@ -58,10 +58,10 @@ def create_icon_cate_model(cate_only=False, is_softmax=False, use_gap=False, tra
     model.summary()
     return model
 
-def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shuffle=True, enable_cache=False):
+def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shuffle=True, enable_cache=False, limit_cache_n=None):
     cache_dict = {}
-    #limit cache for screenshot
-    if train_sc: cached_n = 0
+    #limit cache 
+    if limit_cache_n != None: cached_n = 0
 
     for i in range(epochs):
         if shuffle: random.shuffle(aial)
@@ -82,11 +82,11 @@ def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shu
                             icon = icon_util.load_icon_by_app_id(app_id, 128, 128)
                         #put in cache
                         if enable_cache:
-                            #train sc case limit number of screenshots
-                            if train_sc and cached_n < 108000:
+                            #limit cache
+                            if limit_cache_n != None and cached_n < limit_cache_n:
                                 cache_dict[app_id] = icon
                                 cached_n += 1
-                            #icon case has no limit
+                            # no limit cache
                             else:
                                 cache_dict[app_id] = icon
                     except:
