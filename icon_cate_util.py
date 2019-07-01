@@ -92,7 +92,6 @@ def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shu
                             if limit_cache_n != None and cached_n < limit_cache_n:
                                 cache_dict[app_id] = icon
                                 cached_n += 1
-                                print('cached')
                             # no limit cache
                             else:
                                 cache_dict[app_id] = icon
