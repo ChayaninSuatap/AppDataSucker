@@ -86,17 +86,17 @@ def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shu
                             icon = icon_util.load_icon_by_fn(mypath.screenshot_folder + app_id, 256, 160, rotate_for_sc=True)
                         else:
                             icon = icon_util.load_icon_by_app_id(app_id, 128, 128)
-                        #put in cache
-                        if enable_cache:
-                            #limit cache
-                            if limit_cache_n != None and cached_n < limit_cache_n:
-                                cache_dict[app_id] = icon
-                                cached_n += 1
-                            # no limit cache
-                            else:
-                                cache_dict[app_id] = icon
                     except:
                         continue
+                    #put in cache
+                    if enable_cache:
+                        #limit cache
+                        if limit_cache_n != None and cached_n < limit_cache_n:
+                            cache_dict[app_id] = icon
+                            cached_n += 1
+                        # no limit cache
+                        else:
+                            cache_dict[app_id] = icon
                 icons.append(icon)
                 labels.append(label)
                 cate_labels.append(cate_label)     
