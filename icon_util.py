@@ -56,27 +56,36 @@ def oversample_image(app_ids_and_labels):
             app_ids_and_labels.append( picked)
 
 def create_model(IS_REGRESSION, summary=False, use_gap=False, train_sc=False, layers_filters = [64, 128, 256], dropout=0.2
-    , sliding_dropout=None, conv1x1_layer_n=1):
-    #initial sliding dropout
+    , sliding_dropout=None, conv1x1_layer_n=1, stack_conv=1):
+    # init increasing number for dropout layer name
+    global dropout_layer_index
+    dropout_layer_index = 0
+    #initial for sliding dropout
     if sliding_dropout != None:
         global current_dropout_value
         current_dropout_value = sliding_dropout[0]
         global increase_dropout_value
         increase_dropout_value = sliding_dropout[1]
 
-    def add_conv(layer, filter_n, layer_index, kernel_size=(3,3), dropout=0.2, padding_same=False, maxpool=True):
+    def add_conv(layer, filter_n, kernel_size=(3,3), dropout=0.2, padding_same=False, maxpool=True,
+        is_stacking_layer=False):
         global current_dropout_value
+        global dropout_layer_index
         padding = 'same' if padding_same else 'valid'
         x = Conv2D(filter_n ,kernel_size, padding=padding)(layer)
         x = LeakyReLU()(x)
         x = BatchNormalization()(x)
         #regular dropout
         if sliding_dropout==None:
-            x = Dropout(dropout, name='do_' + str(layer_index) + '_' + str(dropout))(x)
+            x = Dropout(dropout, name='do_' + str(dropout_layer_index) + '_' + str(dropout))(x)
+            dropout_layer_index += 1
         #sliding dropout
         else:
-            x = Dropout(current_dropout_value, name='do_' + str(filter_n) + '_' + str(current_dropout_value))(x)
-            current_dropout_value += increase_dropout_value
+            x = Dropout(current_dropout_value, name='do_' + str(dropout_layer_index) + '_' + str(current_dropout_value))(x)
+            dropout_layer_index += 1
+            # if is_stacking_layer do not inscrease dropout value when sliding
+            if is_stacking_layer==False:
+                current_dropout_value += increase_dropout_value
         if maxpool:
             x = MaxPooling2D()(x) 
         return x
@@ -86,19 +95,37 @@ def create_model(IS_REGRESSION, summary=False, use_gap=False, train_sc=False, la
         input_layer = Input(shape=(160, 256, 3))
     else:
         input_layer = Input(shape=(128, 128, 3))
-    #define conv layers
-    x = add_conv(input_layer, layers_filters[0], layer_index=0, padding_same=True, dropout=dropout)
+    ### define conv layers
+    # define first layer next to input layer 
+    if stack_conv == 1:
+        x = add_conv(input_layer, layers_filters[0], padding_same=True, dropout=dropout)
+    elif stack_conv > 1:
+        x = add_conv(input_layer, layers_filters[0], padding_same=True, dropout=dropout, maxpool=False, is_stacking_layer=True)
+        # already add stack layer by one
+        for j in range(2, stack_conv):
+            x = add_conv(x, layers_filters[0], padding_same=True, dropout=dropout, maxpool=False, is_stacking_layer=True)
+        # then add conv with maxpool
+        x = add_conv(x, layers_filters[0], padding_same=True, dropout=dropout)
+    # define rest layer
     for i in range(1, len(layers_filters)):
-        x = add_conv(x, layers_filters[i], layer_index=i, padding_same=True, dropout=dropout)
+        #regular conv layer
+        if stack_conv == 1:
+            x = add_conv(x, layers_filters[i], padding_same=True, dropout=dropout)
+        #stacking conv layer
+        elif stack_conv > 1:
+            # add_conv only stack_conv - 1 times
+            for j in range(1, stack_conv):
+                x = add_conv(x, layers_filters[i], padding_same=True, dropout=dropout, maxpool=False, is_stacking_layer=True)
+            # then add a conv with maxpooling
+            x = add_conv(x, layers_filters[i], padding_same=True, dropout=dropout)
+
     #connect with GAP or a conv1x1 layer
     if not use_gap:
         cur_layer_filter_n = layers_filters[-1]//2
-        cur_layer_index = i+1
         for i in range(conv1x1_layer_n):
-            x = add_conv(x, cur_layer_filter_n, layer_index=cur_layer_index,
+            x = add_conv(x, cur_layer_filter_n,
                 padding_same=True, kernel_size=(1,1), dropout=dropout)
             cur_layer_filter_n = cur_layer_filter_n//2
-            cur_layer_index += 1
         x = Flatten(name='my_model_flatten')(x)
         flatten_layer = x
     if use_gap:
