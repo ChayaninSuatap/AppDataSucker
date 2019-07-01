@@ -26,7 +26,8 @@ aial = preprocess_util.get_app_id_rating_cate_from_aial(aial)
 aial_train, aial_test = gen_k_fold_pass(aial, kf_pass=0, n_splits=4)
 print(icon_cate_util.compute_baseline(aial_train, aial_test))
 
-model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True, layers_filters=[64, 128, 256, 512, 1024], conv1x1_layer_n=2)
+model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True, layers_filters=[64, 128, 256, 512], conv1x1_layer_n=2,
+    sliding_dropout=(0.05, 0.06))
 # model.load_weights('cate_conv_1024_k0-ep-609-loss-0.015-acc-0.995-vloss-5.739-vacc-0.361.hdf5')
 
 #export
@@ -58,7 +59,7 @@ model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True, l
 
 batch_size = 16
 epochs = 999
-gen_train = icon_cate_util.datagenerator(aial_train, batch_size, epochs, cate_only=True, enable_cache=True, limit_cache_n=2)
+gen_train = icon_cate_util.datagenerator(aial_train, batch_size, epochs, cate_only=True, enable_cache=True)
 gen_test = icon_cate_util.datagenerator(aial_test, batch_size, epochs, cate_only=True, shuffle=False, enable_cache=True)
 
 #eval top 5 acc

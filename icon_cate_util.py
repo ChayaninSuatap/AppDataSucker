@@ -91,9 +91,11 @@ def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shu
                     #put in cache
                     if enable_cache:
                         #limit cache
-                        if limit_cache_n != None and cached_n < limit_cache_n:
-                            cache_dict[app_id] = icon
-                            cached_n += 1
+                        if limit_cache_n != None:
+                            #cache only when below limit
+                            if  cached_n < limit_cache_n:
+                                cache_dict[app_id] = icon
+                                cached_n += 1
                         # no limit cache
                         else:
                             cache_dict[app_id] = icon
