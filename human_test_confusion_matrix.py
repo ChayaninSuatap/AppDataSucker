@@ -10,4 +10,9 @@ for i in range(340):
     pred.append(int(x))
 print(pred)
 
-print(confusion_matrix(gt, pred))
+conmat = confusion_matrix(gt, pred)
+for row in conmat:
+    for col in row:
+        print(col, end=' ')
+    print('')
+
