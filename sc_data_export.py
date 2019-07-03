@@ -4,15 +4,21 @@ import numpy as np
 import mypath
 import collections
 
-def predict_for_spreadsheet(model, k_iter, aial_test, sc_dict):
-    f = open('sc_fold' + str(k_iter) + '_testset.txt', 'w')
+def predict_for_spreadsheet(model, k_iter, aial_test, sc_dict, fn_postfix=''):
+    f = open('sc_fold' + str(k_iter) + '_testset_' + fn_postfix + '.txt', 'w')
+    f_mode_5 = open('sc_fold_mode_5_' + str(k_iter) + '_testset_' + fn_postfix + '.txt', 'w')
     f.close()
+    f_mode_5.close()
     for app_id, _ , label in aial_test:
         if (app_id in sc_dict) == False: continue
         truth = np.array(label).argmax()
         #output
         print(app_id, truth, end=' ')
         file_out = app_id + ' ' + str(truth) + ' '
+
+        #accumulator for mode type 5
+        pred_acc = np.array([0] * 17).astype('float64')
+        have_some_sc = False
 
         for ss_fn in sc_dict[app_id]:
             try:
@@ -23,16 +29,30 @@ def predict_for_spreadsheet(model, k_iter, aial_test, sc_dict):
             icon /= 255
             pred = model.predict(np.array([icon]))
             t = pred[0].argmax()
+            #add pred for mode type 5
+            pred_acc += pred[0]
+
             #save predict prob
             predict_prob = pred[0][t]
             #output
             print(t, predict_prob, end=' ')
             file_out += str(t) + ' ' + str(predict_prob) + ' '
-        #output
+            #flag for mode type 5
+            have_some_sc=True
+
+        #write an app_id pred
         print('')
-        f = open('sc_fold' + str(k_iter) + '_testset.txt', 'a')
+        f = open('sc_fold' + str(k_iter) + '_testset_' + fn_postfix + '.txt', 'a')
         f.writelines(file_out + '\n')
         f.close()
+        #write mode 5 result
+        f_mode_5 = open('sc_fold_mode_5_' + str(k_iter) + '_testset_' + fn_postfix + '.txt', 'a')
+        mode_5_result = pred_acc.argmax()
+        if have_some_sc:
+            f_mode_5.writelines(app_id + ' ' + str(mode_5_result) + '\n')
+        else:
+            f_mode_5.writelines(app_id + ' \n')
+        f_mode_5.close()
 
 def compute_mode_from_spreadsheet_txt(k_iter):
     f = open('sc_fold%d_testset.txt' % (k_iter,), 'r')
