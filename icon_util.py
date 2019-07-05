@@ -56,7 +56,7 @@ def oversample_image(app_ids_and_labels):
             app_ids_and_labels.append( picked)
 
 def create_model(IS_REGRESSION, summary=False, use_gap=False, train_sc=False, layers_filters = [64, 128, 256], dropout=0.2
-    , sliding_dropout=None, conv1x1_layer_n=1, stack_conv=1):
+    , sliding_dropout=None, conv1x1_layer_n=1, stack_conv=1, do_slide_down=False):
     # init increasing number for dropout layer name
     global dropout_layer_index
     dropout_layer_index = 0
@@ -85,7 +85,10 @@ def create_model(IS_REGRESSION, summary=False, use_gap=False, train_sc=False, la
             dropout_layer_index += 1
             # if is_stacking_layer do not inscrease dropout value when sliding
             if is_stacking_layer==False:
-                current_dropout_value += increase_dropout_value
+                if do_slide_down==False:
+                    current_dropout_value += increase_dropout_value
+                else:
+                    current_dropout_value -= increase_dropout_value
         if maxpool:
             x = MaxPooling2D()(x) 
         return x
