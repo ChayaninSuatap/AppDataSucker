@@ -7,6 +7,7 @@ import collections
 def predict_for_spreadsheet(model, k_iter, aial_test, sc_dict, fn_postfix=''):
     f = open('sc_fold' + str(k_iter) + '_testset_' + fn_postfix + '.txt', 'w')
     f_mode_5 = open('sc_fold_mode_5_' + str(k_iter) + '_testset_' + fn_postfix + '.txt', 'w')
+    f_sc_sum_pred = open('sc_fold_sum_pred_' + str(k_iter) + '_testset_' + fn_postfix + '.txt', 'w')
     f.close()
     f_mode_5.close()
     for app_id, _ , label in aial_test:
@@ -47,12 +48,21 @@ def predict_for_spreadsheet(model, k_iter, aial_test, sc_dict, fn_postfix=''):
         f.close()
         #write mode 5 result
         f_mode_5 = open('sc_fold_mode_5_' + str(k_iter) + '_testset_' + fn_postfix + '.txt', 'a')
+        f_sc_sum_pred = open('sc_fold_sum_pred_' + str(k_iter) + '_testset_' + fn_postfix + '.txt', 'a')
         mode_5_result = pred_acc.argmax()
         if have_some_sc:
             f_mode_5.writelines(app_id + ' ' + str(mode_5_result) + '\n')
+            #sm sum pred
+            sum_pred = pred_acc.sum()
+            f_sc_sum_pred.writelines(app_id + ' ')
+            for x in pred_acc:
+                f_sc_sum_pred.writelines(str(x) + ' ')
+            f_sc_sum_pred.writelines('\n')
         else:
             f_mode_5.writelines(app_id + ' \n')
+            f_sc_sum_pred.writelines(app_id + ' \n')
         f_mode_5.close()
+        f_sc_sum_pred.close()
 
 def compute_mode_from_spreadsheet_txt(k_iter):
     f = open('sc_fold%d_testset.txt' % (k_iter,), 'r')
@@ -147,6 +157,8 @@ def predict_for_spreadsheet_remove_prob():
         out += '\n'
         print(out)
         f_save.write(out)
+
+
 
 
 if __name__ == '__main__':

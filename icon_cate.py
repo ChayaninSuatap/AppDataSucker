@@ -26,44 +26,57 @@ aial = preprocess_util.get_app_id_rating_cate_from_aial(aial)
 aial_train, aial_test = gen_k_fold_pass(aial, kf_pass=0, n_splits=4)
 print(icon_cate_util.compute_baseline(aial_train, aial_test))
 
-model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True, layers_filters = [64, 128, 256, 512, 1024],
-    sliding_dropout=(0.05,0.05), conv1x1_layer_n=2)
-model.load_weights('cate_conv_1024_gap_k0-ep-480-loss-0.024-acc-0.993-vloss-5.465-vacc-0.372.hdf5')
+model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True, layers_filters = [64, 128, 256], stack_conv=2)
+model.load_weights('cate_stack_conv_256_k0-ep-775-loss-0.020-acc-0.994-vloss-5.295-vacc-0.339.hdf5')
 
 #export
-# icon_cate_data_export.predict_for_spreadsheet(model, 0, aial_test)
+# icon_cate_data_export.predict_combine_v1(model, 0, aial_test, '512')
 # input()
 
 #eval for human test
-o = global_util.load_pickle('app_ids_for_human_test.obj')
-xs = []
-ys = []
-for app_id, class_num in o:
-    print(app_id, class_num)
-    icon = icon_util.load_icon_by_app_id(app_id, 128, 128)
-    icon = icon.astype('float32')
-    icon/=255
-    xs.append(icon)
-    y = [0] * 17
-    y[class_num] = 1
-    ys.append(y)
-xs = np.array(xs)
-ys = np.array(ys)
-print(xs.shape)
-print(model.evaluate(xs, ys))
-print('start pred')
-pred = model.predict(xs).argmax(axis=1)
-for x in pred:
-    print(x)
-input()
+# o = global_util.load_pickle('app_ids_for_human_test.obj')
+# xs = []
+# ys = []
+# for app_id, class_num in o:
+#     print(app_id, class_num)
+#     icon = icon_util.load_icon_by_app_id(app_id, 128, 128)
+#     icon = icon.astype('float32')
+#     icon/=255
+#     xs.append(icon)
+#     y = [0] * 17
+#     y[class_num] = 1
+#     ys.append(y)
+# xs = np.array(xs)
+# ys = np.array(ys)
+# print(xs.shape)
+# print(model.evaluate(xs, ys))
+# print('start pred')
+# pred = model.predict(xs).argmax(axis=1)
+# for x in pred:
+#     print(x)
+# input()
 
 batch_size = 16
 epochs = 999
 gen_train = icon_cate_util.datagenerator(aial_train, batch_size, epochs, cate_only=True, enable_cache=True)
 gen_test = icon_cate_util.datagenerator(aial_test, batch_size, epochs, cate_only=True, shuffle=False, enable_cache=True)
 
+# test generator stability
+# arr = [[]]
+# for i in range(999):
+#     arr.append([])
+#     for j in range(math.ceil(len(aial_test)/batch_size)):
+#         xs = gen_test.__next__()
+#         arr[i] += [x.argmax() for x in xs[1]]
+#     print(hash(frozenset(arr[i])))
+# for i in range(len(arr[0])):
+#     if arr[0][i] != arr[2][i]: print('fail')
+# input('its fine maybe')
+
 #eval top 5 acc
-eval_top_5(model, gen_test, math.ceil(len(aial_test)/batch_size))
+# print(model.evaluate_generator(gen_test, math.ceil(len(aial_test)/batch_size)))
+for _ in range(10):
+    eval_top_5(model, gen_test, math.ceil(len(aial_test)/batch_size))
 input()
 
 
