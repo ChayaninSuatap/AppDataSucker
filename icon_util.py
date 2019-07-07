@@ -56,7 +56,7 @@ def oversample_image(app_ids_and_labels):
             app_ids_and_labels.append( picked)
 
 def create_model(IS_REGRESSION, summary=False, use_gap=False, train_sc=False, layers_filters = [64, 128, 256], dropout=0.2
-    , sliding_dropout=None, conv1x1_layer_n=1, stack_conv=1, do_slide_down=False):
+    , sliding_dropout=None, conv1x1_layer_n=1, stack_conv=1, do_slide_down=False, conv1x1_reduce_rate=2):
     # init increasing number for dropout layer name
     global dropout_layer_index
     dropout_layer_index = 0
@@ -122,15 +122,17 @@ def create_model(IS_REGRESSION, summary=False, use_gap=False, train_sc=False, la
             # then add a conv with maxpooling
             x = add_conv(x, layers_filters[i], padding_same=True, dropout=dropout)
 
-    #connect with GAP or a conv1x1 layer
+    ###connect with GAP or a conv1x1 layer
+    #conv1x1
     if not use_gap:
-        cur_layer_filter_n = layers_filters[-1]//2
+        cur_layer_filter_n = layers_filters[-1]//conv1x1_reduce_rate
         for i in range(conv1x1_layer_n):
             x = add_conv(x, cur_layer_filter_n,
                 padding_same=True, kernel_size=(1,1), dropout=dropout)
-            cur_layer_filter_n = cur_layer_filter_n//2
+            cur_layer_filter_n = cur_layer_filter_n//conv1x1_reduce_rate
         x = Flatten(name='my_model_flatten')(x)
         flatten_layer = x
+    #gap
     if use_gap:
         x = GlobalAveragePooling2D()(x)
         # when use_gap link to gap instead

@@ -27,9 +27,10 @@ aial_train, aial_test = gen_k_fold_pass(aial, kf_pass=0, n_splits=4)
 print(icon_cate_util.compute_baseline(aial_train, aial_test))
 
 model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True, layers_filters = [64, 128, 256, 512, 1024],
- conv1x1_layer_n=2, do_slide_down=True, sliding_dropout=(0.4, 0.05))
-# model.load_weights('cate_stack_conv_256_k0-ep-775-loss-0.020-acc-0.994-vloss-5.295-vacc-0.339.hdf5')
+    sliding_dropout=(0.1, 0.05), conv1x1_layer_n=2, conv1x1_reduce_rate=4)
 input()
+# model.load_weights('cate_stack_conv_512_k0-ep-957-loss-0.025-acc-0.991-vloss-5.025-vacc-0.331.hdf5')
+
 #export
 # icon_cate_data_export.predict_combine_v1(model, 0, aial_test, '512')
 # input()
@@ -75,7 +76,7 @@ gen_test = icon_cate_util.datagenerator(aial_test, batch_size, epochs, cate_only
 # input('its fine maybe')
 
 #eval top 5 acc
-# print(model.evaluate_generator(gen_test, math.ceil(len(aial_test)/batch_size)))
+print(model.evaluate_generator(gen_test, math.ceil(len(aial_test)/batch_size)))
 for _ in range(10):
     eval_top_5(model, gen_test, math.ceil(len(aial_test)/batch_size))
 input()
