@@ -264,5 +264,8 @@ def plot_confusion_matrix_generator_icon_cate(model, test_gen_for_ground_truth, 
         for label in labels: ground_truth.append(label)
     keras_util.plot_confusion_matrix_generator(model, ground_truth, test_gen_for_predict, steps_per_epoch)
 
+def compute_class_weight_for_cate(aial_train):
+    return keras_util.compute_class_weight([np.argmax(x) for _,_,x in aial_train])
+
 if __name__ == '__main__':
     fn()
