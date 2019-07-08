@@ -7,6 +7,7 @@ import icon_cate_util
 from keras_util import gen_k_fold_pass
 import sc_util
 from tensorflow.keras.callbacks import ModelCheckpoint
+from tensorflow.keras.models import load_model
 from keras_util import PlotAccLossCallback
 import math
 import sc_data_export
@@ -37,8 +38,9 @@ gen_train=icon_cate_util.datagenerator(aial_train_sc,
 gen_test=icon_cate_util.datagenerator(aial_test_sc,
         batch_size, epochs, cate_only=True, train_sc=True, shuffle=False)
 
-model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True, train_sc=True, layers_filters=[64,128,256,512])
-model.load_weights('sc_cate_conv_512_k0-ep-132-loss-0.097-acc-0.969-vloss-3.760-vacc-0.386.hdf5')
+# model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True, train_sc=True, layers_filters=[64,128,256,512])
+# model.load_weights('sc_cate_conv_512_k0-ep-132-loss-0.097-acc-0.969-vloss-3.760-vacc-0.386.hdf5')
+model = load_model('sc_cate_conv_1024_k0-ep-292-loss-0.020-acc-0.994-vloss-4.533-vacc-0.407.hdf5')
 
 #eval for human test
 # import global_util
@@ -67,7 +69,7 @@ model.load_weights('sc_cate_conv_512_k0-ep-132-loss-0.097-acc-0.969-vloss-3.760-
 
 #export data
 sc_data_export.predict_for_spreadsheet(model ,
-    k_iter=0, aial_test = aial_test, sc_dict= sc_dict, fn_postfix='512')
+    k_iter=0, aial_test = aial_test, sc_dict= sc_dict, fn_postfix='1024')
 input('done')
 
 # model=icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True, train_sc=True)

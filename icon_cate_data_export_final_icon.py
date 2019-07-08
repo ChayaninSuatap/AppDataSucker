@@ -1,5 +1,5 @@
 f_icon = open('icon_fold0_testset.txt', 'r')
-f_ss = open('sc_fold0_testset.txt', 'r')
+f_ss = open('sc_fold0_testset_1024.txt', 'r')
 f_output = open('icon_spreadsheet_final.txt', 'w')
 f_output.close()
 f_output = open('icon_spreadsheet_final.txt', 'a')

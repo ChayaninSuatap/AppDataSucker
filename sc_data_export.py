@@ -1,4 +1,4 @@
-from keras.models import load_model
+
 import icon_util
 import numpy as np
 import mypath
@@ -64,8 +64,8 @@ def predict_for_spreadsheet(model, k_iter, aial_test, sc_dict, fn_postfix=''):
         f_mode_5.close()
         f_sc_sum_pred.close()
 
-def compute_mode_from_spreadsheet_txt(k_iter):
-    f = open('sc_fold%d_testset.txt' % (k_iter,), 'r')
+def compute_mode_from_spreadsheet_txt(k_iter, fn_postfix):
+    f = open('sc_fold%d_testset_%s.txt' % (k_iter, fn_postfix), 'r')
     f_vote = open('ss_vote.txt', 'w')
     f_vote.close()
     f_vote = open('ss_vote.txt', 'a')
@@ -92,8 +92,8 @@ def compute_mode_from_spreadsheet_txt(k_iter):
         except:
             mode = -1
         
-        # #compute mode for first 3 type
-        # #counter
+        #compute mode for first 3 type
+        #counter
         # counter = collections.Counter(labels)
         # ls = []
         # for elem, freq in counter.items():
@@ -115,7 +115,7 @@ def compute_mode_from_spreadsheet_txt(k_iter):
         #         elem0 = ls_sorted[0][0]
         #         elem1 = ls_sorted[1][0]
         #         #decide by occurrence in dataset
-        #         # if occur_prob[elem0] > occur_prob[elem1]:
+        #         # if occur_prob[elem0] > occur_prob[elem1]: #for type 1
         #         #     return elem0
         #         # else:
         #         #     return elem1
@@ -140,9 +140,9 @@ def compute_mode_from_spreadsheet_txt(k_iter):
     f_vote.close()
 
 def predict_for_spreadsheet_remove_prob():
-    f = open('sc_fold0_testset.txt')
-    f_save = open('sc_fold0_testset_remove_prob.txt', 'w')
-    f_save = open('sc_fold0_testset_remove_prob.txt', 'a')
+    f = open('sc_fold0_testset_1024.txt')
+    f_save = open('1024.txt', 'w')
+    f_save = open('1024.txt', 'a')
     for line in f:
         s = line.split(' ')
         tail = s[2:-1]
@@ -162,5 +162,5 @@ def predict_for_spreadsheet_remove_prob():
 
 
 if __name__ == '__main__':
-    compute_mode_from_spreadsheet_txt(0)
+    compute_mode_from_spreadsheet_txt(0, 1024)
     # predict_for_spreadsheet_remove_prob()
