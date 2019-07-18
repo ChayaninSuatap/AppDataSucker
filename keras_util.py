@@ -6,6 +6,7 @@ import functools
 import keras
 from plt_util import plot_confusion_matrix
 from tensorflow.keras.callbacks import Callback
+import tensorflow as tf
 import numpy as np
 import math
 
@@ -194,11 +195,17 @@ def metric_top_k(k):
     o.__name__ = 'top_' + str(k)
     return o
 
-def eval_top_5(model, test_generator, steps):
+def metric_top_k_tf(k):
+    o = functools.partial(keras.metrics.top_k_categorical_accuracy, k=k)
+    o.__name__ = 'top_' + str(k)
+    return o
+
+def eval_top_5(model, test_generator, steps, use_tf_metric=False):
     gen = test_generator
+    metric = metric_top_k_tf if use_tf_metric else metric_top_k
     model.compile(optimizer='adam',
         loss='categorical_crossentropy',
-        metrics=['acc',metric_top_k(2),metric_top_k(3),metric_top_k(4), metric_top_k(5)])
+        metrics=[metric(1),metric(2),metric(3),metric(4), metric(5)])
     print(model.evaluate_generator(gen, steps=steps))
 
 def plot_confusion_matrix_generator(model, ground_truth, test_gen_for_predict, steps_per_epoch):

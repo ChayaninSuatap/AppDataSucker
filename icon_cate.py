@@ -23,7 +23,8 @@ icon_cate_util.check_aial_error(aial)
 #filter only rating cate
 aial = preprocess_util.get_app_id_rating_cate_from_aial(aial)
 
-aial_train, aial_test = gen_k_fold_pass(aial, kf_pass=0, n_splits=4)
+aial_train, aial_test = gen_k_fold_pass(aial, kf_pass=3, n_splits=4)
+
 print(icon_cate_util.compute_baseline(aial_train, aial_test))
 class_weight = icon_cate_util.compute_class_weight_for_cate(aial_test)
 print(class_weight)
@@ -31,7 +32,7 @@ print(class_weight)
 # model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True, layers_filters = [64, 128, 256], conv
     # conv1x1_reduce_rate=2, sliding_dropout=(0.05,0.05))
 # input()
-model = load_model('cate_stack_conv_512_k0-ep-957-loss-0.025-acc-0.991-vloss-5.025-vacc-0.331.hdf5')
+model = load_model('cate_model5_k3-ep-429-loss-0.026-acc-0.992-vloss-5.426-vacc-0.362.hdf5')
 
 #export
 # icon_cate_data_export.predict_for_spreadsheet(model, 0, aial_test)
@@ -61,7 +62,7 @@ model = load_model('cate_stack_conv_512_k0-ep-957-loss-0.025-acc-0.991-vloss-5.0
 #     print(x)
 # input()
 
-batch_size = 16
+batch_size = 24
 epochs = 999
 gen_train = icon_cate_util.datagenerator(aial_train, batch_size, epochs, cate_only=True, enable_cache=True)
 gen_test = icon_cate_util.datagenerator(aial_test, batch_size, epochs, cate_only=True, shuffle=False, enable_cache=True)
@@ -81,7 +82,7 @@ gen_test = icon_cate_util.datagenerator(aial_test, batch_size, epochs, cate_only
 #eval top 5 acc
 # print(model.evaluate_generator(gen_test, math.ceil(len(aial_test)/batch_size)))
 # for _ in range(10):
-eval_top_5(model, gen_test, math.ceil(len(aial_test)/batch_size))
+eval_top_5(model, gen_test, math.ceil(len(aial_test)/batch_size), use_tf_metric=False)
 input()
 
 
