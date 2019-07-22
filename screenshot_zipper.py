@@ -11,8 +11,8 @@ def split(arr, size):
     arrs.append(arr)
     return arrs
 
-chrunk_size = 297009 // 9
-ss_path = 'e:/thesis_datasets/screenshots256/'
+chrunk_size = 187239 // 3
+ss_path = 'e:/thesis_datasets/screenshots.256.distincted/'
 fns = os.listdir(ss_path)
 chrunks = split(fns, chrunk_size)
 
