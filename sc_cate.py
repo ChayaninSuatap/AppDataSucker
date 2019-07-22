@@ -11,6 +11,7 @@ from tensorflow.keras.models import load_model
 from keras_util import PlotAccLossCallback
 import math
 import sc_data_export
+import icon_util
 
 sc_dict = sc_util.make_sc_dict()
 
@@ -30,6 +31,27 @@ print(icon_cate_util.compute_baseline(aial_train, aial_test))
 
 #make aial_train_sc, aial_test_sc
 aial_train_sc, aial_test_sc = sc_util.make_aial_sc(aial_train, aial_test, sc_dict)
+
+#compute number of screenshot each flow
+# counts = []
+# for k_fold in range(4):
+#     aial_train, aial_test = gen_k_fold_pass(aial, kf_pass=k_fold, n_splits=4)
+#     aial_train_sc, aial_test_sc = sc_util.make_aial_sc(aial_train, aial_test, sc_dict)
+#     cate_count = [0] * 17
+#     for sc_fn,_,cate in aial_test_sc:
+#         try:
+#             sc = icon_util.load_icon_by_fn('E:/thesis_datasets/screenshots.256.distincted/' + sc_fn, 256, 160, rotate_for_sc=True)
+#             cate_ix = np.array([cate]).argmax()
+#             cate_count[cate_ix] += 1
+#             # print(cate_count)
+#         except Exception as e:
+#             pass
+#             # print(repr(e))
+#             # print(count)
+#     counts.append( cate_count)
+#     print(cate_count)
+# print(counts)
+# input()
 
 batch_size = 8
 epochs = 999
