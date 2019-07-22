@@ -1,5 +1,9 @@
 import db_util
+import mypath
 from overall_feature_util import _extract_category
+import icon_util
+from global_util import save_pickle, load_pickle
+import os.path
 def prep_rating_category():
     conn = db_util.connect_db()
     app_ids_and_labels = []
@@ -62,8 +66,31 @@ def remove_low_rating_amount(aial, threshold):
             newaial.append(x)
     return newaial
 
+def get_app_ids_without_icon(save_obj=False):
+    app_ids = db_util.get_all_app_id(db_util.connect_db())
+    app_ids_without_icon = []
+    for app_id in app_ids:
+        try:
+            icon = icon_util.load_icon_by_app_id(app_id, 128, 128)
+        except:
+            if not os.path.isfile('icons.recrawled/' + app_id + '.png'):
+                print(app_id)
+                app_ids_without_icon.append( app_id)
+    if save_obj: save_pickle(app_ids_without_icon, 'app_ids_without_icon.recrawled.obj')
+    return app_ids_without_icon
+
 
 if __name__ == '__main__':
-    prep_rating_category()
+    # o = get_app_ids_without_icon(save_obj=True)
+    # print(o, len(o))
+    app_ids_without_icon = load_pickle('app_ids_without_icon.recrawled.obj')
+    import sc_util
+    sc_dict = sc_util.make_sc_dict()
+    has_sc = []
+    for x in app_ids_without_icon:
+        if x in sc_dict and len(sc_dict[x]) > 0:
+            print(x)
+            has_sc.append(x)
+    print(has_sc, len(has_sc))
     
 
