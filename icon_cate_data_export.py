@@ -104,23 +104,30 @@ def vote_by_maturity_for_human_test(models):
         pred_argmaxs.append( pred_argmax)
         preds.append( pred)
     output = []
-    for i in range(len(pred_argmaxs[0])):
-        if pred_argmaxs[0][i] == pred_argmaxs[1][i]:
-            output.append(pred_argmaxs[0][i])
-        elif pred_argmaxs[1][i] == pred_argmaxs[2][i]:
-            output.append(pred_argmaxs[1][i])
-        elif pred_argmaxs[0][i] == pred_argmaxs[2][i]:
-            output.append(pred_argmaxs[2][i])
-        else:
-            ix0 = pred_argmaxs[0][i]
-            ix1 = pred_argmaxs[1][i]
-            ix2 = pred_argmaxs[2][i]
-            if preds[0][i][ix0] >= preds[1][i][ix1] and preds[0][i][ix0] >= preds[2][i][ix2]:
-                output.append( pred_argmaxs[0][i])
-            elif preds[1][i][ix1] >= preds[0][i][ix0] and preds[1][i][ix1] >= preds[2][i][ix2]:
-                output.append( pred_argmaxs[1][i])
-            elif preds[2][i][ix2] >= preds[1][i][ix1] and preds[2][i][ix2] >= preds[0][i][ix0]:
-                output.append( pred_argmaxs[2][i])
+    #vote2
+    # for i in range(len(pred_argmaxs[0])):
+    #     if pred_argmaxs[0][i] == pred_argmaxs[1][i]:
+    #         output.append(pred_argmaxs[0][i])
+    #     elif pred_argmaxs[1][i] == pred_argmaxs[2][i]:
+    #         output.append(pred_argmaxs[1][i])
+    #     elif pred_argmaxs[0][i] == pred_argmaxs[2][i]:
+    #         output.append(pred_argmaxs[2][i])
+    #     else:
+    #         ix0 = pred_argmaxs[0][i]
+    #         ix1 = pred_argmaxs[1][i]
+    #         ix2 = pred_argmaxs[2][i]
+    #         if preds[0][i][ix0] >= preds[1][i][ix1] and preds[0][i][ix0] >= preds[2][i][ix2]:
+    #             output.append( pred_argmaxs[0][i])
+    #         elif preds[1][i][ix1] >= preds[0][i][ix0] and preds[1][i][ix1] >= preds[2][i][ix2]:
+    #             output.append( pred_argmaxs[1][i])
+    #         elif preds[2][i][ix2] >= preds[1][i][ix1] and preds[2][i][ix2] >= preds[0][i][ix0]:
+    #             output.append( pred_argmaxs[2][i])
+
+    #vote5
+    for i in range(340):
+        sum_pred = preds[0][i] + preds[1][i] + preds[2][i]
+        output.append( sum_pred.argmax())
+
     [print(x) for x in output]
 
 
