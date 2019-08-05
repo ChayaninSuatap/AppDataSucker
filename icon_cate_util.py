@@ -43,7 +43,7 @@ def create_icon_cate_model(cate_only=False, is_softmax=False, use_gap=False, tra
         x = BatchNormalization()(x)
         #regular dropout
         if sliding_dropout==None:
-            x = Dropout(0.2, name='do_last_0.2')(x)
+            x = Dropout(dropout, name='do_last_%.2f' % (dropout,))(x)
         #increasing dropout value
         else:
             current_dropout_value = o['current_dropout_value']
