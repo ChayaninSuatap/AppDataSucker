@@ -13,24 +13,24 @@ import math
 import sc_data_export
 import icon_util
 
-sc_dict = sc_util.make_sc_dict()
+# sc_dict = sc_util.make_sc_dict()
 
-random.seed(859)
-np.random.seed(859)
-aial = preprocess_util.prep_rating_category_scamount_download(for_softmax=True)
-aial = preprocess_util.remove_low_rating_amount(aial, 100)
-random.shuffle(aial)
-print('aial loss',icon_cate_util.compute_aial_loss(aial))
-icon_cate_util.check_aial_error(aial)
+# random.seed(859)
+# np.random.seed(859)
+# aial = preprocess_util.prep_rating_category_scamount_download(for_softmax=True)
+# aial = preprocess_util.remove_low_rating_amount(aial, 100)
+# random.shuffle(aial)
+# print('aial loss',icon_cate_util.compute_aial_loss(aial))
+# icon_cate_util.check_aial_error(aial)
 
-#filter only rating cate
-aial = preprocess_util.get_app_id_rating_cate_from_aial(aial)
-aial_train, aial_test = gen_k_fold_pass(aial, kf_pass=0, n_splits=4)
+# #filter only rating cate
+# aial = preprocess_util.get_app_id_rating_cate_from_aial(aial)
+# aial_train, aial_test = gen_k_fold_pass(aial, kf_pass=0, n_splits=4)
 
-print(icon_cate_util.compute_baseline(aial_train, aial_test))
+# print(icon_cate_util.compute_baseline(aial_train, aial_test))
 
-#make aial_train_sc, aial_test_sc
-aial_train_sc, aial_test_sc = sc_util.make_aial_sc(aial_train, aial_test, sc_dict)
+# #make aial_train_sc, aial_test_sc
+# aial_train_sc, aial_test_sc = sc_util.make_aial_sc(aial_train, aial_test, sc_dict)
 
 #compute number of screenshot each flow
 # counts = []
@@ -53,17 +53,17 @@ aial_train_sc, aial_test_sc = sc_util.make_aial_sc(aial_train, aial_test, sc_dic
 # print(counts)
 # input()
 
-batch_size = 8
-epochs = 999
-gen_train=icon_cate_util.datagenerator(aial_train_sc,
-        batch_size, epochs, cate_only=True, train_sc=True)
-gen_test=icon_cate_util.datagenerator(aial_test_sc,
-        batch_size, epochs, cate_only=True, train_sc=True, shuffle=False)
+# batch_size = 8
+# epochs = 999
+# gen_train=icon_cate_util.datagenerator(aial_train_sc,
+#         batch_size, epochs, cate_only=True, train_sc=True)
+# gen_test=icon_cate_util.datagenerator(aial_test_sc,
+#         batch_size, epochs, cate_only=True, train_sc=True, shuffle=False)
 
-# model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True, train_sc=True, layers_filters=[64,128,256,512])
-# model.load_weights('sc_cate_conv_512_k0-ep-132-loss-0.097-acc-0.969-vloss-3.760-vacc-0.386.hdf5')
-model = load_model('sc_cate_conv_1024_2_conv1x1_slide_do_k0-ep-274-loss-0.028-acc-0.991-vloss-4.660-vacc-0.417.hdf5')
-
+# # model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True, train_sc=True, layers_filters=[64,128,256,512])
+# # model.load_weights('sc_cate_conv_512_k0-ep-132-loss-0.097-acc-0.969-vloss-3.760-vacc-0.386.hdf5')
+model = load_model('ensemble_model/s10_k0.hdf5')
+output_fn = 's10_k0_h.obj'
 #eval for human test
 import global_util
 import icon_util
@@ -84,9 +84,9 @@ ys = np.array(ys)
 print(xs.shape)
 # print(model.evaluate(xs, ys))
 print('start pred')
-pred = model.predict(xs, batch_size=1).argmax(axis=1)
-for x in pred:
-    print(x)
+pred = model.predict(xs, batch_size=1)
+global_util.save_pickle(pred, 'ensemble_data/' + output_fn)
+print(pred)
 input()
 
 #export data
