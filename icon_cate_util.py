@@ -66,7 +66,7 @@ def create_icon_cate_model(cate_only=False, is_softmax=False, use_gap=False, tra
     model.summary()
     return model
 
-def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shuffle=True, enable_cache=False, limit_cache_n=None):
+def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shuffle=True, enable_cache=False, limit_cache_n=None, yield_app_id=False, skip_reading_image=False):
     cache_dict = {}
     #limit cache 
     if limit_cache_n != None: cached_n = 0
@@ -77,6 +77,7 @@ def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shu
             icons = []
             labels = []
             cate_labels = []
+            app_ids = []
             #prepare chrunk
             for app_id, label, cate_label in g:
                 #get from cache
@@ -84,14 +85,17 @@ def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shu
                     icon = cache_dict[app_id]
                 else:
                     try:
-                        if train_sc:
+                        if skip_reading_image:
+                            icon=None
+                        elif train_sc:
                             icon = icon_util.load_icon_by_fn(mypath.screenshot_folder + app_id, 256, 160, rotate_for_sc=True)
-                        else:
+                        elif not train_sc:
                             icon = icon_util.load_icon_by_app_id(app_id, 128, 128)
                     except:
                         continue
                     #put in cache
                     if enable_cache:
+                    
                         #limit cache
                         if limit_cache_n != None:
                             #cache only when below limit
@@ -101,6 +105,7 @@ def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shu
                         # no limit cache
                         else:
                             cache_dict[app_id] = icon
+                app_ids.append(app_id)
                 icons.append(icon)
                 labels.append(label)
                 cate_labels.append(cate_label)     
@@ -113,9 +118,9 @@ def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shu
             labels = np.array(labels)
             cate_labels = np.array(cate_labels)
             if cate_only:
-                yield icons, cate_labels
+                yield (icons, cate_labels) if not yield_app_id else (app_ids, icon, cate_labels)
             else:
-                yield icons, [labels, cate_labels]
+                yield (icons, [labels, cate_labels]) if not yield_app_id else (app_ids, icons, [labels, cate_labels])
                 
 class FoldData:
     def __init__(self, onehot, avg_rating, std_rating, scamount, total_app, download_dict, rating_amount_dict):

@@ -31,10 +31,13 @@ def make_ensemble_data_human_testset(ensemble_data, labels, human_testset_labels
     
     return output
 
-def compute_max_sum(sum_pred):
+def compute_max_sum(sum_pred, get_confidence=False):
     output = []
     for pred_row in sum_pred:
-        output.append(argmax(pred_row))
+        if get_confidence==False:
+            output.append(argmax(pred_row))
+        else:
+            output.append((argmax(pred_row), max(pred_row)))
     return output
 
 def get_labels(k_fold, get_app_id=False):
