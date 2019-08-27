@@ -31,8 +31,10 @@ print(class_weight)
 
 # model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True, layers_filters = [64, 128, 256], conv
     # conv1x1_reduce_rate=2, sliding_dropout=(0.05,0.05))
+model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True, train_sc=False,
+    layers_filters = [64, 128, 256, 512], predict_rating=True)
 # input()
-model = load_model('cate_model5_k3-ep-429-loss-0.026-acc-0.992-vloss-5.426-vacc-0.362.hdf5')
+# model = load_model('cate_model5_k3-ep-429-loss-0.026-acc-0.992-vloss-5.426-vacc-0.362.hdf5')
 
 #export
 # icon_cate_data_export.predict_for_spreadsheet(model, 0, aial_test)
@@ -62,10 +64,10 @@ model = load_model('cate_model5_k3-ep-429-loss-0.026-acc-0.992-vloss-5.426-vacc-
 #     print(x)
 # input()
 
-batch_size = 24
+batch_size = 16
 epochs = 999
-gen_train = icon_cate_util.datagenerator(aial_train, batch_size, epochs, cate_only=True, enable_cache=True)
-gen_test = icon_cate_util.datagenerator(aial_test, batch_size, epochs, cate_only=True, shuffle=False, enable_cache=True)
+gen_train = icon_cate_util.datagenerator(aial_train, batch_size, epochs, cate_only=True, enable_cache=True, predict_rating=True)
+gen_test = icon_cate_util.datagenerator(aial_test, batch_size, epochs, cate_only=True, shuffle=False, enable_cache=True, predict_rating=True)
 
 # test generator stability
 # arr = [[]]
@@ -79,21 +81,12 @@ gen_test = icon_cate_util.datagenerator(aial_test, batch_size, epochs, cate_only
 #     if arr[0][i] != arr[2][i]: print('fail')
 # input('its fine maybe')
 
-#eval top 5 acc
-# print(model.evaluate_generator(gen_test, math.ceil(len(aial_test)/batch_size)))
-# for _ in range(10):
-eval_top_5(model, gen_test, math.ceil(len(aial_test)/batch_size), use_tf_metric=False)
-input()
-
-
 filepath='t-ep-{epoch:03d}-loss-{loss:.3f}-acc{acc:.3f}-vloss-{val_loss:.3f}-vacc-{val_acc:.3f}.hdf5'
-### save for predict rating + cate
-# filepath='reg_cate_only_k0-ep-{epoch:03d}-loss-{my_model_regress_1_loss:.3f}-vloss-{val_my_model_regress_1_loss:.3f}-vmape-{val_my_model_regress_1_mean_absolute_percentage_error:.3f}.hdf5'
 
-checkpoint = ModelCheckpoint(filepath, monitor='val_acc', save_best_only=False, verbose=0, period=1)
-palc = PlotAccLossCallback(is_cate=False)
+# checkpoint = ModelCheckpoint(filepath, monitor='val_acc', save_best_only=False, verbose=0, period=1)
+palc = PlotAccLossCallback(is_cate=False, is_regression=True)
 model.fit_generator(gen_train,
     steps_per_epoch=math.ceil(len(aial_train)/batch_size),
     validation_data=gen_test, max_queue_size=1,
     validation_steps=math.ceil(len(aial_test)/batch_size),
-    callbacks=[checkpoint, palc], epochs=epochs, initial_epoch=0, class_weight=class_weight)
+    callbacks=[palc], epochs=epochs, initial_epoch=0,)

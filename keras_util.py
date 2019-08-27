@@ -40,7 +40,6 @@ def group_for_fit_generator(xs, n, shuffle=False):
     if out != []:
         yield out
 
-
 class PlotConfusionMatrixCallback(Callback):
     def set_postfix_name(self, name):
         self.postfix_name = name

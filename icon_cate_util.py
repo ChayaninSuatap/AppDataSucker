@@ -25,7 +25,7 @@ def compute_baseline(aial, aial_test):
     return avg, total_mse/ len(aial_test), total_mae/len(aial_test)
 
 def create_icon_cate_model(cate_only=False, is_softmax=False, use_gap=False, train_sc=False, layers_filters = [64, 128, 256], dropout=0.2,
-    sliding_dropout=None , conv1x1_layer_n=1, stack_conv=1, do_slide_down=False, conv1x1_reduce_rate=2):
+    sliding_dropout=None , conv1x1_layer_n=1, stack_conv=1, do_slide_down=False, conv1x1_reduce_rate=2, predict_rating=False):
 
     o = icon_util.create_model(IS_REGRESSION=True, use_gap=use_gap, train_sc=train_sc, layers_filters=layers_filters, dropout=dropout,
         sliding_dropout=sliding_dropout, conv1x1_layer_n=conv1x1_layer_n, stack_conv=stack_conv, do_slide_down=do_slide_down,
@@ -34,13 +34,15 @@ def create_icon_cate_model(cate_only=False, is_softmax=False, use_gap=False, tra
     flatten_layer = o['flatten_layer']
     output_layer = o['output_layer']
 
-    #jump
+    #assigning output
     if use_gap and is_softmax:
         output_cate = Dense(17, activation='softmax')(flatten_layer)
     else:
+        #dense before predict nodes
         x = Dense(34)(flatten_layer)
         x = LeakyReLU()(x)
         x = BatchNormalization()(x)
+
         #regular dropout
         if sliding_dropout==None:
             x = Dropout(dropout, name='do_last_%.2f' % (dropout,))(x)
@@ -48,25 +50,29 @@ def create_icon_cate_model(cate_only=False, is_softmax=False, use_gap=False, tra
         else:
             current_dropout_value = o['current_dropout_value']
             x = Dropout(current_dropout_value, name='do_last_'+ str(current_dropout_value))(x)
-        if is_softmax:
-            output_cate = Dense(17, activation='softmax')(x)
-        else:
-            output_cate = Dense(17, activation='sigmoid')(x)
+
+        #predict class
+        output_cate = Dense(17, activation='softmax')(x)
+        if predict_rating:
+            output_cate = Dense(1, activation='linear')(output_cate)
     
     model_output = output_cate if cate_only else [output_layer, output_cate]
     model = Model(inputs=input_layer, outputs=model_output)
-    if cate_only:
+
+    #compilation
+    if cate_only and not predict_rating:
         model.compile(optimizer='adam',
             loss='categorical_crossentropy' if is_softmax else 'binary_crossentropy',
             metrics=['acc'])
-    else:
+    elif cate_only and predict_rating:
         model.compile(optimizer='adam',
-            loss={'my_model_regress_1':'mse','dense_2':'categorical_crossentropy' if is_softmax else 'binary_crossentropy'},
-            metrics={'my_model_regress_1':'mean_absolute_percentage_error'})
+            loss='mse',
+            metrics=['mape'])
     model.summary()
     return model
 
-def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shuffle=True, enable_cache=False, limit_cache_n=None, yield_app_id=False, skip_reading_image=False):
+def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shuffle=True, enable_cache=False, limit_cache_n=None
+, yield_app_id=False, skip_reading_image=False, predict_rating=False):
     cache_dict = {}
     #limit cache 
     if limit_cache_n != None: cached_n = 0
@@ -117,8 +123,10 @@ def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shu
             icons /= 255
             labels = np.array(labels)
             cate_labels = np.array(cate_labels)
-            if cate_only:
+            if cate_only and not predict_rating:
                 yield (icons, cate_labels) if not yield_app_id else (app_ids, icon, cate_labels)
+            elif cate_only and predict_rating:
+                yield (icons, labels) if not yield_app_id else (app_ids, icon, labels)
             else:
                 yield (icons, [labels, cate_labels]) if not yield_app_id else (app_ids, icons, [labels, cate_labels])
                 
