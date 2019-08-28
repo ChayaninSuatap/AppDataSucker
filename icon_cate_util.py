@@ -124,9 +124,9 @@ def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shu
             labels = np.array(labels)
             cate_labels = np.array(cate_labels)
             if cate_only and not predict_rating:
-                yield (icons, cate_labels) if not yield_app_id else (app_ids, icon, cate_labels)
+                yield (icons, cate_labels) if not yield_app_id else (app_ids, icons, cate_labels)
             elif cate_only and predict_rating:
-                yield (icons, labels) if not yield_app_id else (app_ids, icon, labels)
+                yield (icons, labels) if not yield_app_id else (app_ids, icons, labels)
             else:
                 yield (icons, [labels, cate_labels]) if not yield_app_id else (app_ids, icons, [labels, cate_labels])
                 
