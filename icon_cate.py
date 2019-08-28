@@ -81,7 +81,7 @@ gen_test = icon_cate_util.datagenerator(aial_test, batch_size, epochs, cate_only
 #     if arr[0][i] != arr[2][i]: print('fail')
 # input('its fine maybe')
 
-filepath='t-ep-{epoch:03d}-loss-{loss:.3f}-acc{acc:.3f}-vloss-{val_loss:.3f}-vacc-{val_acc:.3f}.hdf5'
+filepath='t-ep-{epoch:03d}-loss-{loss:.3f}-acc{acc:.3f}-vloss-{val_loss:.3f}-vacc-{val_mean_absolute_percentage_error:.3f}.hdf5'
 
 # checkpoint = ModelCheckpoint(filepath, monitor='val_acc', save_best_only=False, verbose=0, period=1)
 palc = PlotAccLossCallback(is_cate=False, is_regression=True)
