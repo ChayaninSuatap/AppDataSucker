@@ -72,7 +72,7 @@ def create_icon_cate_model(cate_only=False, is_softmax=False, use_gap=False, tra
     return model
 
 def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shuffle=True, enable_cache=False, limit_cache_n=None
-, yield_app_id=False, skip_reading_image=False, predict_rating=False):
+, yield_app_id=False, skip_reading_image=False, predict_rating=False, icon_resize_dim=(128, 128)):
     cache_dict = {}
     #limit cache 
     if limit_cache_n != None: cached_n = 0
@@ -96,7 +96,7 @@ def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shu
                         elif train_sc:
                             icon = icon_util.load_icon_by_fn(mypath.screenshot_folder + app_id, 256, 160, rotate_for_sc=True)
                         elif not train_sc:
-                            icon = icon_util.load_icon_by_app_id(app_id, 128, 128)
+                            icon = icon_util.load_icon_by_app_id(app_id, icon_resize_dim[0], icon_resize_dim[0])
                     except:
                         continue
                     #put in cache
