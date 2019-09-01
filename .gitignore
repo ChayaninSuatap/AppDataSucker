@@ -50,3 +50,7 @@ models_descs/
 *.png
 
 *.txt
+
+basic_features/
+
+t3.py

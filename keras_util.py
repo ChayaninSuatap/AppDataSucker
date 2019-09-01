@@ -80,6 +80,9 @@ import matplotlib.pyplot as plt
 import matplotlib
 class PlotAccLossCallback(Callback):
     def __init__(self, is_regression=False, is_cate=False, use_colab=False, proj=''):
+        
+        #is_cate should be False in every case.
+
         self.is_regression = is_regression
         self.is_cate = is_cate
         self.use_colab = use_colab
