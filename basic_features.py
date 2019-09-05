@@ -196,7 +196,6 @@ def make_sc_hog_split_train_test(k_iter, compute_train_set=False, compute_test_s
         
         del feature_dict
     
-    input('ready for norm?')
 
     scaler = fit_scaler(set_dict)
     transform_to_scaler(set_dict, scaler)
