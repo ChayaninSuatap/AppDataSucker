@@ -235,6 +235,7 @@ def make_sc_hog_split_train_test(k_iter, compute_train_set=False, compute_test_s
     dump(set_dict, 'basic_features/sc_hog/' + dump_fn)
 
 if __name__ == '__main__':
+    pass
     # make_sc_hog_split_train_test(0, compute_train_set=False, compute_test_set=True)
 
     # split_train_test('basic_features/icon_gist.gzip', train_path = 'basic_features/icon_gist_train_k3.gzip',
