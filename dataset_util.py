@@ -16,7 +16,7 @@ def make_icon_dataset_generator(k_iter, batch_size, epochs, enable_cache=False, 
 
     return gen_train, gen_test, train_steps, test_steps
 
-def prepare_aial_train_test(k_iter):
+def prepare_aial_train_test(k_iter, get_app_id_only=False):
     random.seed(859)
     np.random.seed(859)
     aial = preprocess_util.prep_rating_category_scamount_download(for_softmax=True)
@@ -25,7 +25,11 @@ def prepare_aial_train_test(k_iter):
     aial = preprocess_util.get_app_id_rating_cate_from_aial(aial)
 
     aial_train, aial_test = keras_util.gen_k_fold_pass(aial, kf_pass= k_iter, n_splits=4)
-    return aial_train, aial_test
+
+    if get_app_id_only:
+        return [app_id for app_id,_,_ in aial_train], [app_id for app_id,_,_ in aial_test]
+    else:
+        return aial_train, aial_test
 
 if __name__ == '__main__':
     aial_train, aial_test = prepare_aial_train_test(0)

@@ -72,7 +72,7 @@ def create_icon_cate_model(cate_only=False, is_softmax=False, use_gap=False, tra
     return model
 
 def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shuffle=True, enable_cache=False, limit_cache_n=None
-, yield_app_id=False, skip_reading_image=False, predict_rating=False, icon_resize_dim=(128, 128)):
+, yield_app_id=False, skip_reading_image=False, predict_rating=False, icon_resize_dim=(128, 128), skip_reading_amount=0):
     cache_dict = {}
     #limit cache 
     if limit_cache_n != None: cached_n = 0
@@ -92,7 +92,10 @@ def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shu
                 else:
                     try:
                         if skip_reading_image:
-                            icon=None
+                            continue
+                        elif skip_reading_amount > 0:
+                            skip_reading_amount -= 1
+                            continue
                         elif train_sc:
                             icon = icon_util.load_icon_by_fn(mypath.screenshot_folder + app_id, 256, 160, rotate_for_sc=True)
                         elif not train_sc:
@@ -280,5 +283,3 @@ def plot_confusion_matrix_generator_icon_cate(model, test_gen_for_ground_truth, 
 def compute_class_weight_for_cate(aial_train):
     return keras_util.compute_class_weight([np.argmax(x) for _,_,x in aial_train])
 
-if __name__ == '__main__':
-    fn()
