@@ -238,7 +238,4 @@ if __name__ == '__main__':
     # make_sc_hog_split_train_test(0, compute_train_set=False, compute_test_set=True)
 
     # split_train_test('basic_features/icon_gist.gzip', train_path = 'basic_features/icon_gist_train_k3.gzip',
-        # test_path = 'basic_features/icon_gist_test_k3.gzip', k_iter = 3)   
-
-    
-
+        # test_path = 'basic_features/icon_gist_test_k3.gzip', k_iter = 3)
