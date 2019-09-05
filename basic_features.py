@@ -54,11 +54,40 @@ def fit_scaler(feature_dict):
         l.append(item)
     scaler = StandardScaler()
     scaler.fit(l)
+    del l
     return scaler
 
 def transform_to_scaler(feature_dict, scaler):
     for k, item in feature_dict.items():
         feature_dict[k] = (item-scaler.mean_) / scaler.var_
+
+def my_fit_scaler(feature_dict:dict):
+    sum = None
+    for k, item in feature_dict.items():
+        if sum is None:
+            sum = np.array(item)
+            np_sum = [item]
+        else:
+            sum+=item
+            np_sum.append(item)
+
+    mean = sum / len(feature_dict)
+
+    sum_diff = None
+    for item in feature_dict.values():
+        if sum_diff is None:
+            sum_diff = (item - mean) ** 2
+        else:
+            sum_diff += (item - mean) ** 2
+    
+    var = sum_diff / (len(feature_dict))
+
+    return mean, var
+
+def my_transform_to_scaler(feature_dict, mean, var):
+    for k, item in feature_dict.items():
+        feature_dict[k] = (item - mean) / var
+
 
 def make_model(feature, dense_sizes=[1000,500]):
 
@@ -207,12 +236,10 @@ def make_sc_hog_split_train_test(k_iter, compute_train_set=False, compute_test_s
     dump(set_dict, 'basic_features/sc_hog/' + dump_fn)
 
 if __name__ == '__main__':
-    #need to run on colab!!
-    make_sc_hog_split_train_test(0, compute_train_set=False, compute_test_set=True)
+    # make_sc_hog_split_train_test(0, compute_train_set=False, compute_test_set=True)
 
     # split_train_test('basic_features/icon_gist.gzip', train_path = 'basic_features/icon_gist_train_k3.gzip',
         # test_path = 'basic_features/icon_gist_test_k3.gzip', k_iter = 3)   
-
 
     
 
