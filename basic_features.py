@@ -32,7 +32,7 @@ def _load_aial():
 def _icon_generator():
     aial = _load_aial()
     datagen = icon_cate_util.datagenerator(aial, 32, 1,  cate_only=True, yield_app_id=True, icon_resize_dim=(180,180))
-    for app_ids, icons, labels in datagen:
+    for app_ids, icons, _ in datagen:
         for app_id, icon in zip(app_ids, icons):
             yield app_id, icon
 
@@ -88,7 +88,6 @@ def my_transform_to_scaler(feature_dict, mean, var):
     for k, item in feature_dict.items():
         feature_dict[k] = (item - mean) / var
 
-
 def make_model(feature, dense_sizes=[1000,500]):
 
     if feature == 'hog':
@@ -142,7 +141,6 @@ def extract_hog_sc(sc):
 
 def split_train_test(dataset_path, train_path, test_path, k_iter, compress=3):
     #split train test from dataset and also normalize it
-
     gist_dict = load(dataset_path)
     aial_train , aial_test = dataset_util.prepare_aial_train_test(k_iter)
 
@@ -160,7 +158,6 @@ def split_train_test(dataset_path, train_path, test_path, k_iter, compress=3):
     scaler = fit_scaler(gist_train_dict)
     transform_to_scaler(gist_train_dict, scaler)
 
-    scaler = fit_scaler(gist_test_dict)
     transform_to_scaler(gist_test_dict, scaler)
 
     #add label
@@ -174,12 +171,14 @@ def split_train_test(dataset_path, train_path, test_path, k_iter, compress=3):
     dump(gist_test_dict, test_path, compress=compress)
     print('done')
 
-def make_sc_hog():
-    # prepare screenshot k0
-    aial_train, aial_test = dataset_util.prepare_aial_train_test(0)
-    aial_train = [app_id for app_id,_,_ in aial_train]
-    aial_test = [app_id for app_id,_,_ in aial_test]
+def make_icon_hog(pixels_per_cell=(8,8)):
+    dict = {}
+    for app_id, icon in _icon_generator():
+        print(app_id)
+        dict[app_id] = extract_hog(icon, pixels_per_cell=pixels_per_cell)
+    dump(dict, 'basic_features/icon_hog16.gzip', compress=3)
 
+def make_sc_hog():
     # total sc 141895
     feature_num_in_part = 0
     file_part_i = 0
@@ -201,10 +200,14 @@ def make_sc_hog():
     if feature_num_in_part > 0 :
         dump(dict, 'basic_features/sc_hog%02d.gzip' % (file_part_i,), compress=3)
 
-def make_sc_hog_split_train_test(k_iter, compute_train_set=False, compute_test_set=False):
+def make_sc_hog_split_train_test(k_iter, compute_train_set=False, compute_test_set=False, mean=None, var=None, compress=3):
     aial_train, aial_test = dataset_util.prepare_aial_train_test(k_iter)
-    if compute_train_set and not compute_test_set: aial = aial_train
-    elif compute_test_set and not compute_train_set: aial = aial_test
+    if compute_train_set and not compute_test_set:
+        aial = aial_train
+    elif compute_test_set and not compute_train_set:
+        if mean is None or var is None:
+            raise Exception('Give me mean or var when making test set')
+        aial = aial_test
     else:
         raise Exception('Choose only one : train or test?')
 
@@ -225,18 +228,38 @@ def make_sc_hog_split_train_test(k_iter, compute_train_set=False, compute_test_s
         
         del feature_dict
     
-    scaler = my_fit_scaler(set_dict)
-    my_transform_to_scaler(set_dict, scaler)
+    if compute_train_set:
+        mean, var = my_fit_scaler(set_dict)
+    my_transform_to_scaler(set_dict, mean, var)
 
     for app_id_fn in set_dict.keys():
         set_dict[app_id_fn] = set_dict[app_id_fn], app_id_cate_dict[app_id_fn[:-6]]
 
     dump_fn = 'sc_hog_train_k%d.gzip' % (k_iter,) if compute_train_set else 'sc_hog_test_k%d.gzip' % (k_iter,)
-    dump(set_dict, 'basic_features/sc_hog/' + dump_fn)
+    dump(set_dict, 'basic_features/sc_hog/' + dump_fn, compress=compress)
+
+    return mean, var
 
 if __name__ == '__main__':
-    pass
-    # make_sc_hog_split_train_test(0, compute_train_set=False, compute_test_set=True)
+    make_sc_hog_split_train_test(0, compute_train_set=False, compute_test_set=True)
 
     # split_train_test('basic_features/icon_gist.gzip', train_path = 'basic_features/icon_gist_train_k3.gzip',
         # test_path = 'basic_features/icon_gist_test_k3.gzip', k_iter = 3)
+    
+    # compare mean var
+    # feature_dict = load('basic_features/icon_gist.gzip')
+    # aial_train, aial_test = dataset_util.prepare_aial_train_test(0, True)
+    # train = {}
+    # test = {}
+    # for k, item in feature_dict.items():
+    #     if k in aial_train:
+    #         train[k] = item
+    #     elif k in aial_test:
+    #         test[k] = item
+    #     else:
+    #         raise Exception('FUCKED')
+    # train_mean, train_var = my_fit_scaler(train) 
+    # test_mean, test_var = my_fit_scaler(test)
+
+    # print(train_mean[:5], train_var[:5])
+    # print(test_mean[:5], test_var[:5])
