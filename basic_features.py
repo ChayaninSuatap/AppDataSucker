@@ -200,7 +200,10 @@ def make_sc_hog():
     if feature_num_in_part > 0 :
         dump(dict, 'basic_features/sc_hog%02d.gzip' % (file_part_i,), compress=3)
 
-def make_sc_hog_split_for_generator(feature_dict_path, save_split_dir, k_iter):
+def make_sc_hog_split_for_generator(feature_dict_path, save_split_dir, k_iter, train=False, test=False):
+    if train == test:
+        raise Exception('select train or test')
+
     feature_dict = load(feature_dict_path)
     max_num_in_part = 10000
     feature_num_in_part = 0
@@ -212,14 +215,21 @@ def make_sc_hog_split_for_generator(feature_dict_path, save_split_dir, k_iter):
         feature_num_in_part += 1
 
         if feature_num_in_part == max_num_in_part:
-            dump(dict, '%s/sc_hog_train_split%02d_k%d' % (save_split_dir,file_part_i, k_iter), compress=0)
+            if train:
+                dump(dict, '%s/sc_hog_train_split%02d_k%d' % (save_split_dir,file_part_i, k_iter), compress=0)
+            else:
+                dump(dict, '%s/sc_hog_test_split%02d_k%d' % (save_split_dir,file_part_i, k_iter), compress=0)
             dict = {}
             feature_num_in_part = 0
             print('part', file_part_i, 'finished')
             file_part_i += 1
     
     if feature_num_in_part > 0 :
-        dump(dict, '%s/sc_hog_train_split%02d_k%d' % (save_split_dir,file_part_i, k_iter), compress=0)
+        if train:
+            dump(dict, '%s/sc_hog_train_split%02d_k%d' % (save_split_dir,file_part_i, k_iter), compress=0)
+        else:
+            dump(dict, '%s/sc_hog_test_split%02d_k%d' % (save_split_dir,file_part_i, k_iter), compress=0)
+
     print('done')
 
 
@@ -264,11 +274,13 @@ def make_sc_hog_split_train_test(k_iter, compute_train_set=False, compute_test_s
     return mean, var
 
 if __name__ == '__main__':
-    make_sc_hog_split_train_test(0, compute_train_set=False, compute_test_set=True)
+    # make_sc_hog_split_train_test(0, compute_train_set=False, compute_test_set=True)
 
     # split_train_test('basic_features/icon_gist.gzip', train_path = 'basic_features/icon_gist_train_k3.gzip',
         # test_path = 'basic_features/icon_gist_test_k3.gzip', k_iter = 3)
     
+    mean, var = global_util.load_pickle('basic_features/sc_hog_mean_and_var_k0.obj')
+    make_sc_hog_split_train_test(0, compute_test_set=True, mean=mean, var=var)
     # compare mean var
     # feature_dict = load('basic_features/icon_gist.gzip')
     # aial_train, aial_test = dataset_util.prepare_aial_train_test(0, True)
