@@ -200,6 +200,29 @@ def make_sc_hog():
     if feature_num_in_part > 0 :
         dump(dict, 'basic_features/sc_hog%02d.gzip' % (file_part_i,), compress=3)
 
+def make_sc_hog_split_for_generator(feature_dict_path, save_split_dir, k_iter):
+    feature_dict = load(feature_dict_path)
+    max_num_in_part = 10000
+    feature_num_in_part = 0
+    file_part_i = 0
+
+    dict = {}
+    for app_id, feature in feature_dict.items():
+        dict[app_id] = feature
+        feature_num_in_part += 1
+
+        if feature_num_in_part == max_num_in_part:
+            dump(dict, '%s/sc_hog_train_split%02d_k%d' % (save_split_dir,file_part_i, k_iter), compress=0)
+            dict = {}
+            feature_num_in_part = 0
+            print('part', file_part_i, 'finished')
+            file_part_i += 1
+    
+    if feature_num_in_part > 0 :
+        dump(dict, '%s/sc_hog_train_split%02d_k%d' % (save_split_dir,file_part_i, k_iter), compress=0)
+    print('done')
+
+
 def make_sc_hog_split_train_test(k_iter, compute_train_set=False, compute_test_set=False, mean=None, var=None, compress=3):
     aial_train, aial_test = dataset_util.prepare_aial_train_test(k_iter)
     if compute_train_set and not compute_test_set:
