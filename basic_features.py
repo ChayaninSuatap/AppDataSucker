@@ -66,10 +66,12 @@ def my_fit_scaler(feature_dict:dict):
     for k, item in feature_dict.items():
         if sum is None:
             sum = np.array(item)
-            np_sum = [item]
         else:
-            sum+=item
-            np_sum.append(item)
+            sum += item
+            if math.isnan(sum[0]):
+                print(k)
+                input()
+            # print(type(sum), sum.shape)
 
     mean = sum / len(feature_dict)
 
@@ -88,9 +90,11 @@ def my_transform_to_scaler(feature_dict, mean, var):
     for k, item in feature_dict.items():
         feature_dict[k] = (item - mean) / var
 
-def make_model(feature, dense_sizes=[1000,500]):
+def make_model(feature, dense_sizes=[1000,500], input_shape=None):
 
-    if feature == 'hog':
+    if input_shape is not None:
+        pass
+    elif feature == 'hog':
         input_shape = 32400
     elif feature == 'gist':
         input_shape = 512
@@ -293,10 +297,11 @@ if __name__ == '__main__':
     split_train_test('basic_features/sc_gist.gzip', train_path = 'basic_features/sc_gist_train_k0.gzip',
         test_path = 'basic_features/sc_gist_test_k0.gzip', k_iter = 0, sc=True)
     
-    # o = load('basic_features/sc_gist_train_k0.gzip')
+    # o = load('basic_features/sc_gist.gzip')
     # print(len(o))
     # for k,item in o.items():
         # print(k,item)
+        # print(type(item))
         # input()
     
     #make sc_hog test set
