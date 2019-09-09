@@ -163,10 +163,10 @@ def split_train_test(dataset_path, train_path, test_path, k_iter, compress=3, sc
 
     #normalize
 
-    scaler = fit_scaler(gist_train_dict)
-    transform_to_scaler(gist_train_dict, scaler)
-
-    transform_to_scaler(gist_test_dict, scaler)
+    mean, var = my_fit_scaler(gist_train_dict)
+    print('mean', mean, 'var', var)
+    my_transform_to_scaler(gist_train_dict, mean, var)
+    my_transform_to_scaler(gist_test_dict, mean, var)
 
     #add label
     for app_id,_, cate in aial_train:
@@ -292,6 +292,12 @@ if __name__ == '__main__':
     #split gist train test
     split_train_test('basic_features/sc_gist.gzip', train_path = 'basic_features/sc_gist_train_k0.gzip',
         test_path = 'basic_features/sc_gist_test_k0.gzip', k_iter = 0, sc=True)
+    
+    # o = load('basic_features/sc_gist_train_k0.gzip')
+    # print(len(o))
+    # for k,item in o.items():
+        # print(k,item)
+        # input()
     
     #make sc_hog test set
     # mean, var = global_util.load_pickle('basic_features/sc_hog_mean_and_var_k0.obj')
