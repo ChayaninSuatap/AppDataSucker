@@ -248,8 +248,30 @@ def make_sc_hog_split_for_generator(feature_dict_path, save_split_dir, k_iter, t
 def make_sc_hog_generator(epochs, batch_size, set_path):
     #note
     #random each epoch
-    for set_fn in os.listdir(set_path):
-        pass
+    
+    for _ in range(epochs):
+        sample_i = 0
+        features = []
+        cates = []
+        for set_fn in os.listdir(set_path):
+            print(set_fn)
+            set_feature_dict = load(set_path + '/' + set_fn)
+
+            for app_id, (feature, cate) in set_feature_dict.items():
+                features.append(feature)
+                cates.append(cate)
+                sample_i+=1
+
+                if sample_i == batch_size:
+                    yield np.array(features), np.array(cates)
+                    sample_i = 0
+                    features = []
+                    cates = []
+        
+        if len(features) > 0:
+            yield np.array(features), np.array(cates)
+            
+
 
 def make_sc_hog_split_train_test(k_iter, compute_train_set=False, compute_test_set=False, mean=None, var=None, compress=3):
     aial_train, aial_test = dataset_util.prepare_aial_train_test(k_iter)
@@ -292,10 +314,18 @@ def make_sc_hog_split_train_test(k_iter, compute_train_set=False, compute_test_s
     return mean, var
 
 if __name__ == '__main__':
+    #test sc hog generator
+    # count = 0
+    # for features, cates in make_sc_hog_generator(2, 128, 'basic_features/sc_hog_test_split_k0'):
+    #     count += features.shape[0]
+    #     print(count)
+    # print(count)
+
+    
 
     #split gist train test
-    split_train_test('basic_features/sc_gist.gzip', train_path = 'basic_features/sc_gist_train_k0.gzip',
-        test_path = 'basic_features/sc_gist_test_k0.gzip', k_iter = 0, sc=True)
+    # split_train_test('basic_features/sc_gist.gzip', train_path = 'basic_features/sc_gist_train_k0.gzip',
+        # test_path = 'basic_features/sc_gist_test_k0.gzip', k_iter = 0, sc=True)
     
     # o = load('basic_features/sc_gist.gzip')
     # print(len(o))
