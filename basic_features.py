@@ -254,7 +254,6 @@ def make_sc_hog_generator(epochs, batch_size, set_path):
         features = []
         cates = []
         for set_fn in os.listdir(set_path):
-            print(set_fn)
             set_feature_dict = load(set_path + '/' + set_fn)
 
             for app_id, (feature, cate) in set_feature_dict.items():
