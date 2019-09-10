@@ -321,6 +321,8 @@ if __name__ == '__main__':
     #     print(count)
     # print(count)
 
+    model = make_model(feature='hog', input_shape=26082)
+    # model.fit_gene
     
 
     #split gist train test
