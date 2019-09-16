@@ -125,12 +125,14 @@ def load_dataset(train_path, test_path):
     for k, (feature, label) in feature_dict_train.items():
         xtrain.append( feature)
         ytrain.append( label)
+        del feature_dict_train[k]
     del feature_dict_train
 
     feature_dict_test = load(test_path)
     for k, (feature, label) in feature_dict_test.items():
         xtest.append( feature)
         ytest.append( label)
+        del feature_dict_test[k]
     del feature_dict_test
 
     return np.array(xtrain), np.array(xtest), np.array(ytrain), np.array(ytest)
@@ -212,6 +214,14 @@ def make_sc_hog():
     if feature_num_in_part > 0 :
         dump(dict, 'basic_features/sc_hog%02d.gzip' % (file_part_i,), compress=3)
 
+def make_sc_hog16():
+    dict = {}
+    for app_id, sc in _screenshot_generator():
+        feature = extract_hog(sc, pixels_per_cell=(16, 16))
+        dict[app_id] = feature
+    dump(dict, 'basic_features/sc_hog16/sc_hog16.gzip', compress=3)
+
+
 def make_sc_hog_split_for_generator(feature_dict_path, save_split_dir, k_iter, train=False, test=False):
     if train == test:
         raise Exception('select train or test')
@@ -271,7 +281,6 @@ def make_sc_hog_generator(epochs, batch_size, set_path):
             yield np.array(features), np.array(cates)
             
 
-
 def make_sc_hog_split_train_test(k_iter, compute_train_set=False, compute_test_set=False, mean=None, var=None, compress=3):
     aial_train, aial_test = dataset_util.prepare_aial_train_test(k_iter)
     if compute_train_set and not compute_test_set:
@@ -313,6 +322,18 @@ def make_sc_hog_split_train_test(k_iter, compute_train_set=False, compute_test_s
     return mean, var
 
 if __name__ == '__main__':
+    load('basic_features/sc_hog16/')
+
+    #count for generator step
+    # count = 0
+    # for fn in os.listdir('sc_hog_test_split_k1'):
+    #     o = load('sc_hog_test_split_k1/' + fn)
+    #     count += len(o)
+    #     del o
+    #     print(fn)
+    #     print(count)
+    # input(count)
+    
     #test sc hog generator
     # count = 0
     # for features, cates in make_sc_hog_generator(2, 128, 'basic_features/sc_hog_test_split_k0'):
@@ -320,13 +341,9 @@ if __name__ == '__main__':
     #     print(count)
     # print(count)
 
-    model = make_model(feature='hog', input_shape=26082)
-    # model.fit_gene
-    
-
     #split gist train test
-    # split_train_test('basic_features/sc_gist.gzip', train_path = 'basic_features/sc_gist_train_k0.gzip',
-        # test_path = 'basic_features/sc_gist_test_k0.gzip', k_iter = 0, sc=True)
+    # split_train_test('basic_features/sc_hog16/sc_hog16.gzip', train_path = 'basic_features/sc_hog16/sc_hog16_train_k0.gzip',
+        # test_path = 'basic_features/sc_hog16/sc_hog16_test_k0.gzip', k_iter = 0, sc=True)
     
     # o = load('basic_features/sc_gist.gzip')
     # print(len(o))
@@ -336,8 +353,8 @@ if __name__ == '__main__':
         # input()
     
     #make sc_hog test set
-    # mean, var = global_util.load_pickle('basic_features/sc_hog_mean_and_var_k0.obj')
-    # make_sc_hog_split_train_test(0, compute_test_set=True, mean=mean, var=var)
+    # mean, var = global_util.load_pickle('basic_features/sc_hog_mean_and_var_k3.obj')
+    # make_sc_hog_split_train_test(3, compute_test_set=True, mean=mean, var=var)
 
     # compare mean var
     # feature_dict = load('basic_features/icon_gist.gzip')
