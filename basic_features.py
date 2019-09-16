@@ -122,14 +122,16 @@ def load_dataset(train_path, test_path):
     xtrain, xtest, ytrain, ytest = [],[],[],[]
 
     feature_dict_train = load(train_path)
-    for k, (feature, label) in feature_dict_train.items():
+    for k in list(feature_dict_train.keys()):
+        feature, label = feature_dict_train[k]
         xtrain.append( feature)
         ytrain.append( label)
         del feature_dict_train[k]
     del feature_dict_train
 
     feature_dict_test = load(test_path)
-    for k, (feature, label) in feature_dict_test.items():
+    for k in list(feature_dict_test.keys()):
+        feature, label = feature_dict_test[k]
         xtest.append( feature)
         ytest.append( label)
         del feature_dict_test[k]
