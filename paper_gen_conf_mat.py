@@ -42,8 +42,9 @@ if __name__ == '__main__':
         x = input()
         a.append([float(xx)*100/20 for xx in x.split('\t')])
     a = np.array(a) 
+
     
     _plot_confusion_matrix(a, ['Board', 'Trivia', 'Arcade', 'Card', 'Music', 'Racing',
  'Action', 'Puzzle', 'Simulation', 'Strategy', 'Role playing', 'Sports', 'Adventure', 'Casino', 'Word', 'Casual', 'Educational'],
- title='Screenshot prediction using ensemble method'
+ title='Screenshot model'
  )

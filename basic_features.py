@@ -324,17 +324,22 @@ def make_sc_hog_split_train_test(k_iter, compute_train_set=False, compute_test_s
     return mean, var
 
 if __name__ == '__main__':
-    load('basic_features/sc_hog16/')
-
-    #count for generator step
-    # count = 0
-    # for fn in os.listdir('sc_hog_test_split_k1'):
-    #     o = load('sc_hog_test_split_k1/' + fn)
-    #     count += len(o)
-    #     del o
-    #     print(fn)
-    #     print(count)
-    # input(count)
+    # o = load('basic_features/sc_hog16/sc_hog16_test_k0.gzip')
+    # for k,item in o.items():
+        # print(len(item[0]))
+        # input()
+    m=make_model('gist', dense_sizes=[1000, 1000, 500, 500, 250, 250])
+    m.summary()
+    input()
+    # count for generator step
+    count = 0
+    for fn in os.listdir('basic_features/sc_hog_test_split_k3'):
+        o = load('basic_features/sc_hog_test_split_k3/' + fn)
+        count += len(o)
+        del o
+        print(fn)
+        print(count)
+    input(count)
     
     #test sc hog generator
     # count = 0
