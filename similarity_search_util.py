@@ -128,6 +128,9 @@ def create_human_testset_groundtruth():
         gts.append(int(gt))
     global_util.save_pickle(gts, fn)
 
+def compute_screenshot_preds():
+    pass
+
 if __name__ == '__main__':
 
     create_human_testset_groundtruth()
