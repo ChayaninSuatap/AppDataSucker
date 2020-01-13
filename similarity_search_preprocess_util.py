@@ -5,8 +5,9 @@ import numpy as np
 import shutil
 import random
 
-MAX_CACHE = 9000
-THRESHOLD = 10000
+MAX_CACHE = 100
+THRESHOLD = 5000
+COMPARE_NEXT_N = 20
 
 def loadimg(path, cache, img_fn):
     if img_fn in cache:
@@ -31,8 +32,12 @@ def fn(path='icons.backup/'):
     icon_fns_size = len(icon_fns)
 
     #load saved progress
-    icon_fns = load_pickle('similarity_search/icon_fns.obj')
+    # icon_fns = load_pickle('similarity_search/icon_fns.obj')
 
+    #new
+
+
+    #old
     while len(icon_fns) > 0:
         #print progression
         print('progress %.2f' % ((icon_fns_size - len(icon_fns))*100/icon_fns_size,))
@@ -43,27 +48,41 @@ def fn(path='icons.backup/'):
         current_icon_fns = [comparing_icon_fn]
         try:
             comparing_icon = loadimg(path + comparing_icon_fn, cache, comparing_icon_fn)
-        except Exception as e:
+        except:
             continue
     
         #compare to each other images
         remove_list = []
+        compared_n = 0
         for icon_fn in icon_fns:
             try:
                 icon_img = loadimg(path + icon_fn, cache, icon_fn)
                 if compare(comparing_icon, icon_img, THRESHOLD):
                     current_icon_fns.append(icon_fn)
                     remove_list.append(icon_fn)
-            except Exception as e:
+                compared_n += 1
+
+                if compared_n == COMPARE_NEXT_N:
+                    break
+
+            #simply skip if cant read img
+            except :
                 remove_list.append(icon_fn)
 
         #copy file for test threshold
         print('copying')
+        #copy for duplicate set
         set_dir = 'similarity_search/duplicate_set/' + str(len(current_icon_fns)) + comparing_icon_fn + '/'
         os.mkdir(set_dir)
+
         for x in current_icon_fns:
-            shutil.copyfile(path + x, set_dir + x)
-            shutil.copyfile(path + x, 'similarity_search/icons_remove_duplicate/' + x)
+            try:
+                shutil.copyfile(path + x, set_dir + x)
+            except Exception as e:
+                input(repr(e))
+
+        #copy for a unique from set
+        shutil.copyfile(path + x, 'similarity_search/icons_remove_duplicate/' + random.choice(current_icon_fns))
 
         #post process before next loop
         for x in remove_list:
