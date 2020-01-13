@@ -15,16 +15,23 @@ def map_two_lists(icon_names, preds):
         d[icon_name] = pred
     return d
 
-def make_preds_cache():
-    icon_names = get_icon_names('icons.backup')
-    preds = compute_preds(icon_names, icons_fd_path = 'icons.backup/', show_output=True)
-    save_pickle(preds, 'similarity_search/icon_names_preds_dict.obj')
+def make_preds_cache(icons_fd, model_path, cache_path):
+    icon_names = get_icon_names(icons_fd)
+    preds = compute_preds(icon_names, icons_fd_path = icons_fd, show_output=True)
+    save_pickle(preds, cache_path)
 
-def get_top10_nearest_icon_human_test(distance_fn = mse):
+def get_top10_nearest_icon_human_test(saved_icon_fns_preds_dict, distance_fn = mse, human_test_fd = 'icons_human_test/', compare_icon_fn_list=None):
     saved_icon_fns_preds_dict = 'similarity_search/icon_names_preds_dict.obj' # list of list : [[0.34, 0.12 , 0.677]]
-    human_test_fd = 'icons_human_test/'
-
     icon_fns_preds_dict = load_pickle(saved_icon_fns_preds_dict)
+
+    print('before filter', len(icon_fns_preds_dict.keys()))
+    new_icon_fns_preds_dict = {}
+    for icon_fn in compare_icon_fn_list:
+        if icon_fn in icon_fns_preds_dict:
+            new_icon_fns_preds_dict[icon_fn] = icon_fns_preds_dict[icon_fn]
+    icon_fns_preds_dict = new_icon_fns_preds_dict
+    print('after filter', len(icon_fns_preds_dict.keys()))
+
     icon_human_fns = get_icon_names(human_test_fd)
     icon_human_preds = compute_preds(icon_human_fns, icons_fd_path = human_test_fd)
 
@@ -43,12 +50,26 @@ def get_top10_nearest_icon_human_test(distance_fn = mse):
     
 if __name__ == '__main__':
     # precompute
-    # output = get_top10_nearest_icon_human_test()
+    # compare_icon_fn_list = get_icon_names('similarity_search/icons_remove_duplicate')
+    # output = get_top10_nearest_icon_human_test('similarity_search/icon_names_preds_dict_model5_fix_cw_k0.obj',compare_icon_fn_list = compare_icon_fn_list)
     # save_pickle(output, 'output.obj')
+    # input('done')
+
+    # make_preds_cache(icons_fd = 'similarity_search/icons_remove_duplicate/', model_path = 'similarity_search/models/cate_model5_fix_cw_k0.hdf5',
+    #     cache_path='similarity_search/icon_names_preds_dict_model5_fix_cw_k0.obj')
+    # input('done')
+
+    '''
+    cate_model5_fix_cw_k0-ep-2120-loss-0.004-acc-0.999-vloss-5.843-vacc-0.379.hdf5
+cate_model_i2_cw_k0-ep-101-loss-0.077-acc-0.975-vloss-0.399-vacc-0.375.hdf5
+cate_model_i3_cw_k0-ep-1853-loss-0.003-acc-0.999-vloss-5.855-vacc-0.362.hdf5
+cate_model_i5_cw_k0-ep-2271-loss-0.010-acc-0.997-vloss-4.939-vacc-0.352.hdf5
+cate_model_i7_cw_k0-ep-1037-loss-0.020-acc-0.998-vloss-6.140-vacc-0.329.hdf5
+    '''
 
     cate_dict = make_category_dict()
-
-    output = load_pickle('output.obj') #human testset icon fn -> list of nearest fn
+ 
+    output = load_pickle('output.obj') #human testset icon fn -> list of nearest fn (top ten, already sorted)
 
     fig, ax = plt.subplots(5, 6, figsize=(8,4))    
     [x.set_axis_off() for x in ax.ravel()]
