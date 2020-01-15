@@ -8,23 +8,22 @@ import db_util
 import global_util
 from overall_feature_util import _all_game_category
 
-def compute_preds(icon_names, model_name = 'models_top_each_task/i3_k0.hdf5',
-    icons_fd_path = 'icons.test_similarity_search/', show_output=False):
-    model = load_model(model_name)
-    input_layer = None
-    output_layer = None
-    for layer in model.layers:
-        if layer.name == 'input_1':
-            input_layer = layer
-        #test if weights change
-        # elif layer.name == 'conv2d':
-        #     print(layer.get_weights()[0][0][0][0])
-        elif layer.name == 'my_model_flatten':
-            output_layer = layer
-            break
+def compute_preds(icon_names, model_path,
+    icons_fd_path, use_feature_vector, show_output=False):
 
-    model = Model(input_layer.input, output_layer.output)
-    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['acc'])
+    model = load_model(model_path)
+    #drop softmax layer
+    if use_feature_vector:
+        input_layer = None
+        output_layer = None
+        for layer in model.layers:
+            if layer.name == 'input_1':
+                input_layer = layer
+            elif layer.name == 'my_model_flatten':
+                output_layer = layer
+                break
+        model = Model(input_layer.input, output_layer.output)
+        model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['acc'])
     
     preds = {}
     for icon_name in icon_names:

@@ -15,13 +15,14 @@ def map_two_lists(icon_names, preds):
         d[icon_name] = pred
     return d
 
-def make_preds_cache(icons_fd, model_path, cache_path):
+def make_preds_cache(icons_fd, model_path, cache_path, use_feature_vector):
     icon_names = get_icon_names(icons_fd)
-    preds = compute_preds(icon_names, icons_fd_path = icons_fd, show_output=True)
+    preds = compute_preds(icon_names, model_path = model_path, icons_fd_path = icons_fd, show_output =True, use_feature_vector=use_feature_vector)
     save_pickle(preds, cache_path)
 
-def get_top10_nearest_icon_human_test(saved_icon_fns_preds_dict, distance_fn = mse, human_test_fd = 'icons_human_test/', compare_icon_fn_list=None):
-    saved_icon_fns_preds_dict = 'similarity_search/icon_names_preds_dict.obj' # list of list : [[0.34, 0.12 , 0.677]]
+def get_top10_nearest_icon_human_test(saved_icon_fns_preds_dict, model_path,
+    distance_fn, compare_icon_fn_list,
+    use_feature_vector , human_test_fd = 'icons_human_test/'):
     icon_fns_preds_dict = load_pickle(saved_icon_fns_preds_dict)
 
     print('before filter', len(icon_fns_preds_dict.keys()))
@@ -33,7 +34,7 @@ def get_top10_nearest_icon_human_test(saved_icon_fns_preds_dict, distance_fn = m
     print('after filter', len(icon_fns_preds_dict.keys()))
 
     icon_human_fns = get_icon_names(human_test_fd)
-    icon_human_preds = compute_preds(icon_human_fns, icons_fd_path = human_test_fd)
+    icon_human_preds = compute_preds(icon_human_fns, icons_fd_path = human_test_fd, model_path= model_path, use_feature_vector=use_feature_vector)
 
     output = {}
     for human_icon_fn, human_icon_pred in icon_human_preds.items():
@@ -50,14 +51,15 @@ def get_top10_nearest_icon_human_test(saved_icon_fns_preds_dict, distance_fn = m
     
 if __name__ == '__main__':
     # precompute
+    # make_preds_cache(icons_fd = 'similarity_search/icons_remove_duplicate/', model_path = 'similarity_search/models/cate_model5_fix_cw_k0.hdf5',
+    # cache_path='similarity_search/icon_names_preds_dict_model5_fix_cw_k0_softmax.obj', use_feature_vector=False)
+
     # compare_icon_fn_list = get_icon_names('similarity_search/icons_remove_duplicate')
-    # output = get_top10_nearest_icon_human_test('similarity_search/icon_names_preds_dict_model5_fix_cw_k0.obj',compare_icon_fn_list = compare_icon_fn_list)
+    # output = get_top10_nearest_icon_human_test('similarity_search/icon_names_preds_dict_model5_fix_cw_k0.obj',compare_icon_fn_list = compare_icon_fn_list,
+    #     model_path = 'similarity_search/models/cate_model5_fix_cw_k0.hdf5', distance_fn=euclidean, use_feature_vector=True)
     # save_pickle(output, 'output.obj')
     # input('done')
 
-    # make_preds_cache(icons_fd = 'similarity_search/icons_remove_duplicate/', model_path = 'similarity_search/models/cate_model5_fix_cw_k0.hdf5',
-    #     cache_path='similarity_search/icon_names_preds_dict_model5_fix_cw_k0.obj')
-    # input('done')
 
     '''
     cate_model5_fix_cw_k0-ep-2120-loss-0.004-acc-0.999-vloss-5.843-vacc-0.379.hdf5
