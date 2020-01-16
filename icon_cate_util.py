@@ -10,6 +10,8 @@ import preprocess_util
 import keras_util
 import matplotlib.pyplot as plt
 import mypath
+import os
+
 def compute_baseline(aial, aial_test):
     total = 0
     for _,x,_ in aial:
@@ -201,28 +203,55 @@ def _make_fds(aial):
     return fds
 def compute_aial_loss(aial):
     return _computeObjValue(_make_fds(aial))
-def fn():
+
+def make_aial_from_seed(seed, icon_fd):
+    #prepare data
+    aial = preprocess_util.prep_rating_category_scamount_download(for_softmax=True)
+    aial = preprocess_util.remove_low_rating_amount(aial, 100)
+    #use only app_id in this folder
+    new_aial = []
+    icon_fns = os.listdir(icon_fd)
+    for x in aial:
+        if (x[0] + '.png') in icon_fns:
+            new_aial.append(x)
+    random.seed(seed)
+    np.random.seed(seed)
+    random.shuffle(new_aial)
+    return new_aial
+
+
+def find_best_seed(icon_fd):
     import random
     answer_list = []
     MAX = 10
-    # check manualy
-    # random.seed(281)
-    # np.random.seed(281)
-    # #prepare data
-    # aial = preprocess_util.prep_rating_category_scamount_download()
-    # aial = preprocess_util.remove_low_rating_amount(aial, 100)
-    # random.shuffle(aial)
+    #check manually
+    # aial = make_aial_from_seed(772, icon_fd)
+    # print(compute_aial_loss(aial))
     # train, test = keras_util.gen_k_fold_pass(aial, 0, 4)
-    # fd=makeFoldData(test)
+    # fd=_makeFoldData(test)
     # fd.show()
     # input()
+
+    #prepare data
+    aial = preprocess_util.prep_rating_category_scamount_download(for_softmax=True)
+    aial = preprocess_util.remove_low_rating_amount(aial, 100)
+    #use only app_id in this folder
+    new_aial = []
+    icon_fns = os.listdir(icon_fd)
+    for x in aial:
+        if (x[0] + '.png') in icon_fns:
+            new_aial.append(x)
+    aial_master = new_aial
+
     for seed_value in range(0,1000):
         print('seed',seed_value)
         random.seed(seed_value)
         np.random.seed(seed_value)
-        #prepare data
-        aial = preprocess_util.prep_rating_category_scamount_download(for_softmax=True)
-        aial = preprocess_util.remove_low_rating_amount(aial, 100)
+        
+        aial = []
+        for x in aial_master:
+            aial.append(x)
+
         random.shuffle(aial)
         fd=_makeFoldData(aial)
         fds = []
@@ -247,6 +276,7 @@ def fn():
     for fds,seed,loss in answer_list:
         for x in fds: x.show()
         print(seed, loss)
+
 def check_aial_error(aial):
     fds = _make_fds(aial)
     for x in fds: x.show()
@@ -283,3 +313,7 @@ def plot_confusion_matrix_generator_icon_cate(model, test_gen_for_ground_truth, 
 def compute_class_weight_for_cate(aial_train):
     return keras_util.compute_class_weight([np.argmax(x) for _,_,x in aial_train])
 
+if __name__ == '__main__':
+    #seed 772 for icons.rem.duplicate
+    #0.523598116128659
+    find_best_seed('similarity_search/icons_remove_duplicate')
