@@ -84,7 +84,7 @@ cate_model_i7_cw_k0-ep-1037-loss-0.020-acc-0.998-vloss-6.140-vacc-0.329.hdf5
         ax[i,0].text(0, 0.5, get_human_testset_cate_from_fn(current_key))
         for j in range(1,6):
             ax[i,j].imshow(Image.open('icons.backup/' + output[current_key][j]))
-            ax[i,j].text(0, 0.5, '%s' % (cate_dict[output[current_key][j][:-4]],))
+            ax[i,j].text(0, 0.5, '%s \n%s' % (cate_dict[output[current_key][j][:-4]], output[current_key][j][:-4]))
     plt.show()
 
 
