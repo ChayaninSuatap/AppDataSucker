@@ -27,11 +27,16 @@ def compute_baseline(aial, aial_test):
     return avg, total_mse/ len(aial_test), total_mae/len(aial_test)
 
 def create_icon_cate_model(cate_only=False, is_softmax=False, use_gap=False, train_sc=False, layers_filters = [64, 128, 256], dropout=0.2,
-    sliding_dropout=None , conv1x1_layer_n=1, stack_conv=1, do_slide_down=False, conv1x1_reduce_rate=2, predict_rating=False):
+    sliding_dropout=None , conv1x1_layer_n=1, stack_conv=1, do_slide_down=False, conv1x1_reduce_rate=2, predict_rating=False,
+    disable_conv_dropout=False):
 
-    o = icon_util.create_model(IS_REGRESSION=True, use_gap=use_gap, train_sc=train_sc, layers_filters=layers_filters, dropout=dropout,
-        sliding_dropout=sliding_dropout, conv1x1_layer_n=conv1x1_layer_n, stack_conv=stack_conv, do_slide_down=do_slide_down,
+    dropout_for_conv = 0 if disable_conv_dropout else dropout
+    sliding_dropout_for_conv = None if disable_conv_dropout else sliding_dropout
+
+    o = icon_util.create_model(IS_REGRESSION=True, use_gap=use_gap, train_sc=train_sc, layers_filters=layers_filters, dropout=dropout_for_conv,
+        sliding_dropout=sliding_dropout_for_conv, conv1x1_layer_n=conv1x1_layer_n, stack_conv=stack_conv, do_slide_down=do_slide_down,
         conv1x1_reduce_rate=conv1x1_reduce_rate)
+
     input_layer = o['input_layer']
     flatten_layer = o['flatten_layer']
     output_layer = o['output_layer']
@@ -48,6 +53,7 @@ def create_icon_cate_model(cate_only=False, is_softmax=False, use_gap=False, tra
         #regular dropout
         if sliding_dropout==None:
             x = Dropout(dropout, name='do_last_%.2f' % (dropout,))(x)
+
         #increasing dropout value
         else:
             current_dropout_value = o['current_dropout_value']
