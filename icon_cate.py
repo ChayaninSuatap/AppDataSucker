@@ -32,8 +32,8 @@ print(class_weight)
 # model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True, layers_filters = [64, 128, 256], conv
     # conv1x1_reduce_rate=2, sliding_dropout=(0.05,0.05))
 model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True, train_sc=False,
-    layers_filters = [64, 128, 256, 512], predict_rating=True)
-# input()
+    layers_filters = [64, 128, 256, 512], layers_dense=[128, 68, 34], disable_conv_dropout=True, sliding_dropout=[0.1, 0.2])
+input()
 # model = load_model('cate_model5_k3-ep-429-loss-0.026-acc-0.992-vloss-5.426-vacc-0.362.hdf5')
 
 #export

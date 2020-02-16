@@ -28,7 +28,7 @@ def compute_baseline(aial, aial_test):
 
 def create_icon_cate_model(cate_only=False, is_softmax=False, use_gap=False, train_sc=False, layers_filters = [64, 128, 256], dropout=0.2,
     sliding_dropout=None , conv1x1_layer_n=1, stack_conv=1, do_slide_down=False, conv1x1_reduce_rate=2, predict_rating=False,
-    disable_conv_dropout=False):
+    disable_conv_dropout=False, layers_dense=[34]):
 
     dropout_for_conv = 0 if disable_conv_dropout else dropout
     sliding_dropout_for_conv = None if disable_conv_dropout else sliding_dropout
@@ -45,19 +45,33 @@ def create_icon_cate_model(cate_only=False, is_softmax=False, use_gap=False, tra
     if use_gap and is_softmax:
         output_cate = Dense(17, activation='softmax')(flatten_layer)
     else:
-        #dense before predict nodes
-        x = Dense(34)(flatten_layer)
+        #first dense
+        x = Dense(layers_dense[0])(flatten_layer)
         x = LeakyReLU()(x)
         x = BatchNormalization()(x)
 
         #regular dropout
         if sliding_dropout==None:
-            x = Dropout(dropout, name='do_last_%.2f' % (dropout,))(x)
-
+            x = Dropout(dropout, name='do_dense_0_%.2f' % (dropout,))(x)
         #increasing dropout value
         else:
-            current_dropout_value = o['current_dropout_value']
-            x = Dropout(current_dropout_value, name='do_last_'+ str(current_dropout_value))(x)
+            current_dropout_value = o['current_dropout_value'] if not disable_conv_dropout else sliding_dropout[0]
+            x = Dropout(current_dropout_value, name='do_dense_0_'+ str(current_dropout_value))(x)
+            current_dropout_value += sliding_dropout[1]
+
+        #later dense (before softmax layer)
+        for i in range(1, len(layers_dense)):
+            x = Dense(layers_dense[i])(x)
+            x = LeakyReLU()(x)
+            x = BatchNormalization()(x)
+            #regular dropout
+            if sliding_dropout==None:
+                x = Dropout(dropout, name='do_dense_%d_%.2f' % (i,dropout,))(x)
+            #increasing dropout value
+            else:
+                x = Dropout(current_dropout_value, name= 'do_dense_%d_%f' % (i,current_dropout_value))(x)
+                current_dropout_value += sliding_dropout[1]
+
 
         #predict class
         output_cate = Dense(17, activation='softmax')(x)
