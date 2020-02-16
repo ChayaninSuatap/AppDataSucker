@@ -56,7 +56,7 @@ def oversample_image(app_ids_and_labels):
             app_ids_and_labels.append( picked)
 
 def create_model(IS_REGRESSION, summary=False, use_gap=False, train_sc=False, layers_filters = [64, 128, 256], dropout=0.2
-    , sliding_dropout=None, conv1x1_layer_n=1, stack_conv=1, do_slide_down=False, conv1x1_reduce_rate=2):
+    , sliding_dropout=None, conv1x1_layer_n=1, stack_conv=1, do_slide_down=False, conv1x1_reduce_rate=2, conv1x1_maxpool=True):
     # init increasing number for dropout layer name
     global dropout_layer_index
     dropout_layer_index = 0
@@ -128,7 +128,7 @@ def create_model(IS_REGRESSION, summary=False, use_gap=False, train_sc=False, la
         cur_layer_filter_n = layers_filters[-1]//conv1x1_reduce_rate
         for i in range(conv1x1_layer_n):
             x = add_conv(x, cur_layer_filter_n,
-                padding_same=True, kernel_size=(1,1), dropout=dropout)
+                padding_same=True, kernel_size=(1,1), dropout=dropout, maxpool=conv1x1_maxpool)
             cur_layer_filter_n = cur_layer_filter_n//conv1x1_reduce_rate
         x = Flatten(name='my_model_flatten')(x)
         flatten_layer = x
