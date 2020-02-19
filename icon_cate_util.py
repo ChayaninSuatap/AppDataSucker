@@ -148,6 +148,8 @@ def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shu
             icons /= 255
             labels = np.array(labels)
             cate_labels = np.array(cate_labels)
+
+            #yield
             if cate_only and not predict_rating:
                 yield (icons, cate_labels) if not yield_app_id else (app_ids, icons, cate_labels)
             elif cate_only and predict_rating:
@@ -239,6 +241,11 @@ def make_aial_from_seed(seed, icon_fd):
     random.shuffle(new_aial)
     return new_aial
 
+def filter_aial_rating_cate(aial):
+    newaial = []
+    for x in aial:
+        newaial.append( (x[0], x[1], x[2]))
+    return newaial
 
 def find_best_seed(icon_fd):
     import random
