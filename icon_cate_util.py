@@ -336,4 +336,4 @@ def compute_class_weight_for_cate(aial_train):
 if __name__ == '__main__':
     #seed 772 for icons.rem.duplicate
     #0.523598116128659
-    find_best_seed('similarity_search/icons_rem_dup_recrawl')
+    find_best_seed('similarity_search/icons_remove_duplicate(for icons.backup)')
