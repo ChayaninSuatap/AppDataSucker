@@ -152,7 +152,6 @@ def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shu
             if datagen:
                 for augmented_chrunk in datagen.flow(icons, batch_size = icons.shape[0], shuffle=False):
                     icons = augmented_chrunk
-                    print('f')
                     break
             
             #test datagen
