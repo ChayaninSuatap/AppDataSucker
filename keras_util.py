@@ -9,6 +9,7 @@ from tensorflow.keras.callbacks import Callback
 import tensorflow as tf
 import numpy as np
 import math
+from datetime import datetime
 
 def compute_class_weight(labels):
     #make class_freq
@@ -29,7 +30,9 @@ def compute_class_weight(labels):
 def group_for_fit_generator(xs, n, shuffle=False):
     i = 0
     out = []
-    if shuffle : random.shuffle(xs)
+    if shuffle:
+        random.seed(datetime.now())
+        random.shuffle(xs)
     for x in xs:
         i+=1
         out.append(x)

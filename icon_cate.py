@@ -14,6 +14,7 @@ import global_util
 import mypath
 import keras_util
 import matplotlib.pyplot as plt
+import sc_util
 
 batch_size = 32
 epochs = 100
@@ -25,9 +26,21 @@ aial = icon_cate_util.make_aial_from_seed(327, mypath.icon_folder)
 aial = icon_cate_util.filter_aial_rating_cate(aial)
 aial_train, aial_test = keras_util.gen_k_fold_pass(aial, kf_pass=0, n_splits=4)
 
-mypath.icon_folder = 'similarity_search/icons_rem_dup_recrawl/'
-gen_train = icon_cate_util.datagenerator(aial_train, batch_size, epochs, cate_only=True, enable_cache=True, datagen=keras_util.create_image_data_gen())
-gen_test = icon_cate_util.datagenerator(aial_test, batch_size, epochs, cate_only=True, shuffle=False, enable_cache=True)
+#icon
+# mypath.icon_folder = 'similarity_search/icons_rem_dup_recrawl/'
+# gen_train = icon_cate_util.datagenerator(aial_train, batch_size, epochs, cate_only=True, enable_cache=True, datagen=keras_util.create_image_data_gen())
+# gen_test = icon_cate_util.datagenerator(aial_test, batch_size, epochs, cate_only=True, shuffle=False, enable_cache=True)
+
+#sc
+mypath.screenshot_folder = 'screenshots.256.distincted.rem.human/'
+sc_dict = sc_util.make_sc_dict()
+aial_train_sc, aial_test_sc = sc_util.make_aial_sc(aial_train, aial_test, sc_dict)
+
+gen_train=icon_cate_util.datagenerator(aial_train_sc,
+        batch_size, epochs, cate_only=True, train_sc=True, enable_cache=True, limit_cache_n=45000, datagen=keras_util.create_image_data_gen())
+gen_test=icon_cate_util.datagenerator(aial_test_sc,
+        batch_size, epochs, cate_only=True, train_sc=True, shuffle=False)
+
 
 for icons, cate_labels in gen_train:
     pass

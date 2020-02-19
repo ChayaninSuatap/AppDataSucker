@@ -11,6 +11,7 @@ import keras_util
 import matplotlib.pyplot as plt
 import mypath
 import os
+from datetime import datetime
 
 def compute_baseline(aial, aial_test):
     total = 0
@@ -102,7 +103,7 @@ def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shu
     if limit_cache_n != None: cached_n = 0
 
     for i in range(epochs):
-        if shuffle: random.shuffle(aial)
+
         for g in group_for_fit_generator(aial, batch_size, shuffle=shuffle):
             icons = []
             labels = []
@@ -147,7 +148,7 @@ def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shu
             icons = np.asarray(icons)
 
             #test dataget
-            #old_icons = np.array(icons)
+            # old_icons = np.array(icons)
 
             if datagen:
                 for augmented_chrunk in datagen.flow(icons, batch_size = icons.shape[0], shuffle=False):
