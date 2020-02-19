@@ -93,9 +93,11 @@ def create_icon_cate_model(cate_only=False, is_softmax=False, use_gap=False, tra
     model.summary()
     return model
 
-def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shuffle=True, enable_cache=False, limit_cache_n=None
-, yield_app_id=False, skip_reading_image=False, predict_rating=False, icon_resize_dim=(128, 128), skip_reading_amount=0):
+def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shuffle=True, enable_cache=False, limit_cache_n=None,
+    yield_app_id=False, skip_reading_image=False, predict_rating=False, icon_resize_dim=(128, 128), skip_reading_amount=0, datagen=None):
+
     cache_dict = {}
+    
     #limit cache 
     if limit_cache_n != None: cached_n = 0
 
@@ -112,6 +114,7 @@ def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shu
                 if enable_cache and app_id in cache_dict:
                     icon = cache_dict[app_id]
                 else:
+                #read img from dir
                     try:
                         if skip_reading_image:
                             continue
@@ -143,11 +146,27 @@ def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shu
 
             icons = np.asarray(icons)
 
+            #test dataget
+            #old_icons = np.array(icons)
+
+            if datagen:
+                for augmented_chrunk in datagen.flow(icons, batch_size = icons.shape[0], shuffle=False):
+                    icons = augmented_chrunk
+                    print('f')
+                    break
+            
+            #test datagen
+            # fig, axes = plt.subplots(2, 2)
+            # for old_icon, icon in zip(old_icons, icons):
+            #     axes[0,0].imshow(old_icon.astype('float32') / 255)
+            #     axes[0,1].imshow(icon.astype('float32') / 255)
+            #     plt.show()
+
             #normalize
             icons = icons.astype('float32')
             icons /= 255
-            labels = np.array(labels)
-            cate_labels = np.array(cate_labels)
+            labels = np.asarray(labels)
+            cate_labels = np.asarray(cate_labels)
 
             #yield
             if cate_only and not predict_rating:

@@ -11,9 +11,29 @@ import keras
 import functools
 import icon_cate_data_export
 import global_util
+import mypath
+import keras_util
+import matplotlib.pyplot as plt
 
-random.seed(859)
-np.random.seed(859)
+batch_size = 32
+epochs = 100
+
+random.seed(327)
+np.random.seed(327)
+mypath.icon_folder = 'similarity_search/icons_rem_dup_recrawl/'
+aial = icon_cate_util.make_aial_from_seed(327, mypath.icon_folder)
+aial = icon_cate_util.filter_aial_rating_cate(aial)
+aial_train, aial_test = keras_util.gen_k_fold_pass(aial, kf_pass=0, n_splits=4)
+
+mypath.icon_folder = 'similarity_search/icons_rem_dup_recrawl/'
+gen_train = icon_cate_util.datagenerator(aial_train, batch_size, epochs, cate_only=True, enable_cache=True, datagen=keras_util.create_image_data_gen())
+gen_test = icon_cate_util.datagenerator(aial_test, batch_size, epochs, cate_only=True, shuffle=False, enable_cache=True)
+
+for icons, cate_labels in gen_train:
+    pass
+
+input()
+
 aial = preprocess_util.prep_rating_category_scamount_download(for_softmax=True)
 aial = preprocess_util.remove_low_rating_amount(aial, 100)
 random.shuffle(aial)
