@@ -6,6 +6,8 @@ import icon_util
 from global_util import save_pickle, load_pickle
 import os.path
 import os
+import sc_util
+from shutil import copyfile
 
 def prep_rating_category():
     conn = db_util.connect_db()
@@ -167,11 +169,31 @@ def remove_human_scs_from_dir(fd_path):
     
     print('del app n', del_app_n)
 
+def filter_sc_fns_from_icon_fns_by_app_id(icon_dir, sc_dir):
+    results = []
+    sc_dict = sc_util.make_sc_dict(sc_dir)
+    for icon_fn in os.listdir(icon_dir):
+        app_id = icon_fn[:-4]
+        if app_id in sc_dict:
+            results += sc_dict[app_id]
+    return results
+
+def copy_sc_fns_to_dir(sc_fns, source_dir, dest_dir):
+    for sc_fn in sc_fns:
+        print('copying', sc_fn)
+        copyfile(source_dir + sc_fn, dest_dir + sc_fn)
+
+
 if __name__ == '__main__':
     
     # remove_human_icons_from_dir('similarity_search/icons_rem_dup_recrawl/')
-    remove_human_scs_from_dir('screenshots.256.distincted/')
+    # remove_human_scs_from_dir('screenshots.256.distincted/')
 
+
+
+    x = filter_sc_fns_from_icon_fns_by_app_id('similarity_search/icons_rem_dup_human_recrawl/', 'screenshots.256.distincted.rem.human/')
+    print(len(x))
+    copy_sc_fns_to_dir(x, 'e:/screenshots.distincted.rem.human/', 'e:/screenshots.t/')
     # o = get_app_ids_without_icon(save_obj=True)
     # print(o, len(o))
     # app_ids_without_icon = load_pickle('app_ids_without_icon.recrawled.obj')

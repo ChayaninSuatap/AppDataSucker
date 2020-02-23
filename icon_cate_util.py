@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import mypath
 import os
 from datetime import datetime
+import global_util
 
 def compute_baseline(aial, aial_test):
     total = 0
@@ -260,6 +261,11 @@ def make_aial_from_seed(seed, icon_fd):
     random.shuffle(new_aial)
     return new_aial
 
+def dump_aial_from_seed(seed, icon_fd, dump_full_path):
+    aial = make_aial_from_seed(seed, icon_fd)
+    global_util.save_pickle(aial, dump_full_path)
+    return aial
+
 def filter_aial_rating_cate(aial):
     newaial = []
     for x in aial:
@@ -362,4 +368,6 @@ def compute_class_weight_for_cate(aial_train):
 if __name__ == '__main__':
     #seed 772 for icons.rem.duplicate
     #0.523598116128659
-    find_best_seed('similarity_search/icons_remove_duplicate(for icons.backup)')
+    aial = dump_aial_from_seed(327, 'similarity_search/icons_rem_dup_human_recrawl/', 'aial_seed_327.obj')
+    print(compute_aial_loss(aial))
+    # find_best_seed('similarity_search/icons_remove_duplicate(for icons.backup)')
