@@ -153,8 +153,9 @@ def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shu
 
             if datagen:
                 for augmented_chrunk in datagen.flow(icons, batch_size = icons.shape[0], shuffle=False):
-                    icons = augmented_chrunk
+                    icons_temp = augmented_chrunk
                     break
+                icons = icons_temp
             
             #test datagen
             # fig, axes = plt.subplots(2, 2)

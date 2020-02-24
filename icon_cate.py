@@ -16,12 +16,13 @@ import keras_util
 import matplotlib.pyplot as plt
 import sc_util
 
-batch_size = 32
+batch_size = 128
 epochs = 100
 
 random.seed(327)
 np.random.seed(327)
-mypath.icon_folder = 'similarity_search/icons_rem_dup_recrawl/'
+mypath.icon_folder = 'similarity_search/icons_rem_dup_human_recrawl/'
+mypath.screenshot_folder = 'screenshots.256.distincted.rem.human/'
 aial = icon_cate_util.make_aial_from_seed(327, mypath.icon_folder)
 aial = icon_cate_util.filter_aial_rating_cate(aial)
 aial_train, aial_test = keras_util.gen_k_fold_pass(aial, kf_pass=0, n_splits=4)
@@ -37,15 +38,18 @@ sc_dict = sc_util.make_sc_dict()
 aial_train_sc, aial_test_sc = sc_util.make_aial_sc(aial_train, aial_test, sc_dict)
 
 gen_train=icon_cate_util.datagenerator(aial_train_sc,
-        batch_size, epochs, cate_only=True, train_sc=True, enable_cache=True, limit_cache_n=45000, datagen=keras_util.create_image_data_gen())
+        batch_size, epochs, cate_only=True, train_sc=True, enable_cache=False, limit_cache_n=45000, datagen=keras_util.create_image_data_gen())
 gen_test=icon_cate_util.datagenerator(aial_test_sc,
         batch_size, epochs, cate_only=True, train_sc=True, shuffle=False)
 
+model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True, train_sc=True,
+                                              layers_filters = [64, 128, 256], dropout = 0.2)
 
-for icons, cate_labels in gen_train:
-    pass
-
-input()
+model.fit_generator(gen_train,
+    steps_per_epoch=math.ceil(len(aial_train_sc)/batch_size),
+    validation_data=gen_test,
+    validation_steps=math.ceil(len(aial_test_sc)/batch_size),
+    epochs=epochs)
 
 aial = preprocess_util.prep_rating_category_scamount_download(for_softmax=True)
 aial = preprocess_util.remove_low_rating_amount(aial, 100)
