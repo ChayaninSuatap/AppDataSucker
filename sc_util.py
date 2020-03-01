@@ -1,8 +1,8 @@
 import os
 import mypath
-def make_sc_dict():
+def make_sc_dict(sc_dir = mypath.screenshot_folder):
     sc_dict = {} #map app_id and array of it each sceenshot .png
-    for fn in os.listdir(mypath.screenshot_folder):
+    for fn in os.listdir(sc_dir):
         app_id = fn[:-6]
         if app_id not in sc_dict:
             sc_dict[app_id] = [fn]

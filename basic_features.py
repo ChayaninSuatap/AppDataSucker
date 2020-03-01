@@ -19,6 +19,7 @@ import os
 import sc_util
 import mypath
 import math
+import icon_util
 
 def _load_aial():
     random.seed(859)
@@ -187,12 +188,12 @@ def split_train_test(dataset_path, train_path, test_path, k_iter, compress=3, sc
     dump(gist_test_dict, test_path, compress=compress)
     print('done')
 
-def make_icon_hog(pixels_per_cell=(8,8)):
+def make_icon_hog(pixels_per_cell=(8,8), save_folder='basic_features/', icon_generator=_icon_generator):
     dict = {}
-    for app_id, icon in _icon_generator():
+    for app_id, icon in icon_generator():
         print(app_id)
         dict[app_id] = extract_hog(icon, pixels_per_cell=pixels_per_cell)
-    dump(dict, 'basic_features/icon_hog16.gzip', compress=3)
+    dump(dict, '%s/icon_hog%d.gzip' % (save_folder, pixels_per_cell[0]), compress=3)
 
 def make_sc_hog():
     # total sc 141895
@@ -324,22 +325,48 @@ def make_sc_hog_split_train_test(k_iter, compute_train_set=False, compute_test_s
     return mean, var
 
 if __name__ == '__main__':
-    # o = load('basic_features/sc_hog16/sc_hog16_test_k0.gzip')
-    # for k,item in o.items():
-        # print(len(item[0]))
-        # input()
-    m=make_model('gist', dense_sizes=[1000, 1000, 500, 500, 250, 250])
-    m.summary()
-    input()
+
+    f = open('basic_features/gistdescriptor/valid_icon_app_id_list_t.txt', 'w')
+    aial = icon_cate_util.make_aial_from_seed(327, 'similarity_search/icons_rem_dup_human_recrawl/')
+    print(icon_cate_util.compute_aial_loss(aial), len(aial))
+    aial = icon_cate_util.filter_aial_rating_cate(aial)
+    for app_id,_ ,_ in aial:
+        f.writelines(app_id + '\n')
+    
+    #####extract hog 8 or 16 for thesis
+    # old_icon_hog_dict = load('basic_features/icon_hog16.gzip')
+    # new_icon_hog_dict = {}
+
+    # aial = icon_cate_util.make_aial_from_seed(327, 'similarity_search/icons_rem_dup_human_recrawl/')
+    # print(icon_cate_util.compute_aial_loss(aial), len(aial))
+    # aial = icon_cate_util.filter_aial_rating_cate(aial)
+
+    # for app_id,_ ,_ in aial:
+    #     if app_id in old_icon_hog_dict:
+    #         new_icon_hog_dict[app_id] = old_icon_hog_dict[app_id]
+    #     else:
+    #         #read img
+    #         icon = icon_util.load_icon_by_fn('similarity_search/icons_rem_dup_human_recrawl/' + app_id + '.png', 180, 180)
+    #         #extract hog
+    #         hog_feature = extract_hog(icon, (16,16))
+    #         #add in dict
+    #         new_icon_hog_dict[app_id] = hog_feature
+    
+
+    # print('total elem', len(new_icon_hog_dict.keys()))
+    # dump(new_icon_hog_dict, 'basic_features_t/icon_hog16_t.gzip', compress=3)
+    #####
+
+
     # count for generator step
-    count = 0
-    for fn in os.listdir('basic_features/sc_hog_test_split_k3'):
-        o = load('basic_features/sc_hog_test_split_k3/' + fn)
-        count += len(o)
-        del o
-        print(fn)
-        print(count)
-    input(count)
+    # count = 0
+    # for fn in os.listdir('basic_features/sc_hog_test_split_k3'):
+    #     o = load('basic_features/sc_hog_test_split_k3/' + fn)
+    #     count += len(o)
+    #     del o
+    #     print(fn)
+    #     print(count)
+    # input(count)
     
     #test sc hog generator
     # count = 0
