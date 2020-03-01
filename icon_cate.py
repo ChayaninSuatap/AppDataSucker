@@ -5,7 +5,7 @@ import random
 import icon_util
 import math
 from tensorflow.keras.callbacks import ModelCheckpoint
-from keras_util import PlotAccLossCallback, gen_k_fold_pass, metric_top_k, eval_top_5, compute_class_weight
+from keras_util import PlotAccLossCallback, gen_k_fold_pass, metric_top_k, eval_top_5, compute_class_weight, SaveBestEpochCallback
 from tensorflow.keras.models import load_model
 import keras
 import functools
@@ -16,23 +16,29 @@ import keras_util
 import matplotlib.pyplot as plt
 import sc_util
 
+proj = 'icon_model2.4_k0_t'
+save_model_fd = 'local_models/'
 k = 0
-batch_size = 128
-epochs = 100
+batch_size = 16
+epochs = 500
+initial_epoch = 0
 
+mypath.icon_folder = 'similarity_search/icons_rem_dup_human_recrawl/'
+mypath.screenshot_folder = 'screenshots.256.distincted.rem.human/'
 random.seed(327)
 np.random.seed(327)
-mypath.icon_folder = 'similarity_search/icons_rem_dup_recrawl/'
 aial = icon_cate_util.make_aial_from_seed(327, mypath.icon_folder)
 aial = icon_cate_util.filter_aial_rating_cate(aial)
 aial_train, aial_test = keras_util.gen_k_fold_pass(aial, kf_pass=k, n_splits=4)
 
+cw = icon_cate_util.compute_class_weight_for_cate(aial_train)
+
 #icon
 gen_train = icon_cate_util.datagenerator(aial_train, batch_size, epochs, cate_only=True, enable_cache=True, datagen=keras_util.create_image_data_gen())
+# gen_train = icon_cate_util.datagenerator(aial_train, batch_size, epochs, cate_only=True, enable_cache=True)
 gen_test = icon_cate_util.datagenerator(aial_test, batch_size, epochs, cate_only=True, shuffle=False, enable_cache=True)
 
 #sc
-# mypath.screenshot_folder = 'screenshots.256.distincted.rem.human/'
 # sc_dict = sc_util.make_sc_dict()
 # aial_train_sc, aial_test_sc = sc_util.make_aial_sc(aial_train, aial_test, sc_dict)
 
@@ -41,16 +47,25 @@ gen_test = icon_cate_util.datagenerator(aial_test, batch_size, epochs, cate_only
 # gen_test=icon_cate_util.datagenerator(aial_test_sc,
 #         batch_size, epochs, cate_only=True, train_sc=True, shuffle=False)
 
-# model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True, train_sc=False,
-#                                               layers_filters = [64, 128, 256], dropout = 0.2)
-model = load_model('C:/Users/chaya/Downloads/icon_model1_k0_t-ep-266-loss-0.507-acc-0.830-vloss-3.467-vacc-0.319.hdf5')
-eval_top_5(model, gen_test, math.ceil(len(aial_test)/batch_size))
+model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True, train_sc=False,
+                                              layers_filters = [64, 128, 256, 512], sliding_dropout = (0, 0.1))
 
-# model.fit_generator(gen_train,
-#     steps_per_epoch=math.ceil(len(aial_train_sc)/batch_size),
-#     validation_data=gen_test,
-#     validation_steps=math.ceil(len(aial_test_sc)/batch_size),
-#     epochs=epochs)
+filepath='%s/%s-ep-{epoch:03d}-loss-{loss:.3f}-acc-{acc:.3f}-vloss-{val_loss:.3f}-vacc-{val_acc:.3f}.hdf5' % (save_model_fd + proj ,proj,)
+
+filepath_every_ep = '%s/model.hdf5' % (save_model_fd + proj,)
+filepath_every_ep_backup = '%s/model_backup.hdf5' % (save_model_fd + proj,)
+
+cp_best_ep = ModelCheckpoint(filepath, monitor='val_acc', save_best_only=True, verbose=0, period=1)
+cp_every_ep = ModelCheckpoint(filepath_every_ep, monitor='val_acc', save_best_only=False, verbose=0, period=1)
+cp_every_ep_backup = ModelCheckpoint(filepath_every_ep_backup, monitor='val_acc', save_best_only=False, verbose=0, period=1)
+
+
+model.fit_generator(gen_train,
+    steps_per_epoch=math.ceil(len(aial_train)/batch_size),
+    validation_data=gen_test,
+    validation_steps=math.ceil(len(aial_test)/batch_size),
+    epochs=epochs, callbacks=[cp_every_ep, cp_every_ep_backup, cp_best_ep],
+    class_weight = cw, initial_epoch = initial_epoch, max_queue_size = 1, workers = 1)
 
 
 #old stuff

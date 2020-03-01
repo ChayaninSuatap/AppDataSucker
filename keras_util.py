@@ -10,6 +10,7 @@ import tensorflow as tf
 import numpy as np
 import math
 from datetime import datetime
+import global_util
 
 def compute_class_weight(labels):
     #make class_freq
@@ -66,6 +67,55 @@ def _get_weights_of_layers(model):
                 weights = w_and_b[0].flatten()
                 output.append( weights)
     return output
+
+
+def _get_best_ep_and_acc(training_log):
+    for i,x in enumerate(training_log):
+        if i == 0:
+            best_acc = x
+            best_ep = i + 1
+        elif best_acc < x:
+            best_acc = x
+            best_ep = i + 1
+    return best_ep, best_acc
+
+def get_initial_epoch(proj_path):
+    pass
+
+class SaveBestEpochCallback(Callback):
+    def __init__(self, proj_path):
+        self.proj_path = proj_path
+        
+        if not os.path.exists(proj_path+'training_log.obj'):
+            global_util.save_pickle([])
+        else:
+            try:
+                training_log = global_util.load_pickle(proj_path + 'training_log.obj')
+            except:
+                raise Exception('Can not load training_log.obj')
+
+    def on_epoch_end(self, epoch, logs={}):
+
+
+        try:
+            old_log = global_util.load_pickle(proj_path + 'training_log.obj')
+        except:
+            raise Exception('Can not load training_log.obj')
+
+        training_log = old_log[:]
+        old_best_ep, old_best_acc = get_best_ep_and_acc(old_log)
+
+        if logs['val_acc'] > old_best_acc:
+            self.model.save(proj_path + 'best_model.hdf5')
+            self.model.save(proj_path + 'best_model.backup.hdf5')
+        
+        training_log.append(logs['val_acc'])
+        
+        global_util.save_pickle(training_log, proj_path + 'training_log.obj')
+        global_util.save_pickle(training_log, proj_path + 'training_log.backup.obj')
+
+        self.model.save(proj_path + 'model.hdf5')
+        self.model.save(proj_path + 'model.backup.hdf5')
 
 class PlotWeightsCallback(Callback):
     def on_train_begin(self, logs={}):
