@@ -16,9 +16,9 @@ import keras_util
 import matplotlib.pyplot as plt
 import sc_util
 
-proj = 'icon_model2.4_k0_t'
+proj = 'icon_model2.5_k1_t'
 save_model_fd = 'local_models/'
-k = 0
+k = 1
 batch_size = 16
 epochs = 500
 initial_epoch = 0
@@ -48,7 +48,7 @@ gen_test = icon_cate_util.datagenerator(aial_test, batch_size, epochs, cate_only
 #         batch_size, epochs, cate_only=True, train_sc=True, shuffle=False)
 
 model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True, train_sc=False,
-                                              layers_filters = [64, 128, 256, 512], sliding_dropout = (0, 0.1))
+                                              layers_filters = [64, 128, 256, 512], sliding_dropout = (0, 0.15))
 
 filepath='%s/%s-ep-{epoch:03d}-loss-{loss:.3f}-acc-{acc:.3f}-vloss-{val_loss:.3f}-vacc-{val_acc:.3f}.hdf5' % (save_model_fd + proj ,proj,)
 
@@ -65,7 +65,7 @@ model.fit_generator(gen_train,
     validation_data=gen_test,
     validation_steps=math.ceil(len(aial_test)/batch_size),
     epochs=epochs, callbacks=[cp_every_ep, cp_every_ep_backup, cp_best_ep],
-    class_weight = cw, initial_epoch = initial_epoch, max_queue_size = 1, workers = 1)
+    class_weight = cw, initial_epoch = initial_epoch)
 
 
 #old stuff

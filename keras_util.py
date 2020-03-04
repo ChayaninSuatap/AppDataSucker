@@ -132,13 +132,14 @@ class PlotWeightsCallback(Callback):
 import matplotlib.pyplot as plt
 import matplotlib
 class PlotAccLossCallback(Callback):
-    def __init__(self, is_regression=False, is_cate=False, use_colab=False, proj=''):
+    def __init__(self, is_regression=False, is_cate=False, use_colab=False, proj='', use_paperspace=False):
         
         #is_cate should be False in every case.
 
         self.is_regression = is_regression
         self.is_cate = is_cate
         self.use_colab = use_colab
+        self.use_paperspace = use_paperspace
         self.proj = proj
         from matplotlib.pyplot import rcParams
         rcParams['figure.figsize'] = 14, 8
@@ -212,6 +213,9 @@ class PlotAccLossCallback(Callback):
         #save fig
         if self.use_colab:
             fig_name = '/content/drive/My Drive/%s/%.03d.png' % (self.proj, epoch+1,)
+            plt.savefig(fig_name)
+        elif self.use_paperspace:
+            fig_name = '/storage/%s/%.03d.png' % (self.proj, epoch+1,)
             plt.savefig(fig_name)
         else:
             fig_name = 'plots/%.03d.png' % (epoch+1,)
