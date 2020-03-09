@@ -13,6 +13,7 @@ import mypath
 import os
 from datetime import datetime
 import global_util
+from PIL import Image
 
 def compute_baseline(aial, aial_test):
     total = 0
@@ -96,7 +97,8 @@ def create_icon_cate_model(cate_only=False, is_softmax=False, use_gap=False, tra
     return model
 
 def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shuffle=True, enable_cache=False, limit_cache_n=None,
-    yield_app_id=False, skip_reading_image=False, predict_rating=False, icon_resize_dim=(128, 128), skip_reading_amount=0, datagen=None):
+    yield_app_id=False, skip_reading_image=False, predict_rating=False, icon_resize_dim=(128, 128), scale_method = Image.BICUBIC,
+    skip_reading_amount=0, datagen=None):
 
     cache_dict = {}
     
@@ -124,9 +126,9 @@ def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shu
                             skip_reading_amount -= 1
                             continue
                         elif train_sc:
-                            icon = icon_util.load_icon_by_fn(mypath.screenshot_folder + app_id, 256, 160, rotate_for_sc=True)
+                            icon = icon_util.load_icon_by_fn(mypath.screenshot_folder + app_id, 256, 160, rotate_for_sc=True, scale_method = scale_method)
                         elif not train_sc:
-                            icon = icon_util.load_icon_by_app_id(app_id, icon_resize_dim[0], icon_resize_dim[0])
+                            icon = icon_util.load_icon_by_app_id(app_id, icon_resize_dim[0], icon_resize_dim[0], scale_method = scale_method)
                     except:
                         continue
                     #put in cache

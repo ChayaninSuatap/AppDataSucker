@@ -7,17 +7,17 @@ from tensorflow.keras.layers import Dense, Conv2D, Input, MaxPooling2D, Flatten,
 from tensorflow.keras.models import Model
 import matplotlib.pyplot as plt
 
-def load_icon_by_app_id(app_id, resizeW, resizeH):
-    return open_and_resize(mypath.icon_folder + app_id + '.png', resizeW, resizeH)
+def load_icon_by_app_id(app_id, resizeW, resizeH, scale_method):
+    return open_and_resize(mypath.icon_folder + app_id + '.png', resizeW, resizeH,  scale_method = scale_method)
 
-def load_icon_by_fn(fn, resizeW, resizeH, rotate_for_sc=False):
-    return open_and_resize(fn, resizeW, resizeH, rotate_for_sc)
+def load_icon_by_fn(fn, resizeW, resizeH, scale_method, rotate_for_sc=False):
+    return open_and_resize(fn, resizeW, resizeH, rotate_for_sc = rotate_for_sc, scale_method = scale_method)
 
-def open_and_resize(fn, resizeW, resizeH, rotate_for_sc=False):
-    converted = _convert_to_rgba(fn, resizeW, resizeH, rotate_for_sc)
+def open_and_resize(fn, resizeW, resizeH, rotate_for_sc=False, scale_method=Image.BICUBIC):
+    converted = _convert_to_rgba(fn, resizeW, resizeH, rotate_for_sc = rotate_for_sc, scale_method = scale_method)
     return np.array(converted)[:,:,:3]
 
-def _convert_to_rgba(fn, resizeW, resizeH, rotate_for_sc=False):
+def _convert_to_rgba(fn, resizeW, resizeH, rotate_for_sc=False, scale_method=Image.BICUBIC):
     #train screenshot
     if rotate_for_sc:
         png = Image.open(fn).convert('RGB')
@@ -29,11 +29,11 @@ def _convert_to_rgba(fn, resizeW, resizeH, rotate_for_sc=False):
         if png.size == (resizeW, resizeH):
             return png
         else:
-            return png.resize( (resizeW, resizeH))
+            return png.resize( (resizeW, resizeH), resample = scale_method)
     #train icon
     else:
         png = Image.open(fn).convert('RGBA')
-        png = png.resize( (resizeW, resizeH))
+        png = png.resize( (resizeW, resizeH), resample = scale_method)
         background = Image.new('RGBA', png.size, (255,255,255))
         alpha_composite = Image.alpha_composite(background, png)
         return alpha_composite

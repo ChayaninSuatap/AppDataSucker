@@ -18,8 +18,8 @@ import sc_util
 
 proj = 'icon_model2.5_k1_t'
 save_model_fd = 'local_models/'
-k = 1
-batch_size = 16
+k = 2
+batch_size = 32
 epochs = 500
 initial_epoch = 0
 
@@ -27,6 +27,8 @@ mypath.icon_folder = 'similarity_search/icons_rem_dup_human_recrawl/'
 mypath.screenshot_folder = 'screenshots.256.distincted.rem.human/'
 random.seed(327)
 np.random.seed(327)
+
+
 aial = icon_cate_util.make_aial_from_seed(327, mypath.icon_folder)
 aial = icon_cate_util.filter_aial_rating_cate(aial)
 aial_train, aial_test = keras_util.gen_k_fold_pass(aial, kf_pass=k, n_splits=4)
@@ -35,17 +37,19 @@ cw = icon_cate_util.compute_class_weight_for_cate(aial_train)
 
 #icon
 gen_train = icon_cate_util.datagenerator(aial_train, batch_size, epochs, cate_only=True, enable_cache=True, datagen=keras_util.create_image_data_gen())
-# gen_train = icon_cate_util.datagenerator(aial_train, batch_size, epochs, cate_only=True, enable_cache=True)
 gen_test = icon_cate_util.datagenerator(aial_test, batch_size, epochs, cate_only=True, shuffle=False, enable_cache=True)
 
-#sc
-# sc_dict = sc_util.make_sc_dict()
-# aial_train_sc, aial_test_sc = sc_util.make_aial_sc(aial_train, aial_test, sc_dict)
+model = load_model('local_models/icon_model2.5_k2_t-ep-471-loss-0.092-acc-0.627-vloss-4.744-vacc-0.302.hdf5')
+input()
 
-# gen_train=icon_cate_util.datagenerator(aial_train_sc,
-#         batch_size, epochs, cate_only=True, train_sc=True, enable_cache=False, limit_cache_n=45000, datagen=keras_util.create_image_data_gen())
-# gen_test=icon_cate_util.datagenerator(aial_test_sc,
-#         batch_size, epochs, cate_only=True, train_sc=True, shuffle=False)
+#sc
+sc_dict = sc_util.make_sc_dict('screenshots.256.distincted.rem.human/')
+aial_train_sc, aial_test_sc = sc_util.make_aial_sc(aial_train, aial_test, sc_dict)
+
+gen_train=icon_cate_util.datagenerator(aial_train_sc,
+        batch_size, epochs, cate_only=True, train_sc=True, enable_cache=False, limit_cache_n=45000, datagen=keras_util.create_image_data_gen())
+gen_test=icon_cate_util.datagenerator(aial_test_sc,
+        batch_size, epochs, cate_only=True, train_sc=True, shuffle=False)
 
 model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True, train_sc=False,
                                               layers_filters = [64, 128, 256, 512], sliding_dropout = (0, 0.15))
