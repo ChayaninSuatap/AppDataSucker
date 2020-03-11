@@ -29,11 +29,11 @@ def _convert_to_rgba(fn, resizeW, resizeH, rotate_for_sc=False):
         if png.size == (resizeW, resizeH):
             return png
         else:
-            return png.resize( (resizeW, resizeH))
+            return png.resize( (resizeW, resizeH), Image.NEAREST)
     #train icon
     else:
         png = Image.open(fn).convert('RGBA')
-        png = png.resize( (resizeW, resizeH))
+        png = png.resize( (resizeW, resizeH), Image.NEAREST)
         background = Image.new('RGBA', png.size, (255,255,255))
         alpha_composite = Image.alpha_composite(background, png)
         return alpha_composite
