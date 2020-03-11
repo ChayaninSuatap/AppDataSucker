@@ -39,8 +39,9 @@ gen_train = icon_cate_util.datagenerator(aial_train, batch_size, epochs, cate_on
 gen_test = icon_cate_util.datagenerator(aial_test, batch_size, epochs, cate_only=True, shuffle=False, enable_cache=True)
 
 #sc
-# sc_dict = sc_util.make_sc_dict()
-# aial_train_sc, aial_test_sc = sc_util.make_aial_sc(aial_train, aial_test, sc_dict)
+sc_dict = sc_util.make_sc_dict('screenshots.256.distincted.rem.human/')
+aial_train_sc, aial_test_sc = sc_util.make_aial_sc(aial_train, aial_test, sc_dict)
+input(len(aial_train_sc), len(aial_test_sc))
 
 # gen_train=icon_cate_util.datagenerator(aial_train_sc,
 #         batch_size, epochs, cate_only=True, train_sc=True, enable_cache=False, limit_cache_n=45000, datagen=keras_util.create_image_data_gen())

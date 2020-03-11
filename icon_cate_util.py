@@ -96,7 +96,8 @@ def create_icon_cate_model(cate_only=False, is_softmax=False, use_gap=False, tra
     return model
 
 def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shuffle=True, enable_cache=False, limit_cache_n=None,
-    yield_app_id=False, skip_reading_image=False, predict_rating=False, icon_resize_dim=(128, 128), skip_reading_amount=0, datagen=None):
+    yield_app_id=False, skip_reading_image=False, predict_rating=False, icon_resize_dim=(128, 128), skip_reading_amount=0, datagen=None,
+    train_with_tpu=False):
 
     cache_dict = {}
     
@@ -168,6 +169,10 @@ def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shu
             icons /= 255
             labels = np.asarray(labels)
             cate_labels = np.asarray(cate_labels)
+
+            #train with TPU don't care left samples (not full batch)
+            if len(icons) < batch_size:
+                continue
 
             #yield
             if cate_only and not predict_rating:
