@@ -13,6 +13,7 @@ import mypath
 import os
 from datetime import datetime
 import global_util
+import gc
 
 def compute_baseline(aial, aial_test):
     total = 0
@@ -181,6 +182,8 @@ def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shu
                 yield (icons, labels) if not yield_app_id else (app_ids, icons, labels)
             else:
                 yield (icons, [labels, cate_labels]) if not yield_app_id else (app_ids, icons, [labels, cate_labels])
+            
+            gc.collect()
                 
 class FoldData:
     def __init__(self, onehot, avg_rating, std_rating, scamount, total_app, download_dict, rating_amount_dict):
