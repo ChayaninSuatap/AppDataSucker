@@ -6,7 +6,9 @@ import icon_cate_util
 from keras_util import gen_k_fold_pass
 import icon_util
 import sc_util
-
+import os
+import mypath
+import keras_util
 
 def argmax(l):
     return np.array(l).argmax()
@@ -66,6 +68,20 @@ def get_labels(k_fold, get_app_id=False):
             output.append( np.array(cate).argmax())
     return output
 
+def get_labels_t(k):
+    mypath.icon_folder = 'similarity_search/icons_rem_dup_human_recrawl/'
+    mypath.screenshot_folder = 'screenshots.256.distincted.rem.human/'
+    random.seed(327)
+    np.random.seed(327)
+    aial = icon_cate_util.make_aial_from_seed(327, 'similarity_search/icons_rem_dup_human_recrawl/')
+    aial = icon_cate_util.filter_aial_rating_cate(aial)
+    aial_train, aial_test = keras_util.gen_k_fold_pass(aial, kf_pass=k, n_splits=4)
+
+    output = []
+    for app_id,_,cate in aial_test:
+        output.append(  np.array(cate).argmax())
+    return output
+
 def get_labels_sc(k_fold):
     import mypath
     mypath.screenshot_folder = 'screenshots.256.distincted/'
@@ -116,6 +132,20 @@ def compute_predict_labels(pred):
     return [argmax(x) for x in pred]
 
 if __name__ == '__main__':
+
+    model_fns = map(lambda x: x[:-4], os.listdir('ensemble_model_predicts_t'))
+
+    model_fns = ['icon_model1.2_k0_t_human', 'icon_model1.3_k0_t_human', 'icon_model1.5_k0_t_human', 'icon_model1.1_k0_t_human', 'icon_model1.4_k0_t_human']
+
+    sum_pred = compute_sum_predict(model_fns, directory='ensemble_model_predicts_t')
+
+    labels = get_labels_t(3)
+    labels = remove_app_id(get_human_testset_labels())
+
+    for i in range(1,6):
+        print(compute_topk_accuracy(sum_pred, labels, i), end=" ")
+    
+
     # labels = get_labels(0, get_app_id=False)
     # labels = get_labels_sc(2)
 
@@ -127,12 +157,12 @@ if __name__ == '__main__':
     # sum_pred = compute_sum_predict(['i2_k0', 'i3_k0', 'i5_k0', 'i7_k0', 'i10_k0',])
 
     # sum_pred = compute_sum_predict(['s1_k0_h', 's2_k0_h', 's3_k0_h', 's4_k0_h', 's5_k0_h', 's6_k0_h',])
-    sum_pred = compute_sum_predict(['s3_k0_h', 's5_k0_h', 's6_k0_h', 's7_k0_h', 's10_k0_h',]) 
-    labels = remove_app_id(get_human_testset_labels())
+    # sum_pred = compute_sum_predict(['s3_k0_h', 's5_k0_h', 's6_k0_h', 's7_k0_h', 's10_k0_h',]) 
+    # labels = remove_app_id(get_human_testset_labels())
     # sum_pred = make_ensemble_data_human_testset(sum_pred, labels, human_testset_labels)
 
     #check dataset match
-    print(len(sum_pred), len(labels))
+    # print(len(sum_pred), len(labels))
     
     #compute top5
     # for i in range(1,6):
@@ -144,5 +174,5 @@ if __name__ == '__main__':
     # print(compute_topk_accuracy(sum_pred, labels, 1), end=" ")
 
     # print(compute_topk_accuracy(sum_pred, remove_app_id(human_testset_labels), 1))
-    [print(x) for x in compute_predict_labels(sum_pred)]
+    # [print(x) for x in compute_predict_labels(sum_pred)]
 
