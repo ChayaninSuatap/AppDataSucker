@@ -68,9 +68,8 @@ def get_labels(k_fold, get_app_id=False):
             output.append( np.array(cate).argmax())
     return output
 
-def get_labels_t(k):
+def get_labels_t(k, aial_path = 'aial_seed_327.obj'):
     mypath.icon_folder = 'similarity_search/icons_rem_dup_human_recrawl/'
-    mypath.screenshot_folder = 'screenshots.256.distincted.rem.human/'
     random.seed(327)
     np.random.seed(327)
     aial = icon_cate_util.make_aial_from_seed(327, 'similarity_search/icons_rem_dup_human_recrawl/')
@@ -82,22 +81,19 @@ def get_labels_t(k):
         output.append(  np.array(cate).argmax())
     return output
 
-def get_labels_sc(k_fold):
+def get_labels_sc(seed_value, sc_dir, k_fold, aial_path = 'aial_seed_327.obj'):
     import mypath
-    mypath.screenshot_folder = 'screenshots.256.distincted/'
-    sc_dict = sc_util.make_sc_dict()
+    mypath.screenshot_folder = sc_dir
+    sc_dict = sc_util.make_sc_dict(sc_dir)
     
-    random.seed(859)
-    np.random.seed(859)
-    aial = preprocess_util.prep_rating_category_scamount_download(for_softmax=True)
-    aial = preprocess_util.remove_low_rating_amount(aial, 100)
-    random.shuffle(aial)
+    random.seed(seed_value)
+    np.random.seed(seed_value)
+    aial = load_pickle(aial_path)
     print('aial loss',icon_cate_util.compute_aial_loss(aial))
     icon_cate_util.check_aial_error(aial)
     
     #filter only rating cate
     aial = preprocess_util.get_app_id_rating_cate_from_aial(aial)
-    
     aial_train, aial_test = gen_k_fold_pass(aial, kf_pass=k_fold, n_splits=4)
     
     #make aial_train_sc, aial_test_sc
@@ -105,17 +101,12 @@ def get_labels_sc(k_fold):
 
     output=[]
     for app_id,_,cate in aial_test_sc:
-        # try:
-        #     icon = icon_util.load_icon_by_fn(mypath.screenshot_folder + app_id, 256, 160, rotate_for_sc=True)
-        # except Exception as e:
-        #     print(repr(e))
-        #     continue
         output.append( np.array(cate).argmax())
     return output
 
 def get_human_testset_labels():
     o=load_pickle('app_ids_for_human_test.obj')
-    return o
+    return remove_app_id(o)
 
 def remove_app_id(labels):
     return [x for _,x in labels]
@@ -131,21 +122,235 @@ def compute_topk_accuracy(pred, labels, topk):
 def compute_predict_labels(pred):
     return [argmax(x) for x in pred]
 
+def check_len_preds_len_labels(labels, ensemble_fd, k_iter):
+    labels_n = len(labels)
+    print('len(labels)', labels_n)
+
+    for fn in os.listdir(ensemble_fd):
+            if 'k' + str(k_iter) in fn:
+                print(fn)
+                o = load_pickle(ensemble_fd+ fn)
+                print(len(o))
+                if len(o) != labels_n:
+                    raise Exception('len preds and labels error')
+    
+    print('len preds and labels ok')
+
+def get_pred_fns_by_k(ensemble_fd, k_iter):
+
+    return [fn for fn in os.listdir(ensemble_fd) if 'k' + str(k_iter) in fn]
+
+def filter_pred_fns(ensemble_fd, filter_fn):
+    return [fn for fn in os.listdir(ensemble_fd) if filter_fn(fn)]
+
+def create_icon_human_set_obj(icon_fd):
+    xs = []
+    for fn in sorted(os.listdir(icon_fd), key = lambda x: int(x[:-4])):
+        print(fn)
+        icon = icon_util.load_icon_by_fn(icon_fd + fn, 128, 128)
+        icon = icon.astype('float32') / 255
+        xs.append(icon)
+    save_pickle( (np.array(xs), np.array(get_human_testset_labels())), 'icon_human_testset.obj') 
+
+def create_sc_human_set_obj(sc_fd):
+    xs = []
+    for fn in sorted(os.listdir(sc_fd), key = lambda x: int(x[:-4])):
+        print(fn)
+        sc = icon_util.load_icon_by_fn(sc_fd + fn, 256, 160, rotate_for_sc = True)
+        sc = sc.astype('float32') / 255
+        xs.append(sc)
+    save_pickle( (np.array(xs), np.array(get_human_testset_labels())), 'sc_human_testset.obj') 
+
+def create_all_sc_human_set_obj(sc_fd ,human_app_ids_path = 'app_ids_for_human_test.obj'):
+    sc_dict = sc_util.make_sc_dict(sc_fd)
+    o = load_pickle(human_app_ids_path)
+    xs = []
+    labels = []
+    count_app_id_error = 0
+    for app_id, label in o:
+        labels.append(label)
+
+        if app_id in sc_dict:
+            scs = []
+            for sc_fn in sc_dict[app_id]:
+                try:
+                    sc = icon_util.load_icon_by_fn(sc_fd + sc_fn, 256, 160, rotate_for_sc = True)
+                    sc = sc.astype('float32') / 255
+                    scs.append(sc)
+                    print(sc_fn)
+                except:
+                    pass
+            xs.append(scs)
+            print('len(scs)', len(scs))
+        else:
+            count_app_id_error += 1
+        
+    save_pickle( (xs, labels), 'all_sc_human_testset.obj')
+    print('error', count_app_id_error)
+
+def compute_topk_all_sc_of_game(sc_dir, k_fold,
+    ensemble_sc_fd, sc_model_fns,
+    ensemble_icon_fd=None, icon_model_fns=None,
+    aial_path = 'aial_seed_327.obj'):
+    import mypath
+    mypath.screenshot_folder = sc_dir
+    sc_dict = sc_util.make_sc_dict(sc_dir)
+    aial = load_pickle(aial_path)
+    print('aial loss',icon_cate_util.compute_aial_loss(aial))
+    icon_cate_util.check_aial_error(aial)
+    
+    #filter only rating cate
+    aial = preprocess_util.get_app_id_rating_cate_from_aial(aial)
+    aial_train, aial_test = gen_k_fold_pass(aial, kf_pass=k_fold, n_splits=4)
+    
+    #make aial_train_sc, aial_test_sc
+    _, aial_test_sc = sc_util.make_aial_sc(aial_train, aial_test, sc_dict)
+
+    #make aial_test_app_id
+    aial_test_app_id = [x[0] for x in aial_test]
+    labels = []
+    #make index_dict
+    index_dict = {}
+    for i, (sc_fn, _, _) in enumerate(aial_test_sc):
+        index_dict[sc_fn] = i
+    
+    #load model
+    models = [load_pickle(ensemble_sc_fd + model) for model in sc_model_fns]
+    if ensemble_icon_fd != None:
+        icon_models = [load_pickle(ensemble_icon_fd + model) for model in icon_model_fns]
+
+    dataset_pred = []
+
+    #pred scs for each game
+    for aial_test_i, (app_id, _, label) in enumerate(aial_test):
+
+        game_pred = []
+
+        if app_id in sc_dict:
+            for sc_fn in sc_dict[app_id]:
+
+                #screenshot
+                sc_fn_pred = models[0][index_dict[sc_fn]]
+
+                for model in models[1:]:
+                    sc_fn_pred += model[index_dict[sc_fn]]
+                
+                #normalize sc case
+                for i in range(len(sc_fn_pred)): sc_fn_pred[i] /= len(models) 
+
+                if len(game_pred) == 0:
+                    game_pred = sc_fn_pred
+                else:
+                    for i in range(17): game_pred[i] += sc_fn_pred[i]
+
+            if ensemble_icon_fd != None: 
+                #icon
+                icon_fn_pred = icon_models[0][aial_test_i]
+                for model in icon_models[1:]:
+                    icon_fn_pred += model[aial_test_i]
+                
+                #normalize icon case
+                for i in range(len(icon_fn_pred)): icon_fn_pred[i] /= len(icon_models)
+                #add icon eval to preds
+                for i in range(17): game_pred[i] += icon_fn_pred[i]
+
+            dataset_pred.append(game_pred)
+            labels.append(np.argmax(label))
+    
+    print(len(dataset_pred), len(labels))
+    for i in range(1,6):
+        print(compute_topk_accuracy(dataset_pred, labels, i), end=" ")
+        
+
 if __name__ == '__main__':
 
-    model_fns = map(lambda x: x[:-4], os.listdir('ensemble_model_predicts_t'))
+    k = 3
+    
+    # model_prefixes = [
+    #    'sc_model2.3_k%d_no_aug' % (k,),
+    #    'sc_model2.4_k%d_no_aug' % (k,),
+    #    'sc_model1.6_k%d_no_aug' % (k,),
+    #    'sc_model1.5_k%d_no_aug' % (k,),
+    #    'sc_model1.3_k%d_no_aug' % (k,),
+    # ]
 
-    model_fns = ['icon_model1.2_k0_t_human', 'icon_model1.3_k0_t_human', 'icon_model1.5_k0_t_human', 'icon_model1.1_k0_t_human', 'icon_model1.4_k0_t_human']
+    model_prefixes = [
+       'sc_model1.1_k%d_no_aug' % (k,),
+       'sc_model1.2_k%d_no_aug' % (k,),
+       'sc_model1.3_k%d_no_aug' % (k,),
+       'sc_model1.4_k%d_no_aug' % (k,),
+       'sc_model1.5_k%d_no_aug' % (k,),
+       'sc_model1.6_k%d_no_aug' % (k,),
+    ]
 
-    sum_pred = compute_sum_predict(model_fns, directory='ensemble_model_predicts_t')
+    icon_model_prefixes = [
+        'icon_model2.4_k%d_t' % (k,),
+        'icon_model2.3_k%d_t' % (k,),
+        'icon_model1.3_k%d_t' % (k,),
+        'icon_model1.2_k%d_t' % (k,),
+        'icon_model1.5_k%d_t' % (k,),
+    ]
 
-    labels = get_labels_t(3)
-    labels = remove_app_id(get_human_testset_labels())
+    # icon_model_prefixes = [
+    #     'icon_model1.1_k%d_t' % (k,),
+    #     'icon_model1.2_k%d_t' % (k,),
+    #     'icon_model1.3_k%d_t' % (k,),
+    #     'icon_model1.4_k%d_t' % (k,),
+    #     'icon_model1.5_k%d_t' % (k,),
+    #     'icon_model1.6_k%d_t' % (k,),
+    # ]
 
-    for i in range(1,6):
-        print(compute_topk_accuracy(sum_pred, labels, i), end=" ")
+    model_fns = []
+    for fn in os.listdir('ensemble_model_predicts_t/sc/'):
+        if fn[:21] in model_prefixes:
+            model_fns.append(fn)
+    
+    icon_model_fns = []
+    for fn in os.listdir('ensemble_model_predicts_t/icon/'):
+        if fn[:18] in icon_model_prefixes:
+            icon_model_fns.append(fn)
+
+    compute_topk_all_sc_of_game('screenshots.256.distincted.rem.human/', k,
+        'ensemble_model_predicts_t/sc/', model_fns,
+        'ensemble_model_predicts_t/icon/', icon_model_fns)
+
+
+    # k_iter = 3
+    # ensemble_fd = 'ensemble_model_predicts_t/icon/'
+    # labels = get_labels_t(k_iter)
+
+    # check_len_preds_len_labels(labels, ensemble_fd, k_iter)
+    # # labels = get_labels_sc(327, 'screenshots.256.distincted.rem.human/', 3)
+
+    # def filter_fn(fn, k_iter):
+    #     valid_subnames = ['2.3', '2.4', '1.2', '1.5', '1.3']
+    #     # print(list(map(lambda x: 'sc_model' + x, valid_subnames)))
+    #     return 'k' + str(k_iter) in fn and fn[:13] in list(map(lambda x: 'icon_model' + x, valid_subnames))
+    #     # return 'k' + str(k_iter) in fn and fn[:11] == 'icon_model1'
+    
+    # model_fns = list(map(lambda x: x[:-4], filter_pred_fns(ensemble_fd, lambda fn: filter_fn(fn, k_iter))))
+    # print(model_fns)
+
+    # sum_pred = compute_sum_predict(model_fns, directory = ensemble_fd[:-1])    
+
+    # for i in range(1,6):
+    #     print(compute_topk_accuracy(sum_pred, labels, i), end=" ")
+
+    # t stuff
+    # model_fns = map(lambda x: x[:-4], os.listdir('ensemble_model_predicts_t'))
+
+    # model_fns = ['icon_model1.2_k0_t_human', 'icon_model1.3_k0_t_human', 'icon_model1.5_k0_t_human', 'icon_model1.1_k0_t_human', 'icon_model1.4_k0_t_human']
+
+    # sum_pred = compute_sum_predict(model_fns, directory='ensemble_model_predicts_t')
+
+    # labels = get_labels_t(3)
+    # labels = remove_app_id(get_human_testset_labels())
+
+    # for i in range(1,6):
+    #     print(compute_topk_accuracy(sum_pred, labels, i), end=" ")
     
 
+    #paper stuff
     # labels = get_labels(0, get_app_id=False)
     # labels = get_labels_sc(2)
 
