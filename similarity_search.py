@@ -9,6 +9,15 @@ import random
 def get_icon_names(fd):
     return list(os.listdir(fd))
 
+def get_icon_names_filtered(fd, aial_obj = 'aial_seed_327.obj'):
+    aial_filtered = load_pickle(aial_obj)
+
+    aial_filtered_dict = {}
+    for aial_rec in aial_filtered:
+        aial_filtered_dict[aial_rec[0]] =True
+
+    return [fn for fn in list(os.listdir(fd)) if fn[:-4] in aial_filtered_dict]
+
 def map_two_lists(icon_names, preds):
     d = {}
     for icon_name, pred in zip(icon_names, preds):
@@ -44,6 +53,9 @@ def get_top10_nearest_icon_human_test(saved_icon_fns_preds_dict, model_path,
         
         #sort
         sorted_icon_fns_distances_pairs = sorted(icon_fns_distances_pairs, key=lambda x : x[1])[:10]
+        print(human_icon_fn)
+        [print(x[1], end = ' ') for x in sorted_icon_fns_distances_pairs]
+        print()
         top10_nearest_icon_fns = [x[0] for x in sorted_icon_fns_distances_pairs]
         output[human_icon_fn] = top10_nearest_icon_fns
     
@@ -78,8 +90,6 @@ cate_model_i7_cw_k0-ep-1037-loss-0.020-acc-0.998-vloss-6.140-vacc-0.329.hdf5
 
     for i in range(5):
         current_key = random.choice(list(output.keys())) #sample a human testset icon fn
-
-
         ax[i,0].imshow(Image.open('icons_human_test/' + current_key))
         ax[i,0].text(0, 0.5, get_human_testset_cate_from_fn(current_key))
         for j in range(1,6):
