@@ -50,26 +50,27 @@ def check_sim_search_accuracy(human_icon_top10_cache_fn):
 
 if __name__ == '__main__':
 
-    proj_name = 'icon_model2.4_k3_t'
-    icons_fd = 'similarity_search/icons_rem_dup_human_recrawl/'
-    model_path = 'sim_search_t/models/icon_model2.4_k3_t-ep-433-loss-0.319-acc-0.898-vloss-3.493-vacc-0.380.hdf5'
-    cache_path = 'sim_search_t/preds_caches/icon_model2.4_k3_t.obj'
+    proj_name = 'icon_model2.4_k3_t_p'
     use_feature_vector = False
+    model_fn = 'icon_model2.4_k3_t-ep-433-loss-0.319-acc-0.898-vloss-3.493-vacc-0.380.hdf5'
+    icons_fd = 'similarity_search/icons_rem_dup_human_recrawl/'
+    model_path = 'sim_search_t/models/' + model_fn
+    cache_path = 'sim_search_t/preds_caches/%s.obj' % (proj_name,)
     human_test_fd = 'icons_human_test/'
     human_icon_top10_cache_fd = 'sim_search_t/human_icon_top10_cache/'
     human_icon_top10_cache_fn = human_icon_top10_cache_fd + proj_name + '.obj'
 
-
-    # make_preds_cache(
-    #     icons_fd = icons_fd,
-    #     model_path = model_path,
-    #     cache_path = cache_path,
-    #     use_feature_vector = use_feature_vector)
+    make_preds_cache(
+        icons_fd = icons_fd,
+        model_path = model_path,
+        cache_path = cache_path,
+        use_feature_vector = use_feature_vector)
 
     human_icon_top10_cache = get_top10_nearest_icon_human_test(cache_path,
         model_path, euclidean,
         get_icon_names_filtered(icons_fd),
         use_feature_vector)
+
     save_pickle(human_icon_top10_cache,
         human_icon_top10_cache_fd  + proj_name + '.obj')
 
@@ -77,5 +78,4 @@ if __name__ == '__main__':
 
     # plot_human_icon_top10(human_icon_top10_cache_fn, icons_fd)
 
-    #mse 1123
 

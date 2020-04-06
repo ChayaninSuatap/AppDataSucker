@@ -26,6 +26,9 @@ def compute_preds(icon_names, model_path,
         model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['acc'])
     
     preds = {}
+    icons = []
+    icon_names_pred = []
+
     for icon_name in icon_names:
         try:
             icon = load_icon_by_fn(icons_fd_path + icon_name, 128, 128)
@@ -34,9 +37,20 @@ def compute_preds(icon_names, model_path,
         
         if show_output: print(icon_name)
 
-        pred = model.predict(np.array([icon]) / 255)[0]
-        preds[icon_name] = pred
-    
+        icons.append(icon)
+        icon_names_pred.append(icon_name)
+        if len(icons) == 64:
+            pred = model.predict(np.array(icons) / 255)
+            for p, icon_name in zip(pred, icon_names_pred):
+                preds[icon_name] = p
+            icons = []
+            icon_names_pred = []
+
+    if len(icons) > 0:
+        pred = model.predict(np.array(icons) / 255)
+        for p, icon_name in zip(pred, icon_names_pred):
+            preds[icon_name] = p
+
     return preds
 
 #mse

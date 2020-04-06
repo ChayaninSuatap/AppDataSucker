@@ -25,7 +25,7 @@ def map_two_lists(icon_names, preds):
     return d
 
 def make_preds_cache(icons_fd, model_path, cache_path, use_feature_vector):
-    icon_names = get_icon_names(icons_fd)
+    icon_names = get_icon_names_filtered(icons_fd)
     preds = compute_preds(icon_names, model_path = model_path, icons_fd_path = icons_fd, show_output =True, use_feature_vector=use_feature_vector)
     save_pickle(preds, cache_path)
 
