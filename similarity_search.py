@@ -31,7 +31,11 @@ def make_preds_cache(icons_fd, model_path, cache_path, use_feature_vector):
 
 def get_top10_nearest_icon_human_test(saved_icon_fns_preds_dict, model_path,
     distance_fn, compare_icon_fn_list,
-    use_feature_vector , human_test_fd = 'icons_human_test/'):
+    use_feature_vector ,
+    save_human_preds_caches_path,
+    human_test_fd = 'icons_human_test/',
+    load_human_preds_caches_path = None):
+
     icon_fns_preds_dict = load_pickle(saved_icon_fns_preds_dict)
 
     print('before filter', len(icon_fns_preds_dict.keys()))
@@ -42,8 +46,14 @@ def get_top10_nearest_icon_human_test(saved_icon_fns_preds_dict, model_path,
     icon_fns_preds_dict = new_icon_fns_preds_dict
     print('after filter', len(icon_fns_preds_dict.keys()))
 
-    icon_human_fns = get_icon_names(human_test_fd)
-    icon_human_preds = compute_preds(icon_human_fns, icons_fd_path = human_test_fd, model_path= model_path, use_feature_vector=use_feature_vector)
+    if load_human_preds_caches_path != None:
+        icon_human_preds = load_pickle(load_human_preds_caches_path)
+    else:
+        icon_human_fns = get_icon_names(human_test_fd)
+        icon_human_preds = compute_preds(icon_human_fns, icons_fd_path = human_test_fd, model_path= model_path, use_feature_vector=use_feature_vector)
+
+        save_pickle(icon_human_preds, save_human_preds_caches_path)
+        print('saved human preds caches')
 
     output = {}
     for human_icon_fn, human_icon_pred in icon_human_preds.items():

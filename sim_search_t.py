@@ -2,12 +2,13 @@ from similarity_search import make_preds_cache, \
     get_top10_nearest_icon_human_test, get_icon_names_filtered
 
 from similarity_search_util import euclidean, mse, \
-    get_human_testset_cate_from_fn, make_category_dict
+    get_human_testset_cate_from_fn, make_category_dict, create_mean_preds_caches
 
 from global_util import save_pickle, load_pickle
 import random
 from PIL import Image
 import matplotlib.pyplot as plt
+import os
 
 def plot_human_icon_top10(human_icon_top10_cache_fn,
     icons_fd,
@@ -50,32 +51,62 @@ def check_sim_search_accuracy(human_icon_top10_cache_fn):
 
 if __name__ == '__main__':
 
-    proj_name = 'icon_model2.4_k3_t_p'
-    use_feature_vector = False
-    model_fn = 'icon_model2.4_k3_t-ep-433-loss-0.319-acc-0.898-vloss-3.493-vacc-0.380.hdf5'
-    icons_fd = 'similarity_search/icons_rem_dup_human_recrawl/'
-    model_path = 'sim_search_t/models/' + model_fn
-    cache_path = 'sim_search_t/preds_caches/%s.obj' % (proj_name,)
-    human_test_fd = 'icons_human_test/'
-    human_icon_top10_cache_fd = 'sim_search_t/human_icon_top10_cache/'
-    human_icon_top10_cache_fn = human_icon_top10_cache_fd + proj_name + '.obj'
+    icon_projs = [
+        # 'icon_model2.4',
+        # 'icon_model2.3',
+        # 'icon_model1.2',
+        # 'icon_model1.3',
+        'icon_model1.5',
+    ]
 
-    make_preds_cache(
-        icons_fd = icons_fd,
-        model_path = model_path,
-        cache_path = cache_path,
-        use_feature_vector = use_feature_vector)
+    for icon_proj in icon_projs:
 
-    human_icon_top10_cache = get_top10_nearest_icon_human_test(cache_path,
-        model_path, euclidean,
-        get_icon_names_filtered(icons_fd),
-        use_feature_vector)
+        for model_fn in os.listdir('ensemble_models_t/' + icon_proj):
 
-    save_pickle(human_icon_top10_cache,
-        human_icon_top10_cache_fd  + proj_name + '.obj')
+            if 'k0' in model_fn: k=0
+            if 'k1' in model_fn: k=1
+            if 'k2' in model_fn: k=2
+            if 'k3' in model_fn: k=3
 
-    check_sim_search_accuracy(human_icon_top10_cache_fn)
+            proj_name =  icon_proj + '_k' + str(k) + '_p'
+            use_feature_vector = False
 
-    # plot_human_icon_top10(human_icon_top10_cache_fn, icons_fd)
+            #is overrided
+            # model_fn = 'icon_model2.4_k3_t-ep-433-loss-0.319-acc-0.898-vloss-3.493-vacc-0.380.hdf5'
 
+            icons_fd = 'similarity_search/icons_rem_dup_human_recrawl/'
+            model_path = 'ensemble_models_t/' + icon_proj + '/' + model_fn
+            cache_path = 'sim_search_t/preds_caches/%s.obj' % (proj_name,)
+            human_test_fd = 'icons_human_test/'
+            human_preds_caches_fd = 'sim_search_t/human_preds_caches/' 
+            human_preds_caches_path = human_preds_caches_fd + proj_name + '.obj'
+            human_icon_top10_cache_fd = 'sim_search_t/human_icon_top10_cache/'
+            human_icon_top10_cache_path = human_icon_top10_cache_fd + proj_name + '.obj'
+
+            make_preds_cache(
+                icons_fd = icons_fd,
+                model_path = model_path,
+                cache_path = cache_path,
+                use_feature_vector = use_feature_vector)
+
+            human_icon_top10_cache = get_top10_nearest_icon_human_test(cache_path,
+                model_path, euclidean,
+                get_icon_names_filtered(icons_fd),
+                use_feature_vector,
+                human_preds_caches_path,
+                load_human_preds_caches_path = None)
+
+            save_pickle(human_icon_top10_cache,
+                human_icon_top10_cache_fd  + proj_name + '.obj')
+            check_sim_search_accuracy(human_icon_top10_cache_path)
+
+
+            # create_mean_preds_caches('sim_search_t/human_preds_caches/', 
+            #     [
+            #         'icon_model2.4_k0_t_p.obj',
+            #         'icon_model2.4_k1_t_p.obj',
+            #         'icon_model2.4_k2_t_p.obj',
+            #         'icon_model2.4_k3_t_p.obj'
+            #     ],
+            #     'sim_search_t/human_preds_caches/icon_model2.4_p_e.obj')
 

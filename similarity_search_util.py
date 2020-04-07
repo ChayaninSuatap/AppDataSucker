@@ -7,6 +7,7 @@ from PIL import Image
 import db_util
 import global_util
 from overall_feature_util import _all_game_category
+from global_util import load_pickle, save_pickle
 
 def compute_preds(icon_names, model_path,
     icons_fd_path, use_feature_vector, show_output=False):
@@ -143,6 +144,29 @@ def create_human_testset_groundtruth():
 
 def compute_screenshot_preds():
     pass
+
+def compute_mean_preds_caches(preds_caches_fd, preds_caches_fn):
+    caches = []
+    for fn in preds_caches_fn:
+        o = load_pickle(preds_caches_fd + fn)
+        caches.append(o)
+
+    output = {}
+    for app_id in caches[0].keys():
+
+        sum = caches[0][app_id]
+
+        for cache in caches[1:]:
+            sum += cache[app_id]
+        
+        sum /= len(caches)
+        output[app_id] = sum
+    
+    return output
+
+def create_mean_preds_caches(preds_caches_fd, preds_caches_fn, output_path):
+    o = compute_mean_preds_caches(preds_caches_fd, preds_caches_fn)
+    save_pickle(o, output_path)
 
 if __name__ == '__main__':
 
