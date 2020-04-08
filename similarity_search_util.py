@@ -40,7 +40,7 @@ def compute_preds(icon_names, model_path,
 
         icons.append(icon)
         icon_names_pred.append(icon_name)
-        if len(icons) == 64:
+        if len(icons) == 128:
             pred = model.predict(np.array(icons) / 255)
             for p, icon_name in zip(pred, icon_names_pred):
                 preds[icon_name] = p

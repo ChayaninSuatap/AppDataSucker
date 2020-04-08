@@ -34,7 +34,7 @@ def get_top10_nearest_icon_human_test(saved_icon_fns_preds_dict, model_path,
     use_feature_vector ,
     save_human_preds_caches_path,
     human_test_fd = 'icons_human_test/',
-    load_human_preds_caches_path = None):
+    load_human_preds_caches_path = None, topn = 10):
 
     icon_fns_preds_dict = load_pickle(saved_icon_fns_preds_dict)
 
@@ -62,7 +62,7 @@ def get_top10_nearest_icon_human_test(saved_icon_fns_preds_dict, model_path,
             icon_fns_distances_pairs.append( (icon_fn, distance_fn(human_icon_pred, icon_pred)))
         
         #sort
-        sorted_icon_fns_distances_pairs = sorted(icon_fns_distances_pairs, key=lambda x : x[1])[:10]
+        sorted_icon_fns_distances_pairs = sorted(icon_fns_distances_pairs, key=lambda x : x[1])[:topn]
         print(human_icon_fn)
         [print(x[1], end = ' ') for x in sorted_icon_fns_distances_pairs]
         print()
