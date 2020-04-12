@@ -139,7 +139,7 @@ def create_human_testset_groundtruth():
     fn = 'similarity_search/human_testset_groundtruth_list.obj'
     print('enter human testset groundtruth from spreadsheet :')
     gts = []
-    for i in range(340):
+    for _ in range(340):
         gt = input()
         gts.append(int(gt))
     global_util.save_pickle(gts, fn)
@@ -173,7 +173,7 @@ def create_mean_preds_caches(preds_caches_fd, preds_caches_fn, output_path):
 def create_all_sc_human_set_obj(sc_fd ,human_app_ids_path = 'app_ids_for_human_test.obj'):
     sc_dict = sc_util.make_sc_dict(sc_fd)
     o = load_pickle(human_app_ids_path)
-    xs = []
+    
     count_app_id_error = 0
     output = {}
     for app_id, _ in o:
@@ -196,7 +196,27 @@ def create_all_sc_human_set_obj(sc_fd ,human_app_ids_path = 'app_ids_for_human_t
     print('len output', len(output))
     print('error', count_app_id_error)
 
-def fn(icon_pc_path ,icon_hpc_path, sc_pc_path, sc_hpc_path, distance_fn, topn, human_app_ids_path = 'app_ids_for_human_test.obj'):
+def add_topn(a, b, img_name, dis, topn, is_icon = False, is_sc = False):
+
+    app_id = img_name[:-4] if is_icon else img_name[:-6]
+
+    if len(a) < topn and app_id not in b:
+        a.append( (img_name, dis))
+        b[app_id] = True
+    elif a[-1][1] > dis and app_id not in b:
+        a.append( (img_name, dis))
+        a.sort(key = lambda x:x[1])
+        b[app_id] = True
+
+    while(len(a)>topn):
+        forsaked_img_name = a.pop()[0]
+        if forsaked_img_name[:-4] in b:
+            del b[forsaked_img_name[:-4]]
+        else:
+            del b[forsaked_img_name[:-6]]
+
+def get_topn_using_icon_and_screenshot(icon_pc_path ,icon_hpc_path, sc_pc_path, sc_hpc_path, distance_fn,
+    topn, human_app_ids_path = 'app_ids_for_human_test.obj', bypass_icon=False):
 
     icon_pc = load_pickle(icon_pc_path)
     icon_hpc = load_pickle(icon_hpc_path)
@@ -206,24 +226,19 @@ def fn(icon_pc_path ,icon_hpc_path, sc_pc_path, sc_hpc_path, distance_fn, topn, 
 
     output = {}
 
-    def add_topn(a, img_name, dis):
-
-        if len(a) < topn: a.append( (img_name, dis))
-        elif a[-1][1] > dis:
-            a.append( (img_name, dis))
-            a.sort(key = lambda x:x[1])
-            a = a[:topn]
-
-    for i(app_id,_) in enumerate(load_pickle(human_app_ids_path)):
+    for i,(app_id,_) in enumerate(load_pickle(human_app_ids_path)):
         
         global_topn = []
-        #find top n icon
-        icon_key = str(i) + '.png'
-        main_icon = icon_hpc[icon_key]
+        global_topn_d = {}
 
-        for icon_name, icon_v in icon_pc:
-            dis = distance_fn(main_icon, icon_v)
-            add_topn(global_topn, icon_name, dis)
+        icon_key = str(i) + '.png'
+        print('making', icon_key)
+        #find top n icon
+        if not bypass_icon:
+            main_icon = icon_hpc[icon_key]
+            for icon_name, icon_v in icon_pc.items():
+                dis = distance_fn(main_icon, icon_v)
+                add_topn(global_topn, global_topn_d, icon_name, dis, topn=topn, is_icon=True)
         
         #find top n sc
         for sc_human_name in sc_hpc.keys():
@@ -231,16 +246,52 @@ def fn(icon_pc_path ,icon_hpc_path, sc_pc_path, sc_hpc_path, distance_fn, topn, 
             if sc_human_name[:-6] == app_id:
                 main_sc = sc_hpc[sc_human_name]
 
-                for sc_name, sc_v in sc_pc:
+                print('making', sc_human_name)
+
+                for sc_name, sc_v in sc_pc.items():
                     dis = distance_fn(main_sc, sc_v)
-                    add_topn(global_topn, sc_name, dis)
+                    add_topn(global_topn, global_topn_d, sc_name, dis, topn=topn, is_sc = True)
 
         output[icon_key] = global_topn
+        print(icon_key, output[icon_key])
     return output
 
-if __name__ == '__main__':
+def get_topn_using_screenshot(sc_pc_path, sc_hpc_path, distance_fn, topn):
 
-    create_all_sc_human_set_obj('screenshots/')
+    sc_pc = load_pickle(sc_pc_path)
+    sc_hpc = load_pickle(sc_hpc_path)
+
+    output = {}
+
+    for i,(_, sc_main) in enumerate(sc_hpc.items()):
+        
+        global_topn = []
+        global_topn_d = {}
+        app_id = str(i) + '.png'
+        
+        #find top n sc
+        for sc_name, sc_v in sc_pc.items():
+            dis = distance_fn(sc_main, sc_v)
+            add_topn(global_topn, global_topn_d, sc_name, dis, topn=topn, is_sc = True)
+
+        output[app_id] = global_topn
+        print(app_id, output[app_id])
+    return output
+
+def filter_non_original_sc_human_set_from_sc_hpc(sc_hpc_path, sc_hpc_output_path, sc_human_testset_obj_path = 'sc_human_testset.obj'):
+    sc_hpc = load_pickle(sc_hpc_path)
+    sc_human_testset = load_pickle(sc_human_testset_obj_path)
+    output = {}
+    for k,v in sc_hpc.items():
+        if k in sc_human_testset:
+            output[k] = v
+            print(k)
+    save_pickle(output, sc_hpc_output_path)
+
+
+if __name__ == '__main__':
+    pass
+    #create_all_sc_human_set_obj('screenshots/')
     # create_human_testset_groundtruth()
     # cate_dict = make_category_dict()
 
