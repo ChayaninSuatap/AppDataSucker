@@ -51,85 +51,91 @@ def check_sim_search_accuracy(human_icon_top10_cache_fn):
 
 if __name__ == '__main__':
 
-    icon_projs = [
-        'icon_model2.4',
-        'icon_model2.3',
-        'icon_model1.2',
-        'icon_model1.3',
-        'icon_model1.5',
-    ]
+    # icon_projs = [
+    #     'icon_model1.1',
+    #     'icon_model1.4',
+    #     'icon_model1.6',
+    # ]
 
-    for icon_proj in icon_projs:
+    # for icon_proj in icon_projs:
 
-        for model_fn in os.listdir('ensemble_models_t/' + icon_proj):
+    #     for model_fn in os.listdir('ensemble_models_t/' + icon_proj):
 
-            if 'k0' in model_fn: k=0
-            if 'k1' in model_fn: k=1
-            if 'k2' in model_fn: k=2
-            if 'k3' in model_fn: k=3
+    #         if 'k0' in model_fn: k=0
+    #         if 'k1' in model_fn: k=1
+    #         if 'k2' in model_fn: k=2
+    #         if 'k3' in model_fn: k=3
 
-            proj_name =  icon_proj + '_k' + str(k) + '_f'
-            use_feature_vector = True
+    #         proj_name =  icon_proj + '_k' + str(k) + '_f'
+    #         use_feature_vector = True
 
-            #is overrided
-            # model_fn = 'icon_model2.4_k3_t-ep-433-loss-0.319-acc-0.898-vloss-3.493-vacc-0.380.hdf5'
+    #         #is overrided
+    #         # model_fn = 'icon_model2.4_k3_t-ep-433-loss-0.319-acc-0.898-vloss-3.493-vacc-0.380.hdf5'
 
-            icons_fd = 'similarity_search/icons_rem_dup_human_recrawl/'
-            model_path = 'ensemble_models_t/' + icon_proj + '/' + model_fn
-            cache_path = 'sim_search_t/preds_caches/%s.obj' % (proj_name,)
-            human_test_fd = 'icons_human_test/'
-            human_preds_caches_fd = 'sim_search_t/human_preds_caches/' 
-            human_preds_caches_path = human_preds_caches_fd + proj_name + '.obj'
-            human_icon_top10_cache_fd = 'sim_search_t/human_icon_top10_cache/'
-            human_icon_top10_cache_path = human_icon_top10_cache_fd + proj_name + '.obj'
+    #         icons_fd = 'similarity_search/icons_rem_dup_human_recrawl/'
+    #         model_path = 'ensemble_models_t/' + icon_proj + '/' + model_fn
+    #         cache_path = 'sim_search_t/preds_caches/%s.obj' % (proj_name,)
+    #         human_test_fd = 'icons_human_test/'
+    #         human_preds_caches_fd = 'sim_search_t/human_preds_caches/' 
+    #         human_preds_caches_path = human_preds_caches_fd + proj_name + '.obj'
+    #         human_icon_top10_cache_fd = 'sim_search_t/human_icon_top10_cache/'
+    #         human_icon_top10_cache_path = human_icon_top10_cache_fd + proj_name + '.obj'
 
-            make_preds_cache(
-                icons_fd = icons_fd,
-                model_path = model_path,
-                cache_path = cache_path,
-                use_feature_vector = use_feature_vector)
+    #         make_preds_cache(
+    #             icons_fd = icons_fd,
+    #             model_path = model_path,
+    #             cache_path = cache_path,
+    #             use_feature_vector = use_feature_vector)
 
-            human_icon_top10_cache = get_top10_nearest_icon_human_test(cache_path,
-                model_path, euclidean,
-                get_icon_names_filtered(icons_fd),
-                use_feature_vector,
-                human_preds_caches_path,
-                load_human_preds_caches_path = None, topn=5)
+    #         human_icon_top10_cache = get_top10_nearest_icon_human_test(cache_path,
+    #             model_path, euclidean,
+    #             get_icon_names_filtered(icons_fd),
+    #             use_feature_vector,
+    #             human_preds_caches_path,
+    #             load_human_preds_caches_path = None, topn=5)
 
-            save_pickle(human_icon_top10_cache,
-                human_icon_top10_cache_fd  + proj_name + '.obj')
-            check_sim_search_accuracy(human_icon_top10_cache_path)
+    #         save_pickle(human_icon_top10_cache,
+    #             human_icon_top10_cache_fd  + proj_name + '.obj')
+    #         check_sim_search_accuracy(human_icon_top10_cache_path)
 
-    #sum preds
-    # caches_fd =   'sim_search_t/human_preds_caches/i10/'
-    # output_path = 'sim_search_t/human_preds_caches/i10_p_e.obj'
-
+    # #sum preds
+    # # caches_fd =   'sim_search_t/preds_caches/i12_p/'
+    # # output_path = 'sim_search_t/preds_caches/i12_p_e.obj'
+    # caches_fd =   'sim_search_t/human_preds_caches/i12_p/'
+    # output_path = 'sim_search_t/human_preds_caches/i12_p_e.obj'
     # preds_list = list(os.listdir(caches_fd))
+    # # preds_list = [
+    # #     'icon_model2.4_k0_f.obj',
+    # #     'icon_model2.4_k1_f.obj',
+    # #     'icon_model2.4_k2_f.obj',
+    # #     'icon_model2.4_k3_f.obj',
+    # # ]
     # create_mean_preds_caches(caches_fd, 
     #     preds_list,
     #     output_path)
 
-    #prds human top10 ensemble
-    # proj_name =  'i10_p_e'
-    # use_feature_vector = False
+    #prds human top5 ensemble
+    proj_name =  'i12_p_e'
+    use_feature_vector = False
+    suggest_n = 10
 
-    # icons_fd = 'similarity_search/icons_rem_dup_human_recrawl/'
-    # model_path = None
-    # cache_path = 'sim_search_t/preds_caches/%s.obj' % (proj_name,)
-    # human_test_fd = 'icons_human_test/'
-    # human_preds_caches_fd = 'sim_search_t/human_preds_caches/' 
-    # human_preds_caches_path = human_preds_caches_fd + proj_name + '.obj'
-    # human_icon_top10_cache_fd = 'sim_search_t/human_icon_top10_cache/'
-    # human_icon_top10_cache_path = human_icon_top10_cache_fd + proj_name + '.obj'
+    icons_fd = 'similarity_search/icons_rem_dup_human_recrawl/'
+    model_path = None
+    cache_path = 'sim_search_t/preds_caches/%s.obj' % (proj_name,)
+    human_test_fd = 'icons_human_test/'
+    human_preds_caches_fd = 'sim_search_t/human_preds_caches/' 
+    human_preds_caches_path = human_preds_caches_fd + proj_name + '.obj'
+    human_icon_top10_cache_fd = 'sim_search_t/human_icon_top10_cache/'
+    human_icon_top10_cache_path = human_icon_top10_cache_fd + proj_name + '.obj'
 
-    # human_icon_top10_cache = get_top10_nearest_icon_human_test(cache_path,
-    #     model_path, euclidean,
-    #     get_icon_names_filtered(icons_fd),
-    #     use_feature_vector,
-    #     human_preds_caches_path,
-    #     load_human_preds_caches_path = human_preds_caches_path,
-    #     topn = 5)
+    human_icon_top10_cache = get_top10_nearest_icon_human_test(cache_path,
+        model_path, euclidean,
+        get_icon_names_filtered(icons_fd),
+        use_feature_vector,
+        human_preds_caches_path,
+        load_human_preds_caches_path = human_preds_caches_path,
+        topn = suggest_n)
 
-    # save_pickle(human_icon_top10_cache,
-    #     human_icon_top10_cache_path)
-    # check_sim_search_accuracy(human_icon_top10_cache_path)
+    save_pickle(human_icon_top10_cache,
+        human_icon_top10_cache_path)
+    check_sim_search_accuracy(human_icon_top10_cache_path)

@@ -8,6 +8,8 @@ import db_util
 import global_util
 from overall_feature_util import _all_game_category
 from global_util import load_pickle, save_pickle
+import sc_util
+import icon_util
 
 def compute_preds(icon_names, model_path,
     icons_fd_path, use_feature_vector, show_output=False):
@@ -168,9 +170,78 @@ def create_mean_preds_caches(preds_caches_fd, preds_caches_fn, output_path):
     o = compute_mean_preds_caches(preds_caches_fd, preds_caches_fn)
     save_pickle(o, output_path)
 
+def create_all_sc_human_set_obj(sc_fd ,human_app_ids_path = 'app_ids_for_human_test.obj'):
+    sc_dict = sc_util.make_sc_dict(sc_fd)
+    o = load_pickle(human_app_ids_path)
+    xs = []
+    count_app_id_error = 0
+    output = {}
+    for app_id, _ in o:
+
+        if app_id in sc_dict:
+            
+            for sc_fn in sc_dict[app_id]:
+                try:
+                    sc = icon_util.load_icon_by_fn(sc_fd + sc_fn, 256, 160, rotate_for_sc = True)
+                    sc = sc.astype('float32') / 255
+                    output[sc_fn] = sc
+                    print(sc_fn)
+                except Exception as e:
+                    print(repr(e))
+        else:
+            count_app_id_error += 1
+    
+
+    save_pickle( output, 'all_sc_human_testset.obj')
+    print('len output', len(output))
+    print('error', count_app_id_error)
+
+def fn(icon_pc_path ,icon_hpc_path, sc_pc_path, sc_hpc_path, distance_fn, topn, human_app_ids_path = 'app_ids_for_human_test.obj'):
+
+    icon_pc = load_pickle(icon_pc_path)
+    icon_hpc = load_pickle(icon_hpc_path)
+
+    sc_pc = load_pickle(sc_pc_path)
+    sc_hpc = load_pickle(sc_hpc_path)
+
+    output = {}
+
+    def add_topn(a, img_name, dis):
+
+        if len(a) < topn: a.append( (img_name, dis))
+        elif a[-1][1] > dis:
+            a.append( (img_name, dis))
+            a.sort(key = lambda x:x[1])
+            a = a[:topn]
+
+    for i(app_id,_) in enumerate(load_pickle(human_app_ids_path)):
+        
+        global_topn = []
+        #find top n icon
+        icon_key = str(i) + '.png'
+        main_icon = icon_hpc[icon_key]
+
+        for icon_name, icon_v in icon_pc:
+            dis = distance_fn(main_icon, icon_v)
+            add_topn(global_topn, icon_name, dis)
+        
+        #find top n sc
+        for sc_human_name in sc_hpc.keys():
+            #filter sc_fn from human set that belong to app_id
+            if sc_human_name[:-6] == app_id:
+                main_sc = sc_hpc[sc_human_name]
+
+                for sc_name, sc_v in sc_pc:
+                    dis = distance_fn(main_sc, sc_v)
+                    add_topn(global_topn, sc_name, dis)
+
+        output[icon_key] = global_topn
+    return output
+
 if __name__ == '__main__':
 
-    create_human_testset_groundtruth()
+    create_all_sc_human_set_obj('screenshots/')
+    # create_human_testset_groundtruth()
     # cate_dict = make_category_dict()
 
     # preds = compute_preds(icon_names)
