@@ -11,6 +11,21 @@ from global_util import load_pickle, save_pickle
 import sc_util
 import icon_util
 
+def mod_model(model_path):
+    model = load_model(model_path)
+    #drop softmax layer
+    input_layer = None
+    output_layer = None
+    for layer in model.layers:
+        if layer.name == 'input_1':
+            input_layer = layer
+        elif layer.name == 'my_model_flatten':
+            output_layer = layer
+            break
+    model = Model(input_layer.input, output_layer.output)
+    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['acc'])
+    return model
+
 def compute_preds(icon_names, model_path,
     icons_fd_path, use_feature_vector, show_output=False):
 
