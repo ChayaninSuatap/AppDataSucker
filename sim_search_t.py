@@ -99,17 +99,17 @@ if __name__ == '__main__':
     #         check_sim_search_accuracy(human_icon_top10_cache_path)
 
     # #sum preds
-    caches_fd =   'sim_search_t/sc_hpc/s12/'
-    output_path = 'sim_search_t/sc_hpc/s12_p_e.obj'
+    caches_fd =   'sim_search_t/sc_hpc/'
+    output_path = 'sim_search_t/sc_hpc/s9_f_e.obj'
     # caches_fd =   'sim_search_t/human_preds_caches/i12_p/'
     # output_path = 'sim_search_t/human_preds_caches/i12_p_e.obj'
     preds_list = list(os.listdir(caches_fd))
-    # preds_list = [
-    #     'sc_model2.4_k0.obj',
-    #     'sc_model2.4_k1.obj',
-    #     'sc_model2.4_k2.obj',
-    #     'sc_model2.4_k3.obj',
-    # ]
+    preds_list = [
+        'sc_model2.4_k0_f.obj',
+        'sc_model2.4_k1_f.obj',
+        'sc_model2.4_k2_f.obj',
+        'sc_model2.4_k3_f.obj',
+    ]
     create_mean_preds_caches(caches_fd, 
         preds_list,
         output_path)

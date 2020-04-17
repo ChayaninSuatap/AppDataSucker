@@ -144,9 +144,6 @@ def create_human_testset_groundtruth():
         gts.append(int(gt))
     global_util.save_pickle(gts, fn)
 
-def compute_screenshot_preds():
-    pass
-
 def compute_mean_preds_caches(preds_caches_fd, preds_caches_fn):
     caches = []
     for fn in preds_caches_fn:
@@ -274,6 +271,22 @@ def get_topn_using_screenshot(sc_pc_path, sc_hpc_path, distance_fn, topn):
             dis = distance_fn(sc_main, sc_v)
             add_topn(global_topn, global_topn_d, sc_name, dis, topn=topn, is_sc = True)
 
+        output[app_id] = global_topn
+        print(app_id, output[app_id])
+    return output
+
+def get_topn_using_icon(icon_pc_path, icon_hpc_path, distance_fn, topn):
+    icon_pc = load_pickle(icon_pc_path)
+    icon_hpc = load_pickle(icon_hpc_path)
+    output = {}
+    for app_id, main_icon in icon_hpc.items():
+        global_topn = []
+        global_topn_d = {}
+        
+        for icon_name, icon_v in icon_pc.items():
+            dis = distance_fn(main_icon, icon_v)
+            add_topn(global_topn, global_topn_d, icon_name, dis, topn=topn, is_icon = True)
+        
         output[app_id] = global_topn
         print(app_id, output[app_id])
     return output
