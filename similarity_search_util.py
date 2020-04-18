@@ -75,6 +75,9 @@ def compute_preds(icon_names, model_path,
 def mse(pred1, pred2):
     return ((pred1 - pred2)**2).mean(axis=None)
 
+def sub_and_sum(pred1, pred2):
+    return (np.absolute(pred1 - pred2)).sum()
+
 def euclidean(pred1, pred2):
     return np.linalg.norm(pred1 - pred2)
 

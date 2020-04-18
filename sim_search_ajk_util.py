@@ -1,7 +1,7 @@
 import os
 from global_util import load_pickle, save_pickle
 from shutil import copyfile
-from similarity_search_util import mod_model, euclidean
+from similarity_search_util import mod_model, euclidean, mse, sub_and_sum
 from icon_util import load_icon_by_fn
 import numpy as np
 
@@ -26,8 +26,12 @@ def copy_sc_dataset_base_on_icon(icon_dataset_fd, sc_dataset_fd, sc_fd, human_ap
                 except:
                     pass
 
-def compute_icon_to_icon_distance(icon_dataset_fd, model_path, distance_fn):
-    model = mod_model(model_path)
+def compute_icon_to_icon_distance(icon_dataset_fd, model_paths, distance_fn):
+    #load models
+    models = []
+    for model_path in model_paths:
+        models.append(mod_model(model_path))
+        
     type_d = {} # fn --> type that I splited myself
     dis_d = {} # fn1_fn2 distance
     img_d = {} # fn --> feature vector
@@ -42,7 +46,11 @@ def compute_icon_to_icon_distance(icon_dataset_fd, model_path, distance_fn):
             icon_path = icon_dataset_fd + type_fd + '/' + icon_fn
             icon = load_icon_by_fn(icon_path, 128, 128)
             icon = np.array([icon]) / 255
-            img_d[fn] = model.predict(icon)[0]
+
+            pred = models[0].predict(icon)[0]
+            for model in models[1:]:
+                pred += model.predict(icon)[0]
+            img_d[fn] = pred / len(models)
 
             mrr_d[fn] = []
     
@@ -74,9 +82,6 @@ def compute_icon_to_icon_distance(icon_dataset_fd, model_path, distance_fn):
 
     mrr = total_mrr / len(mrr_d)
     print(mrr)
-    print(added_count)
-    print(len(mrr_d))
-
 
 
 if __name__ == '__main__':
@@ -85,9 +90,11 @@ if __name__ == '__main__':
     sc_fd = 'screenshots/'
     # copy_sc_dataset_base_on_icon(icon_dataset_fd, sc_dataset_fd, sc_fd)
 
-    # model_path = 'sim_search_t/models/icon_model2.4_k0_t-ep-404-loss-0.318-acc-0.896-vloss-3.674-vacc-0.357.hdf5' #39
-    # model_path = 'sim_search_t/models/icon_model2.4_k1_t-ep-497-loss-0.273-acc-0.912-vloss-3.597-vacc-0.370.hdf5'   #45
-    model_path = 'sim_search_t/models/icon_model2.4_k2_t-ep-463-loss-0.283-acc-0.904-vloss-3.585-vacc-0.368.hdf5'   #55
-    # model_path = 'sim_search_t/models/icon_model2.4_k3_t-ep-433-loss-0.319-acc-0.898-vloss-3.493-vacc-0.380.hdf5' #47
-    compute_icon_to_icon_distance(icon_dataset_fd, model_path,
+    model_paths = [
+        # 'sim_search_t/models/icon_model2.4_k0_t-ep-404-loss-0.318-acc-0.896-vloss-3.674-vacc-0.357.hdf5',
+        # 'sim_search_t/models/icon_model2.4_k1_t-ep-497-loss-0.273-acc-0.912-vloss-3.597-vacc-0.370.hdf5',
+        # 'sim_search_t/models/icon_model2.4_k2_t-ep-463-loss-0.283-acc-0.904-vloss-3.585-vacc-0.368.hdf5',
+        'sim_search_t/models/icon_model2.4_k3_t-ep-433-loss-0.319-acc-0.898-vloss-3.493-vacc-0.380.hdf5'
+    ]
+    compute_icon_to_icon_distance(icon_dataset_fd, model_paths,
         distance_fn = euclidean)
