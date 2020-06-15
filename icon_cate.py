@@ -34,9 +34,9 @@ aial_train, aial_test = keras_util.gen_k_fold_pass(aial, kf_pass=k, n_splits=4)
 cw = icon_cate_util.compute_class_weight_for_cate(aial_train)
 
 #icon
-# gen_train = icon_cate_util.datagenerator(aial_train, batch_size, epochs, cate_only=True, enable_cache=True, datagen=keras_util.create_image_data_gen())
+gen_train = icon_cate_util.datagenerator(aial_train, batch_size, epochs, cate_only=True, enable_cache=True, datagen=keras_util.create_image_data_gen())
 # gen_train = icon_cate_util.datagenerator(aial_train, batch_size, epochs, cate_only=True, enable_cache=True)
-# gen_test = icon_cate_util.datagenerator(aial_test, batch_size, epochs, cate_only=True, shuffle=False, enable_cache=True)
+gen_test = icon_cate_util.datagenerator(aial_test, batch_size, epochs, cate_only=True, shuffle=False, enable_cache=True)
 
 #sc
 sc_dict = sc_util.make_sc_dict('screenshots.256.distincted.rem.human/')
@@ -44,17 +44,17 @@ aial_train_sc, aial_test_sc = sc_util.make_aial_sc(aial_train, aial_test, sc_dic
 
 # gen_train=icon_cate_util.datagenerator(aial_train_sc,
         # batch_size, epochs, cate_only=True, train_sc=True, enable_cache=False, limit_cache_n=45000, datagen=keras_util.create_image_data_gen())
-gen_test=icon_cate_util.datagenerator(aial_test_sc,
-        batch_size, epochs, cate_only=True, train_sc=True, shuffle=False)
+# gen_test=icon_cate_util.datagenerator(aial_test_sc,
+        # batch_size, epochs, cate_only=True, train_sc=True, shuffle=False)
 
-model = load_model('ensemble_models_t/icon_model1.5/icon_model1.5_k0_t-ep-369-loss-0.112-acc-0.962-vloss-4.715-vacc-0.329.hdf5')
-preds = model.predict_generator(gen_test, steps=math.ceil( len(aial_test_sc) / batch_size))
+# model = load_model('ensemble_models_t/icon_model1.5/icon_model1.5_k0_t-ep-369-loss-0.112-acc-0.962-vloss-4.715-vacc-0.329.hdf5')
+# preds = model.predict_generator(gen_test, steps=math.ceil( len(aial_test_sc) / batch_size))
 
-print(len(preds) , len(aial_test_sc))
-global_util.save_pickle(preds, 'ensemble_models_t')
+# print(len(preds) , len(aial_test_sc))
+# global_util.save_pickle(preds, 'ensemble_models_t')
 
-# model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True, train_sc=False,
-#                                               layers_filters = [64, 128, 256, 512], sliding_dropout = (0, 0.15))
+model = icon_cate_util.create_icon_cate_model(cate_only=True, is_softmax=True, train_sc=False,
+                                              layers_filters = [64, 128, 256, 512], sliding_dropout = (0, 0.15))
 
 # filepath='%s/%s-ep-{epoch:03d}-loss-{loss:.3f}-acc-{acc:.3f}-vloss-{val_loss:.3f}-vacc-{val_acc:.3f}.hdf5' % (save_model_fd + proj ,proj,)
 
@@ -66,12 +66,12 @@ global_util.save_pickle(preds, 'ensemble_models_t')
 # cp_every_ep_backup = ModelCheckpoint(filepath_every_ep_backup, monitor='val_acc', save_best_only=False, verbose=0, period=1)
 
 
-# model.fit_generator(gen_train,
-#     steps_per_epoch=math.ceil(len(aial_train)/batch_size),
-#     validation_data=gen_test,
-#     validation_steps=math.ceil(len(aial_test)/batch_size),
-#     epochs=epochs, callbacks=[cp_every_ep, cp_every_ep_backup, cp_best_ep],
-#     class_weight = cw, initial_epoch = initial_epoch)
+model.fit_generator(gen_train,
+    steps_per_epoch=math.ceil(len(aial_train)/batch_size),
+    validation_data=gen_test,
+    validation_steps=math.ceil(len(aial_test)/batch_size),
+    epochs=epochs, callbacks=[cp_every_ep, cp_every_ep_backup, cp_best_ep],
+    class_weight = cw, initial_epoch = initial_epoch)
 
 
 #old stuff

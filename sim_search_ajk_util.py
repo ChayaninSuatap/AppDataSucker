@@ -10,19 +10,32 @@ from collections import OrderedDict
 
 def copy_sc_dataset_base_on_icon(icon_dataset_fd, sc_dataset_fd, sc_fd, human_app_ids_path = 'app_ids_for_human_test.obj'):
     for type_fd in os.listdir(icon_dataset_fd):
+
+        #create sc folder
+        if not os.path.exists(sc_dataset_fd + type_fd):
+            os.mkdir(sc_dataset_fd + type_fd)
+
         for icon_fn in os.listdir(icon_dataset_fd + type_fd):
 
             # get app_id
             app_id = icon_fn[:-4]
-            app_id_index = int(icon_fn[:-4])
-            o = load_pickle(human_app_ids_path)
-            app_id = o[app_id_index][0]
+            try:
+                app_id_index = int(icon_fn[:-4])
+                o = load_pickle(human_app_ids_path)
+                app_id = o[app_id_index][0]
+            except:
+                app_id = icon_fn[:-4]
+                app_id_index = app_id
 
             # copy all sc
 
             for i in range(21):
                 sc_name = '%s%2d.png' % (app_id, i)
-                sc_path = sc_dataset_fd + type_fd + '/' + ('%d%2d.png') % (app_id_index, i)
+                try:
+                    sc_path = sc_dataset_fd + type_fd + '/' + ('%d%2d.png') % (app_id_index, i)
+                except:
+                    sc_path = sc_dataset_fd + type_fd + '/' + ('%s%2d.png') % (app_id_index, i)
+
                 try:
                     copyfile(sc_fd + sc_name, sc_path)
                     print(sc_name, sc_path)
@@ -89,6 +102,7 @@ def compute_icon_to_icon_distance(icon_dataset_fd, model_paths, distance_fn, pre
     #compute mrr
     total_mrr = 0
     added_count = 0
+    found_at_count = np.zeros(( len(img_d)-1,))
     for k,v in mrr_d.items():
         main_type = type_d[k]
         for i,(img_b, dis) in enumerate(v):
@@ -96,12 +110,13 @@ def compute_icon_to_icon_distance(icon_dataset_fd, model_paths, distance_fn, pre
             if main_type == type_d[img_b]:
                 total_mrr += 1 / found_at
                 added_count += 1
+                found_at_count[found_at-1]+=1
                 break
 
     mrr = total_mrr / len(mrr_d)
     print(mrr)
 
-    return type_d, mrr_d
+    return type_d, mrr_d, found_at_count
 
 def compute_sc_to_sc_distance(sc_dataset_fd, model_paths, distance_fn, pred_cache_path,
     load_cache = False, save_cache = False, use_pca = False):
@@ -129,7 +144,7 @@ def compute_sc_to_sc_distance(sc_dataset_fd, model_paths, distance_fn, pred_cach
                 sc= np.array([sc]) / 255
 
                 pred = models[0].predict(sc)[0]
-                print('pred',fn)
+                # print('pred',fn)
                 for model in models[1:]:
                     pred += model.predict(sc)[0]
                 img_d[fn] = pred / len(models)
@@ -154,9 +169,21 @@ def compute_sc_to_sc_distance(sc_dataset_fd, model_paths, distance_fn, pred_cach
 
                 mrr_d[img_a].append( (img_b,dis) )
     
-            #sort mrr_d
+        #sort mrr_d
         for k,v in mrr_d.items():
             mrr_d[k] = sorted(v, key = lambda x: x[1])
+        
+        #keep game distinct
+        for k,v in mrr_d.items():
+            a = mrr_d[k]
+            output = []
+            while len(a)>0:
+                cur = a.pop(0)
+                output.append(cur)
+                for i in range(len(a)-1, -1, -1):
+                    if a[i][0][:-2] == cur[0][:-2]:
+                        a.remove(a[i])
+            mrr_d[k] = output
 
     if save_cache:
         save_pickle((type_d, img_d, mrr_d, dis_d),pred_cache_path)
@@ -165,6 +192,7 @@ def compute_sc_to_sc_distance(sc_dataset_fd, model_paths, distance_fn, pred_cach
     #compute mrr
     total_mrr = 0
     added_count = 0
+    found_at_count = np.zeros(( 24,))
     for k,v in mrr_d.items():
         main_type = type_d[k]
         for i,(img_b, dis) in enumerate(v):
@@ -172,16 +200,22 @@ def compute_sc_to_sc_distance(sc_dataset_fd, model_paths, distance_fn, pred_cach
             if main_type == type_d[img_b]:
                 total_mrr += 1 / found_at
                 added_count += 1
+                found_at_count[found_at-1] += 1
+
+                if found_at == 1:
+                    if k[:-2] == img_b[:-2]:
+                        raise ValueError('suggest it own game!')
                 break
 
     mrr = total_mrr / len(mrr_d)
     print(mrr)
-    return mrr_d
+    return mrr_d, found_at_count
 
 def compute_mrr(mrr_d, type_d):
     #compute mrr
     total_mrr = 0
     added_count = 0
+    found_at_count = np.zeros((len(mrr_d),))
     for k,v in mrr_d.items():
         main_type = type_d[k]
         for i,(img_b, dis) in enumerate(v):
@@ -189,11 +223,12 @@ def compute_mrr(mrr_d, type_d):
             if main_type == type_d[img_b]:
                 total_mrr += 1 / found_at
                 added_count += 1
+                found_at_count[found_at-1] += 1
                 break
 
     mrr = total_mrr / len(mrr_d)
     print(mrr)
-    return type_d, mrr_d
+    return type_d, mrr_d, found_at_count
 
 def compute_game_to_game_distance(icon_cache_path, sc_cache_path):
 
@@ -263,53 +298,104 @@ def show_kmeans_clustering(icon_cache_path):
             print(e[0], e[1], end = ' ')
         print()
 
-def plot_pca(icon_cache_path, print_text = True):
+def plot_pca(icon_cache_path, print_text = True, col_d = 
+    {'blocky':'red', 'card':'blue', 'driving_sim':'orange', 'war':'magenta', 'words':'green'},
+    auto_gen_col = False, plot_by_game = False, title='', label_d = None):
     type_d, img_d, mrr_d, _ = load_pickle(icon_cache_path) 
 
     data = np.array(list(img_d.values()))
     result = clustering_util.make_pca(data)
-    col_d = {'blocky':'red', 'card':'blue', 'driving_sim':'yellow',
-    'war':'green', 'words':'black'}
+
+    pbg_col = {}
+    auto_gen_col_d = {}
+
     for (x,y), icon_fn in zip(result, img_d.keys()):
+
         if print_text:
-            plt.text(x,y, type_d[icon_fn], {'size':15})
-        plt.scatter(x,y, s = 50, color = col_d[type_d[icon_fn]], label = type_d[icon_fn])
+            plt.text(x,y, icon_fn, {'size':8})
+
+        label = type_d[icon_fn] if label_d == None else label_d[type_d[icon_fn]]
+
+        if plot_by_game:
+            app_id = icon_fn[:-6]
+            if app_id not in pbg_col:
+                pbg_col[app_id] = np.random.rand(3,)
+            plt.scatter(x,y, s = 50, color = pbg_col[app_id], label = app_id)
+        elif auto_gen_col:
+            if type_d[icon_fn] not in auto_gen_col_d:
+                auto_gen_col_d[type_d[icon_fn]] = np.random.rand(3,)
+            plt.scatter(x,y, s = 50, color = auto_gen_col_d[type_d[icon_fn]], label = label) 
+        else:
+            plt.scatter(x,y, s = 50, color = col_d[type_d[icon_fn]], label = label)
+
     handles, labels = plt.gca().get_legend_handles_labels()
     by_label = OrderedDict(zip(labels, handles))
     plt.legend(by_label.values(), by_label.keys())
+    plt.title(title)
+    plt.show()
+
+def plot_found_at_count(line, title, limit_x = 9999):
+    from pylab import rcParams
+    rcParams['figure.figsize'] = 9, 5
+    splited = list(map(float,line.split('\t')))[:limit_x]
+    x = list(map(str, range(1,limit_x+1)))
+    plt.bar(x,splited)
+    plt.xlabel('Nearest correct suggestion', fontsize = 12) 
+    plt.ylabel('Frequency', fontsize = 12)
+    plt.title(title, fontsize=12)
     plt.show()
 
 if __name__ == '__main__':
-    icon_dataset_fd = 'sim_search_ajk/dataset/icon/'
-    sc_dataset_fd = 'sim_search_ajk/dataset/sc/'
-    sc_fd = 'screenshots/'
+    icon_dataset_fd = 'sim_search_ajk/dataset/icon_puzzle/'
+    sc_dataset_fd = 'sim_search_ajk/dataset/sc_puzzle/'
+    sc_fd = 'C:/screenshots.resized/'
     # copy_sc_dataset_base_on_icon(icon_dataset_fd, sc_dataset_fd, sc_fd)
+    # input()
 
-    model_paths = [
-        # 'sim_search_t/models/icon_model2.4_k0_t-ep-404-loss-0.318-acc-0.896-vloss-3.674-vacc-0.357.hdf5', #0.39922222222222226 #pca 0.620
+    icon_model_paths = [
+        'sim_search_t/models/icon_model2.4_k0_t-ep-404-loss-0.318-acc-0.896-vloss-3.674-vacc-0.357.hdf5', #0.39922222222222226 #pca 0.620
         # 'sim_search_t/models/icon_model2.4_k1_t-ep-497-loss-0.273-acc-0.912-vloss-3.597-vacc-0.370.hdf5', #0.45232034632034623 #pca 0.640
         # 'sim_search_t/models/icon_model2.4_k2_t-ep-463-loss-0.283-acc-0.904-vloss-3.585-vacc-0.368.hdf5', #0.5571528822055138 #pca 0.571
         # 'sim_search_t/models/icon_model2.4_k3_t-ep-433-loss-0.319-acc-0.898-vloss-3.493-vacc-0.380.hdf5' #0.47025526107879045 #pca 0.635
-
-        # 'sim_search_t/models/sc_model2.3_k0_no_aug-ep-087-loss-0.721-acc-0.782-vloss-2.793-vacc-0.400.hdf5',  #0.4112483636213254 #pca 0.582
-        'sim_search_t/models/sc_model2.3_k1_no_aug-ep-135-loss-0.995-acc-0.708-vloss-2.763-vacc-0.398.hdf5', #0.5123068412801622 #pca 0.783
-        # 'sim_search_t/models/sc_model2.3_k2_no_aug-ep-068-loss-0.907-acc-0.723-vloss-2.568-vacc-0.396.hdf5', #0.4684522538516435 #pca 0.557
-        # 'sim_search_t/models/sc_model2.3_k3_no_aug-ep-085-loss-0.786-acc-0.761-vloss-2.568-vacc-0.403.hdf5' #0.4203212543079958 #pca 0.622
+        #0.6169
     ]
 
-    # icon_cache_path = 'sim_search_ajk/dataset/icon_pc_k2_pca.obj'
-    # type_d, mrr_d = compute_icon_to_icon_distance(icon_dataset_fd, model_paths,
-        # distance_fn = euclidean, pred_cache_path = icon_cache_path, save_cache = True , load_cache = False, use_pca = True)
-    
-    # write_rank_into_file(icon_cache_path)
-    # show_kmeans_clustering(icon_cache_path)
+    sc_model_paths = [
+        'sim_search_t/models/sc_model2.3_k0_no_aug-ep-087-loss-0.721-acc-0.782-vloss-2.793-vacc-0.400.hdf5',  #0.4112483636213254 #pca 0.6438055771389106
+        # 'sim_search_t/models/sc_model2.3_k1_no_aug-ep-135-loss-0.995-acc-0.708-vloss-2.763-vacc-0.398.hdf5', #0.5123068412801622 #pca 0.8075961636567699
+        # 'sim_search_t/models/sc_model2.3_k2_no_aug-ep-068-loss-0.907-acc-0.723-vloss-2.568-vacc-0.396.hdf5', #0.4684522538516435 #pca 0.557 0.6155817433595208
+        # 'sim_search_t/models/sc_model2.3_k3_no_aug-ep-085-loss-0.786-acc-0.761-vloss-2.568-vacc-0.403.hdf5' #0.4203212543079958 #pca 0.622 0.6826307811156297
+    ]
 
-    sc_cache_path = 'sim_search_ajk/dataset/sc_pc_k1_pca.obj'
-    # mrr_d = compute_sc_to_sc_distance(sc_dataset_fd, model_paths,
-        # distance_fn = euclidean, pred_cache_path = sc_cache_path, load_cache = False, save_cache = True, use_pca = True)
+    #icon found_at_count average
+    #10.25	6.25	3.5	1.75	0.25	0	0.25	0.25	0.25	0.25	0.25	0.5	0.25	0.5	0	0.25	0	0.25	0	0	0	0	0	0
+    #sc case
+    #154.5	54.5	41.75	15	10.5	6.75	2	4	3.5	0.75	1.25	0.5	0.25	0	0.25	0	0	0.25	0	1.25	0	0	0	0
+    #icon + sc case
+    #16.25	3.5	2	1.25	0.5	1	0.25	0.25
+
+    # plot_found_at_count('16.25	3.5	2	1.25	0.5	1	0.25	0.25',
+        # 'Frequency of nearest correct suggestion using model I10 and model S9', limit_x = 8)
+
+    save_cache = False
+    load_cache = True
+
+    icon_cache_path = 'sim_search_ajk/dataset/icon_k0_puzzle.obj'
+    type_d, mrr_d, found_at_count = compute_icon_to_icon_distance(icon_dataset_fd, icon_model_paths, distance_fn = euclidean, pred_cache_path = icon_cache_path, save_cache = save_cache, load_cache = load_cache, use_pca = True)
+    print(found_at_count)
+
+    sc_cache_path = 'sim_search_ajk/dataset/sc_k0_puzzle.obj'
+    mrr_d, found_at_count = compute_sc_to_sc_distance(sc_dataset_fd, sc_model_paths, distance_fn = euclidean, pred_cache_path = sc_cache_path, load_cache = load_cache, save_cache = save_cache, use_pca = True)
+    print(found_at_count)
     
     # show_kmeans_clustering(sc_cache_path)
-    plot_pca(sc_cache_path, print_text = False)
+    five_labels_d = {'blocky':'Blocky', 'card':'Card', 'driving_sim':'Driving simulator', 'war':'War','words':'Word'}
+    sports_labels_d = {'basketball':'Basketball', 'football':'Football', 'snooker':'Snooker'}
+    sports_col_d = {'basketball':'magenta', 'football':'blue', 'snooker':'red'}
+    puzzle_col_d = {'Blocky':'red', 'Number':'orange', 'Word':'blue'}
+    # plot_pca(icon_cache_path, print_text = False,
+        # auto_gen_col=False, plot_by_game=False, title='Model I10 feature visualization', label_d=five_labels_d)
 
-    # type_d, mrr_d = compute_game_to_game_distance(icon_cache_path, sc_cache_path)
+    type_d, mrr_d, found_at_count = compute_game_to_game_distance(icon_cache_path, sc_cache_path)
+    print(found_at_count)
     # write_rank_into_file(type_d = type_d, mrr_d = mrr_d)

@@ -70,7 +70,8 @@ def my_fit_scaler(feature_dict:dict):
         else:
             sum += item
             if math.isnan(sum[0]):
-                print(k)
+                print('found NAN', k)
+                print(sum[0])
                 input()
             # print(type(sum), sum.shape)
 
@@ -91,7 +92,7 @@ def my_transform_to_scaler(feature_dict, mean, var):
     for k, item in feature_dict.items():
         feature_dict[k] = (item - mean) / var
 
-def make_model(feature, dense_sizes=[1000,500], input_shape=None):
+def make_model(feature, dense_sizes=[1000,500], increase_dropout=False , input_shape=None):
 
     if input_shape is not None:
         pass
@@ -99,12 +100,21 @@ def make_model(feature, dense_sizes=[1000,500], input_shape=None):
         input_shape = 32400
     elif feature == 'gist':
         input_shape = 512
+
+    global dropout_now
+    dropout_now = 0.2
+    if increase_dropout:
+        dropout_now = 0
     
     def add_dense(size, last_layer):
+        global dropout_now
         x = Dense(size)(last_layer)
         x = LeakyReLU()(x)
         x = BatchNormalization()(x)
-        x = Dropout(0.2)(x)
+        x = Dropout(dropout_now)(x)
+        print('added dropout value', dropout_now)
+        if increase_dropout:
+            dropout_now += 0.5 / (len(dense_sizes)-1)
         return x
     
     input_layer = Input(shape=(input_shape,))
@@ -171,7 +181,6 @@ def split_train_test(dataset_path, train_path, test_path, k_iter, compress=3, sc
         if app_id in gist_dict : gist_test_dict[app_id] = gist_dict[app_id]
 
     #normalize
-
     mean, var = my_fit_scaler(gist_train_dict)
     print('mean', mean, 'var', var)
     my_transform_to_scaler(gist_train_dict, mean, var)
@@ -326,12 +335,14 @@ def make_sc_hog_split_train_test(k_iter, compute_train_set=False, compute_test_s
 
 if __name__ == '__main__':
 
-    f = open('basic_features/gistdescriptor/valid_icon_app_id_list_t.txt', 'w')
-    aial = icon_cate_util.make_aial_from_seed(327, 'similarity_search/icons_rem_dup_human_recrawl/')
-    print(icon_cate_util.compute_aial_loss(aial), len(aial))
-    aial = icon_cate_util.filter_aial_rating_cate(aial)
-    for app_id,_ ,_ in aial:
-        f.writelines(app_id + '\n')
+    m = make_model(feature='gist', dense_sizes=[1000,500, 500, 500, 500], increase_dropout=False)
+
+    # f = open('basic_features/gistdescriptor/valid_icon_app_id_list_t.txt', 'w')
+    # aial = icon_cate_util.make_aial_from_seed(327, 'similarity_search/icons_rem_dup_human_recrawl/')
+    # print(icon_cate_util.compute_aial_loss(aial), len(aial))
+    # aial = icon_cate_util.filter_aial_rating_cate(aial)
+    # for app_id,_ ,_ in aial:
+    #     f.writelines(app_id + '\n')
     
     #####extract hog 8 or 16 for thesis
     # old_icon_hog_dict = load('basic_features/icon_hog16.gzip')

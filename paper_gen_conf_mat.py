@@ -38,6 +38,7 @@ def _plot_confusion_matrix(cm, classes,
 if __name__ == '__main__':
     # _plot_confusion_matrix()
     a = []
+    print('Please input:')
     for i in range(17):
         x = input()
         a.append([float(xx)*100/20 for xx in x.split('\t')])
@@ -46,5 +47,5 @@ if __name__ == '__main__':
     
     _plot_confusion_matrix(a, ['Board', 'Trivia', 'Arcade', 'Card', 'Music', 'Racing',
  'Action', 'Puzzle', 'Simulation', 'Strategy', 'Role playing', 'Sports', 'Adventure', 'Casino', 'Word', 'Casual', 'Educational'],
- title='Human Screenshot Performance'
+ title='Ensembling model S13 performance'
  )
