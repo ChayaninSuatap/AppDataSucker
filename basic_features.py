@@ -14,6 +14,7 @@ import dataset_util
 from tensorflow.keras.layers import Dense, Conv2D, Input, LeakyReLU, BatchNormalization, Dropout
 from tensorflow.keras.models import Model
 from tensorflow.keras.callbacks import ModelCheckpoint
+from tensorflow.keras.optimizers import Adam
 from sklearn.preprocessing import StandardScaler
 import os
 import sc_util
@@ -92,7 +93,7 @@ def my_transform_to_scaler(feature_dict, mean, var):
     for k, item in feature_dict.items():
         feature_dict[k] = (item - mean) / var
 
-def make_model(feature, dense_sizes=[1000,500], increase_dropout=False , input_shape=None):
+def make_model(feature, dense_sizes=[1000,500], increase_dropout=False , input_shape=None, learning_rate=0.001):
 
     if input_shape is not None:
         pass
@@ -126,7 +127,8 @@ def make_model(feature, dense_sizes=[1000,500], increase_dropout=False , input_s
     x = Dense(17, activation='softmax')(x)
 
     model = Model(inputs=input_layer, outputs=x)
-    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['acc'])
+    model_optimizer = Adam(learning_rate=learning_rate)
+    model.compile(optimizer=model_optimizer, loss='categorical_crossentropy', metrics=['acc'])
     return model
 
 def load_dataset(train_path, test_path):
