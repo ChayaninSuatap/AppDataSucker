@@ -68,14 +68,14 @@ def make_gist_obj(source, dest):
         else:
             print('found NAN, not added', app_id)
     save_pickle(output, dest)
-
+    
 def split_train_test(dataset_path, train_path, test_path, k_iter, aial_obj, compress=3, sc=False):
     #split train test from dataset and also normalize it
     gist_dict = load_pickle(dataset_path)
 
     #make aial_train, aial_test
     if sc:
-        aial_train, aial_test = keras_util.gen_k_fold_pass(aial, kf_pass = k_iter, n_splits=4)
+        aial_train, aial_test = keras_util.gen_k_fold_pass(aial_obj, kf_pass = k_iter, n_splits=4)
         train_d = {x[0]:x for x in aial_train}
         test_d  = {x[0]:x for x in aial_test}
         aial_train_new = []
@@ -94,7 +94,7 @@ def split_train_test(dataset_path, train_path, test_path, k_iter, aial_obj, comp
         aial_test = aial_test_new
 
     else:
-        aial_train, aial_test = keras_util.gen_k_fold_pass(aial, kf_pass = k_iter, n_splits=4)
+        aial_train, aial_test = keras_util.gen_k_fold_pass(aial_obj, kf_pass = k_iter, n_splits=4)
 
     gist_train_dict = {}
     gist_test_dict = {}
