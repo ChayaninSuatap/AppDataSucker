@@ -8,7 +8,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import random
 import math
-
+import time
+import multiprocessing
 
 def split_aial(aial_obj, k_iter):
     aial_train, aial_test = keras_util.gen_k_fold_pass(aial_obj, kf_pass = k_iter, n_splits=4)
@@ -19,10 +20,11 @@ def split_aial(aial_obj, k_iter):
         aial_test_new.append( (app_id,cate))
     return aial_train_new, aial_test_new
 
-def x_generator(aial_train, batch_size, samples_fd, resize_w, resize_h, extract_fn, rotate_for_sc=False):
+def x_generator(aial_train, batch_size, samples_fd, resize_w, resize_h, rotate_for_sc=False):
     datagen = keras_util.create_image_data_gen()
     imgs_now = []
     cates_now = []
+
     while True:
         random.shuffle(aial_train)
         for app_id, cate in aial_train:
@@ -35,16 +37,17 @@ def x_generator(aial_train, batch_size, samples_fd, resize_w, resize_h, extract_
                 for chrunk_gen in datagen.flow(np.array(imgs_now), batch_size = batch_size, shuffle=False):
                     break
 
-                features = []
-                for img_in_chrunk in chrunk_gen:
-                    feature = extract_fn(img_in_chrunk/255)
-                    features.append(feature)
+                # for img_in_chrunk in chrunk_gen:
+                    # feature = extract_fn(img_in_chrunk/255)
+                    # features.append(feature)
+                features = list(pool.map(extract_fn, chrunk_gen))
+                print('time elapsed extract hog', end_time - start_time)
                 yield np.array(features), np.array(cates_now)
 
                 imgs_now = []
                 cates_now = []
                 
-def make_test_set(aial_test, samples_fd,  resize_w, resize_h, extract_fn, rotate_for_sc=False):
+def make_test_set(aial_test, samples_fd,  resize_w, resize_h, rotate_for_sc=False):
     features = []
     cates = []
     for app_id, cate in aial_test:
@@ -54,25 +57,27 @@ def make_test_set(aial_test, samples_fd,  resize_w, resize_h, extract_fn, rotate
         cates.append(cate)
     return np.array(features), np.array(cates)
 
+##WARNING MUST ACCESS TO TOP LEVEL FOR POOL
+def extract_fn(img):
+    return extract_hog(img/255, pixels_per_cell=(8,8))
+
 if __name__ == '__main__':
     #setting
     k_iter = 0
     samples_fd = 'icons.combine.recrawled/'
     epochs = 100
-    batch_size = 32
+    batch_size = 256
     resize_w = 180
     resize_h = 180
-    
-    def extract_fn(img):
-        return extract_hog(img, pixels_per_cell=(8,8))
         
     #code
+    pool = multiprocessing.Pool()
     aial_obj = load_pickle('aial_seed_327.obj')
     aial_train, aial_test = split_aial(aial_obj, k_iter)
 
-    x_gen = x_generator(aial_train, batch_size, samples_fd=samples_fd, resize_w=resize_w, resize_h=resize_h, extract_fn=extract_fn)
-    test_set = make_test_set(aial_test, samples_fd, resize_w, resize_h, extract_fn)
+    x_gen = x_generator(aial_train, batch_size, samples_fd=samples_fd, resize_w=resize_w, resize_h=resize_h)
+    test_set = make_test_set(aial_test, samples_fd, resize_w, resize_h)
 
     model = make_model('hog')
     model.fit_generator(x_gen, steps_per_epoch = math.ceil(len(aial_train)/batch_size),
-        epochs=epochs, validation_data=test_set)
+        epochs=epochs, validation_data = test_set)

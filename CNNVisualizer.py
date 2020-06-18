@@ -64,22 +64,30 @@ class CNNVisualizer:
 if __name__ == '__main__':
     model_path = 'sim_search_t/models/icon_model2.4_k3_t-ep-433-loss-0.319-acc-0.898-vloss-3.493-vacc-0.380.hdf5'
     # img_path = ''
-    # v = CNNVisualizer(model_path)
-    # v.visualize_feature(layer_i = 1, img_path = 'icons.combine.recrawled/aceviral.dragoncraft.png')
+    v = CNNVisualizer(model_path)
+    v.visualize_feature(layer_i = 1, img_path = 'icons.combine.recrawled/com.solitairemaker.solitaire.png')
 
-    aial = load_pickle('aial_seed_327.obj')
-    m = load_model(model_path)
-    aial_train, aial_test = keras_util.gen_k_fold_pass(aial, kf_pass=3, n_splits=4)
-    app_id_pred_d = []
-    for x in aial_test:
-        app_id = x[0]
-        img_path = 'icons.combine.recrawled/' + app_id + '.png'
-        normed_img = load_icon_by_fn(img_path, 128, 128)/255
-        pred = m.predict(np.array([normed_img]))
-        conf = max(pred[0])
-        app_id_pred_d.append( (app_id,conf))
-    sorted_preds = sorted(app_id_pred_d, key = lambda x : x, reverse=True)
-    print(sorted_preds[:10])
+    # aial = load_pickle('aial_seed_327.obj')
+    # m = load_model(model_path)
+    # aial_train, aial_test = keras_util.gen_k_fold_pass(aial, kf_pass=3, n_splits=4)
+    # app_id_pred_d = []
+    # for x in aial_test:
+    #     app_id = x[0]
+    #     print(app_id)
+    #     img_path = 'icons.combine.recrawled/' + app_id + '.png'
+    #     normed_img = load_icon_by_fn(img_path, 128, 128)/255
+    #     pred = m.predict(np.array([normed_img]))
+    #     conf = max(pred[0])
+    #     app_id_pred_d.append( (app_id,conf))
+    # sorted_preds = sorted(app_id_pred_d, key = lambda x : x[1], reverse=True)
+    # print(sorted_preds[:10])
+    # save_pickle(sorted_preds, 'sorted_preds_icon_model2.4_k3.obj')
+
+    # obj = load_pickle('sorted_preds_icon_model2.4_k3.obj')
+    # count = 0
+    # for app_id, conf in obj:
+    #     if conf == 1.0: count+=1
+    # print(count/len(obj))
 
     
 
