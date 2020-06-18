@@ -51,7 +51,7 @@ def make_test_set(aial_test, samples_fd,  resize_w, resize_h, rotate_for_sc=Fals
     cates = []
     for app_id, cate in aial_test:
         img = load_icon_by_fn(samples_fd + app_id + '.png', resizeW=resize_w, resizeH=resize_h, rotate_for_sc=rotate_for_sc)
-        feature = extract_fn(img/255)
+        feature = extract_fn(img)
         features.append(feature)
         cates.append(cate)
     return np.array(features), np.array(cates)
