@@ -21,6 +21,7 @@ def split_aial(aial_obj, k_iter):
     return aial_train_new, aial_test_new
 
 def x_generator(aial_train, batch_size, samples_fd, resize_w, resize_h, rotate_for_sc=False):
+    global pool
     datagen = keras_util.create_image_data_gen()
     imgs_now = []
     cates_now = []
