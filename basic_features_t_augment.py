@@ -20,8 +20,7 @@ def split_aial(aial_obj, k_iter):
         aial_test_new.append( (app_id,cate))
     return aial_train_new, aial_test_new
 
-def x_generator(aial_train, batch_size, samples_fd, resize_w, resize_h, rotate_for_sc=False):
-    global pool
+def x_generator(aial_train, batch_size, samples_fd, resize_w, resize_h, pool, rotate_for_sc=False):
     datagen = keras_util.create_image_data_gen()
     imgs_now = []
     cates_now = []
@@ -75,9 +74,10 @@ if __name__ == '__main__':
     aial_obj = load_pickle('aial_seed_327.obj')
     aial_train, aial_test = split_aial(aial_obj, k_iter)
 
-    x_gen = x_generator(aial_train, batch_size, samples_fd=samples_fd, resize_w=resize_w, resize_h=resize_h)
-    test_set = make_test_set(aial_test, samples_fd, resize_w, resize_h)
+    x_gen = x_generator(aial_train, batch_size, samples_fd=samples_fd, resize_w=resize_w, resize_h=resize_h, pool=pool)
+    # test_set = make_test_set(aial_test, samples_fd, resize_w, resize_h)
 
     model = make_model('hog')
     model.fit_generator(x_gen, steps_per_epoch = math.ceil(len(aial_train)/batch_size),
-        epochs=epochs, validation_data = test_set)
+        # validation_data = test_set,
+        epochs=epochs)
