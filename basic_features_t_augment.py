@@ -41,7 +41,6 @@ def x_generator(aial_train, batch_size, samples_fd, resize_w, resize_h, rotate_f
                     # feature = extract_fn(img_in_chrunk/255)
                     # features.append(feature)
                 features = list(pool.map(extract_fn, chrunk_gen))
-                print('time elapsed extract hog', end_time - start_time)
                 yield np.array(features), np.array(cates_now)
 
                 imgs_now = []
