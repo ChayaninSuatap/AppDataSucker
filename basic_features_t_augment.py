@@ -73,12 +73,17 @@ def make_test_set(aial_test, samples_fd,  resize_w, resize_h, rotate_for_sc=Fals
         cates.append(cate)
     return np.array(features), np.array(cates)
 
-if __name__ == '__main__':
+def make_global_extract_fn(fn):
     ##WARNING MUST ACCESS TO TOP LEVEL FOR POOL
     global extract_fn
-    def extract_fn(img):
+    extract_fn = fn
+
+if __name__ == '__main__':
+
+    def fn(img):
         feature = extract_hog(img/255, pixels_per_cell=(16,16))
         return feature
+    make_global_extract_fn(fn)
 
     #setting
     k_iter = 0
@@ -95,7 +100,7 @@ if __name__ == '__main__':
 
     x_gen = x_generator(aial_train, batch_size, samples_fd=samples_fd, resize_w=resize_w,
         resize_h=resize_h, pool=pool, parallel=False, time_extracting=True)
-    # test_set = make_test_set(aial_test, samples_fd, resize_w, resize_h)
+    test_set = make_test_set(aial_test, samples_fd, resize_w, resize_h)
 
     model = make_model('hog', input_shape=6561)
     model.fit_generator(x_gen, steps_per_epoch = math.ceil(len(aial_train)/batch_size),
