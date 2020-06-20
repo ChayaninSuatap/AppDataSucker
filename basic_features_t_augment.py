@@ -20,7 +20,8 @@ def split_aial(aial_obj, k_iter):
         aial_test_new.append( (app_id,cate))
     return aial_train_new, aial_test_new
 
-def x_generator(aial_train, batch_size, samples_fd, resize_w, resize_h, pool, extract_fn, rotate_for_sc=False):
+def x_generator(aial_train, batch_size, samples_fd, resize_w, resize_h, pool, rotate_for_sc=False):
+    global extract_fn
     datagen = keras_util.create_image_data_gen()
     imgs_now = []
     cates_now = []
@@ -46,7 +47,7 @@ def x_generator(aial_train, batch_size, samples_fd, resize_w, resize_h, pool, ex
                 imgs_now = []
                 cates_now = []
                 
-def make_test_set(aial_test, samples_fd,  resize_w, resize_h, extract_fn, rotate_for_sc=False):
+def make_test_set(aial_test, samples_fd,  resize_w, resize_h, rotate_for_sc=False):
     features = []
     cates = []
     for app_id, cate in aial_test:
@@ -57,6 +58,7 @@ def make_test_set(aial_test, samples_fd,  resize_w, resize_h, extract_fn, rotate
     return np.array(features), np.array(cates)
 
 ##WARNING MUST ACCESS TO TOP LEVEL FOR POOL
+global extract_fn
 def extract_fn(img):
     feature = extract_hog(img/255, pixels_per_cell=(16,16))
     return feature
@@ -75,8 +77,8 @@ if __name__ == '__main__':
     aial_obj = load_pickle('aial_seed_327.obj')
     aial_train, aial_test = split_aial(aial_obj, k_iter)
 
-    x_gen = x_generator(aial_train, batch_size, samples_fd=samples_fd, resize_w=resize_w, resize_h=resize_h, pool=pool,extract_fn=extract_fn)
-    # test_set = make_test_set(aial_test, samples_fd, resize_w, resize_h, extract_fn)
+    x_gen = x_generator(aial_train, batch_size, samples_fd=samples_fd, resize_w=resize_w, resize_h=resize_h, pool=pool)
+    # test_set = make_test_set(aial_test, samples_fd, resize_w, resize_h)
 
     model = make_model('hog', input_shape=6561)
     model.fit_generator(x_gen, steps_per_epoch = math.ceil(len(aial_train)/batch_size),
