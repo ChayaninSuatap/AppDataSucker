@@ -23,10 +23,17 @@ def x_generator(aial_train, batch_size, samples_fd, resize_w, resize_h, extract_
     datagen = keras_util.create_image_data_gen()
     imgs_now = []
     cates_now = []
+    cache_d={}
+    
+    print('making cache')
+    for app_id, _ in aial_train:
+        cache_d[app_id] = load_icon_by_fn(samples_fd + app_id + '.png', resizeW = resize_w, resizeH = resize_h, rotate_for_sc = rotate_for_sc)
+    print('cache made')
+
     while True:
         random.shuffle(aial_train)
         for app_id, cate in aial_train:
-            img = load_icon_by_fn(samples_fd + app_id + '.png', resizeW = resize_w, resizeH = resize_h, rotate_for_sc = rotate_for_sc)
+            img = cache_d[app_id]
             imgs_now.append(img)
             cates_now.append(cate)
 
