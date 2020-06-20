@@ -20,15 +20,23 @@ def split_aial(aial_obj, k_iter):
         aial_test_new.append( (app_id,cate))
     return aial_train_new, aial_test_new
 
-def x_generator(aial_train, batch_size, samples_fd, resize_w, resize_h, pool, extract_fn, rotate_for_sc=False):
+def x_generator(aial_train, batch_size, samples_fd, resize_w, resize_h, pool, extract_fn,
+    rotate_for_sc=False, parallel=True, time_extracting=False):
     datagen = keras_util.create_image_data_gen()
     imgs_now = []
     cates_now = []
 
+    #make cache
+    cache_d = {}
+    print('making cache')
+    for app_id, cate in aial_train:
+        cache_d[app_id] = load_icon_by_fn(samples_fd + app_id + '.png', resizeW = resize_w, resizeH = resize_h, rotate_for_sc = rotate_for_sc)
+    print('making cache done')
+
     while True:
         random.shuffle(aial_train)
         for app_id, cate in aial_train:
-            img = load_icon_by_fn(samples_fd + app_id + '.png', resizeW = resize_w, resizeH = resize_h, rotate_for_sc = rotate_for_sc)
+            img = cache_d[app_id]
             imgs_now.append(img)
             cates_now.append(cate)
 
@@ -37,10 +45,17 @@ def x_generator(aial_train, batch_size, samples_fd, resize_w, resize_h, pool, ex
                 for chrunk_gen in datagen.flow(np.array(imgs_now), batch_size = batch_size, shuffle=False):
                     break
 
-                # for img_in_chrunk in chrunk_gen:
-                    # feature = extract_fn(img_in_chrunk/255)
-                    # features.append(feature)
-                features = list(pool.map(extract_fn, chrunk_gen))
+                if time_extracting:
+                    start_time = time.time()
+                if parallel:
+                    features = list(pool.map(extract_fn, chrunk_gen))
+                else:
+                    features = []
+                    for img_in_chrunk in chrunk_gen:
+                        feature = extract_fn(img_in_chrunk)
+                        features.append(feature)
+                if time_extracting:
+                    print('extract time per batch', time.time() - start_time)
                 yield np.array(features), np.array(cates_now)
 
                 imgs_now = []
@@ -75,7 +90,8 @@ if __name__ == '__main__':
     aial_obj = load_pickle('aial_seed_327.obj')
     aial_train, aial_test = split_aial(aial_obj, k_iter)
 
-    x_gen = x_generator(aial_train, batch_size, samples_fd=samples_fd, resize_w=resize_w, resize_h=resize_h, pool=pool,extract_fn=extract_fn)
+    x_gen = x_generator(aial_train, batch_size, samples_fd=samples_fd, resize_w=resize_w,
+        resize_h=resize_h, pool=pool,extract_fn=extract_fn, parallel=False, time_extracting=True)
     # test_set = make_test_set(aial_test, samples_fd, resize_w, resize_h, extract_fn)
 
     model = make_model('hog', input_shape=6561)
