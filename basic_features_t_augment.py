@@ -73,13 +73,13 @@ def make_test_set(aial_test, samples_fd,  resize_w, resize_h, rotate_for_sc=Fals
         cates.append(cate)
     return np.array(features), np.array(cates)
 
-##WARNING MUST ACCESS TO TOP LEVEL FOR POOL
-global extract_fn
-def extract_fn(img):
-    feature = extract_hog(img/255, pixels_per_cell=(16,16))
-    return feature
-
 if __name__ == '__main__':
+    ##WARNING MUST ACCESS TO TOP LEVEL FOR POOL
+    global extract_fn
+    def extract_fn(img):
+        feature = extract_hog(img/255, pixels_per_cell=(16,16))
+        return feature
+
     #setting
     k_iter = 0
     samples_fd = 'icons.combine.recrawled/'
