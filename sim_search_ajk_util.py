@@ -192,7 +192,7 @@ def compute_sc_to_sc_distance(sc_dataset_fd, model_paths, distance_fn, pred_cach
     #compute mrr
     total_mrr = 0
     added_count = 0
-    found_at_count = np.zeros(( 24,))
+    found_at_count = np.zeros(( 30,))
     for k,v in mrr_d.items():
         main_type = type_d[k]
         for i,(img_b, dis) in enumerate(v):
@@ -374,17 +374,17 @@ if __name__ == '__main__':
     #icon + sc case
     #16.25	3.5	2	1.25	0.5	1	0.25	0.25
 
-    # plot_found_at_count('16.25	3.5	2	1.25	0.5	1	0.25	0.25',
-        # 'Frequency of nearest correct suggestion using model I10 and model S9', limit_x = 8)
+    plot_found_at_count('16	4.75	5	1	1	1.25	0.25	0.5	0	0.25',
+        'Frequency of nearest correct suggestion using icons and screenshots of Puzzle dataset', limit_x = 10)
 
     save_cache = False
     load_cache = True
 
-    icon_cache_path = 'sim_search_ajk/dataset/icon_k0_puzzle.obj'
+    icon_cache_path = 'sim_search_ajk/dataset/icon_k3_puzzle.obj'
     type_d, mrr_d, found_at_count = compute_icon_to_icon_distance(icon_dataset_fd, icon_model_paths, distance_fn = euclidean, pred_cache_path = icon_cache_path, save_cache = save_cache, load_cache = load_cache, use_pca = True)
     print(found_at_count)
 
-    sc_cache_path = 'sim_search_ajk/dataset/sc_k0_puzzle.obj'
+    sc_cache_path = 'sim_search_ajk/dataset/sc_k3_puzzle.obj'
     mrr_d, found_at_count = compute_sc_to_sc_distance(sc_dataset_fd, sc_model_paths, distance_fn = euclidean, pred_cache_path = sc_cache_path, load_cache = load_cache, save_cache = save_cache, use_pca = True)
     print(found_at_count)
     

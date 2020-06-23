@@ -4,6 +4,7 @@ from global_util import load_pickle, save_pickle
 from joblib import dump, load
 import numpy as np
 import keras_util
+import random
 import math
 from basic_features import my_fit_scaler, my_transform_to_scaler
 
@@ -69,6 +70,7 @@ def make_gist_obj(source, dest):
             print('found NAN, not added', app_id)
     save_pickle(output, dest)
     
+#used in both hog & gist
 def split_train_test(dataset_path, train_path, test_path, k_iter, aial_obj, compress=3, sc=False):
     #split train test from dataset and also normalize it
     gist_dict = load_pickle(dataset_path)
@@ -123,18 +125,39 @@ def split_train_test(dataset_path, train_path, test_path, k_iter, aial_obj, comp
     dump(gist_test_dict, test_path, compress=compress)
     print('done')
 
+def extract_hog16_sc_from_file(source, dest):
+    if not os.path.exists(dest):
+        os.mkdir(dest)
+    
+    o = load(source)
+    for app_id, (x,y) in o.items():
+        save_pickle((x,y), dest + app_id + '.obj')
+
+def x_generator(aial, batch_size, samples_fd, use_random = False):
+    xs_now = []
+    ys_now = []
+
+    while True:
+        if use_random:
+            random.shuffle(aial)
+        for app_id, cate in aial:
+            img = load_pickle(samples_fd + app_id + '.obj')
+            xs_now.append(img)
+            ys_now.append(cate)
+
+            if len(xs_now) == batch_size:
+                yield np.array(xs_now), np.array(ys_now)
+                xs_now = []
+                ys_now = []
+
+
 if __name__ == '__main__':
-    # sc_fns = filter_sc_fns_from_icon_fns_by_app_id('similarity_search/icons_rem_dup_human_recrawl/', 'screenshots.256.distincted.rem.human/')
-    # make_not_computed_gist_sc_list('basic_features/gistdescriptor/gist.sc.txt', sc_fns)
-
-    aial = load('aial_seed_327.obj')
-    app_ids = {x[0]:True for x in aial}
-
-    # o = load('basic_features_t/gist_icon_t.obj')
-
-    split_train_test('basic_features_t/gist_sc_t.obj', 
-        train_path='basic_features_t/gist_sc_train_k3.obj',
-        test_path ='basic_features_t/gist_sc_test_k3.obj', k_iter = 3, aial_obj=aial, sc=True)
+    extract_hog16_sc_from_file('basic_features_t/hog16_sc_test_k3.gzip',
+        'basic_features_t/hog16_sc_test_k3/')
+    # aial = load('aial_seed_327.obj')
+    # split_train_test('basic_features_t/gist_sc_t.obj', 
+        # train_path='basic_features_t/gist_sc_train_k3.obj',
+        # test_path ='basic_features_t/gist_sc_test_k3.obj', k_iter = 3, aial_obj=aial, sc=True)
 
     # check_gist_has_all_icons('basic_features_t/gist_icon_t.txt', app_ids)
     # make_not_computed_gist_sc_list('basic_features_t/gist.sc.txt', os.listdir('screenshots.256.distincted.rem.human'), app_ids)
