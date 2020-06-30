@@ -6,7 +6,8 @@ import numpy as np
 import keras_util
 import random
 import math
-from basic_features import my_fit_scaler, my_transform_to_scaler
+from basic_features import my_fit_scaler, my_transform_to_scaler, make_model
+from basic_features_t_augment import split_aial
 
 def make_not_computed_gist_sc_list(old_sc_gist_txt, sc_fns, app_ids):
     old_computed_list = {}
@@ -73,7 +74,7 @@ def make_gist_obj(source, dest):
 #used in both hog & gist
 def split_train_test(dataset_path, train_path, test_path, k_iter, aial_obj, compress=3, sc=False):
     #split train test from dataset and also normalize it
-    gist_dict = load_pickle(dataset_path)
+    gist_dict = load(dataset_path)
 
     #make aial_train, aial_test
     if sc:
@@ -82,6 +83,7 @@ def split_train_test(dataset_path, train_path, test_path, k_iter, aial_obj, comp
         test_d  = {x[0]:x for x in aial_test}
         aial_train_new = []
         aial_test_new = []
+        #make app_id key to app_id & sc number key
         for k in gist_dict.keys():
             app_id = k[:-6]
             if app_id in train_d:
@@ -103,10 +105,14 @@ def split_train_test(dataset_path, train_path, test_path, k_iter, aial_obj, comp
 
     # aial train & test need cate !
     for app_id,_,_,_,_,_ in aial_train:
-        if app_id in gist_dict : gist_train_dict[app_id] = gist_dict[app_id]
+        if app_id in gist_dict :
+            gist_train_dict[app_id] = gist_dict[app_id]
+            del gist_dict[app_id]
 
     for app_id,_,_,_,_,_ in aial_test:
-        if app_id in gist_dict : gist_test_dict[app_id] = gist_dict[app_id]
+        if app_id in gist_dict :
+            gist_test_dict[app_id] = gist_dict[app_id]
+            del gist_dict[app_id]
 
     #normalize
     mean, var = my_fit_scaler(gist_train_dict)
@@ -122,26 +128,33 @@ def split_train_test(dataset_path, train_path, test_path, k_iter, aial_obj, comp
         if app_id in gist_test_dict : gist_test_dict[app_id] = gist_test_dict[app_id], cate
 
     dump(gist_train_dict, train_path, compress=compress)
+    del gist_train_dict
     dump(gist_test_dict, test_path, compress=compress)
+    del gist_test_dict
     print('done')
 
-def extract_hog16_sc_from_file(source, dest):
+#one time extract
+def extract_hog16_sc_from_file(source, dest, aial_dest):
     if not os.path.exists(dest):
         os.mkdir(dest)
     
     o = load(source)
+    aial_d = {}
     for app_id, (x,y) in o.items():
         save_pickle((x,y), dest + app_id + '.obj')
+        aial_d[app_id] = y
+    save_pickle(aial_d, aial_dest)
 
-def x_generator(aial, batch_size, samples_fd, use_random = False):
+def make_dataset_generator(aial, batch_size, samples_fd, use_random = False):
     xs_now = []
     ys_now = []
 
     while True:
+        aial_list = [(app_id, cate) for app_id,cate in aial.items()]
         if use_random:
-            random.shuffle(aial)
-        for app_id, cate in aial:
-            img = load_pickle(samples_fd + app_id + '.obj')
+            random.shuffle(aial_list)
+        for app_id, _ in aial_list:
+            img, cate = load_pickle(samples_fd + app_id + '.obj')
             xs_now.append(img)
             ys_now.append(cate)
 
@@ -152,12 +165,24 @@ def x_generator(aial, batch_size, samples_fd, use_random = False):
 
 
 if __name__ == '__main__':
-    extract_hog16_sc_from_file('basic_features_t/hog16_sc_test_k3.gzip',
-        'basic_features_t/hog16_sc_test_k3/')
-    # aial = load('aial_seed_327.obj')
-    # split_train_test('basic_features_t/gist_sc_t.obj', 
-        # train_path='basic_features_t/gist_sc_train_k3.obj',
-        # test_path ='basic_features_t/gist_sc_test_k3.obj', k_iter = 3, aial_obj=aial, sc=True)
+    # extract_hog16_sc_from_file('basic_features_t/hog16_sc_test_k3.gzip',
+    #     'basic_features_t/hog16_sc_test_k3/',
+    #     'basic_features_t/aial_hog16_sc_test_k3.obj')
+    
+    # aial_train = load_pickle('basic_features_t/aial_hog16_sc_train_k3.obj')
+    # aial_test  = load_pickle('basic_features_t/aial_hog16_sc_test_k3.obj')
+    # train_gen = make_dataset_generator(aial_train, 24, 'basic_features_t/hog16_sc_train_k3/', use_random=True)
+    # test_gen = make_dataset_generator(aial_test, 24, 'basic_features_t/hog16_sc_test_k3/', use_random=False)
+    # m = make_model(feature = 'hog', input_shape=9072)
+    # m.fit_generator(train_gen, steps_per_epoch = math.ceil(len(aial_train)/24),
+    #     validation_data = test_gen,
+    #     validation_steps = math.ceil(len(aial_test)/24),
+    #     epochs=10)
+
+    aial = load('aial_seed_327.obj')
+    split_train_test('basic_features_t/sc_hog16.gzip', 
+        train_path='basic_features_t/hog16_sc_train_k2.gzip',
+        test_path ='basic_features_t/hog16_sc_test_k2.gzip', k_iter = 2, aial_obj=aial, sc=True)
 
     # check_gist_has_all_icons('basic_features_t/gist_icon_t.txt', app_ids)
     # make_not_computed_gist_sc_list('basic_features_t/gist.sc.txt', os.listdir('screenshots.256.distincted.rem.human'), app_ids)
