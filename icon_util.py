@@ -170,3 +170,20 @@ def create_model(IS_REGRESSION, summary=False, use_gap=False, train_sc=False, la
         output_dict['current_dropout_value'] = current_dropout_value
     return output_dict
 
+def rgb_to_gray(img):
+    grayImage = np.zeros(img.shape)
+    R = np.array(img[:, :, 0])
+    G = np.array(img[:, :, 1])
+    B = np.array(img[:, :, 2])
+
+    R = (R *.299)
+    G = (G *.587)
+    B = (B *.114)
+
+    Avg = (R+G+B)
+    grayImage = img
+
+    for i in range(3):
+        grayImage[:,:,i] = Avg
+
+    return grayImage

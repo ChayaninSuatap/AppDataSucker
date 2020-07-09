@@ -170,7 +170,8 @@ if __name__ == '__main__':
     #     'basic_features_t/aial_hog16_sc_test_k3.obj')
     
     # aial_train = load_pickle('basic_features_t/aial_hog16_sc_train_k3.obj')
-    # aial_test  = load_pickle('basic_features_t/aial_hog16_sc_test_k3.obj')
+    aial_test  = load_pickle('basic_features_t/aial_hog16_sc_test_k3.obj')
+    input(aial_test)
     # train_gen = make_dataset_generator(aial_train, 24, 'basic_features_t/hog16_sc_train_k3/', use_random=True)
     # test_gen = make_dataset_generator(aial_test, 24, 'basic_features_t/hog16_sc_test_k3/', use_random=False)
     # m = make_model(feature = 'hog', input_shape=9072)
