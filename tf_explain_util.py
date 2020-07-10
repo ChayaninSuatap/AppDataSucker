@@ -54,8 +54,8 @@ def visualize_grad_cam(model, icon, cate_index, save_dest=None, use_custom_gradc
             sum_red = applied_magnitude_map[:,:,0].sum()
             sum_green = applied_magnitude_map[:,:,1].sum()
             sum_blue = applied_magnitude_map[:,:,2].sum()
-            print(sum_red, sum_green, sum_blue, sum_magnitude_map)
-            print(sum_red/sum_magnitude_map, sum_green/sum_magnitude_map, sum_blue/sum_magnitude_map)
+            # print(sum_red, sum_green, sum_blue, sum_magnitude_map)
+            # print(sum_red/sum_magnitude_map, sum_green/sum_magnitude_map, sum_blue/sum_magnitude_map)
 
             ax[0].imshow(icon)
             ax[1].imshow(output)
