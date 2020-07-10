@@ -9,6 +9,8 @@ import cv2
 from custom_gradcam import GradCAM as CustomGradCam
 from vis.visualization.saliency import visualize_cam, visualize_saliency
 
+cates = ['BOARD', 'TRIVIA',	'ARCADE','CARD','MUSIC','RACING','ACTION','PUZZLE','SIMULATION','STRATEGY','ROLE_PLAYING','SPORTS','ADVENTURE','CASINO','WORD','CASUAL','EDUCATIONAL']
+
 def visualize_grad_cam(model, icon, cate_index, save_dest=None, use_custom_gradcam=False,
     show_visualize=True):
     _, ax = plt.subplots(1, 3)
@@ -103,8 +105,8 @@ def make_vanilla_grad_explain_fn():
     return fn
 
 if __name__ == '__main__':
-    app_id = 'com.dysugar.jewels.prince'
-    cate_index = 7
+    app_id = 'com.keesing.android.crossword'
+    cate_index = 3
     model_path = 'sim_search_t/models/icon_model2.4_k3_t-ep-433-loss-0.319-acc-0.898-vloss-3.493-vacc-0.380.hdf5'
     img_path = 'icons.combine.recrawled/%s.png' % (app_id,)
     img = load_icon_by_fn(img_path, 128, 128)/255
@@ -112,12 +114,11 @@ if __name__ == '__main__':
     img = np.fliplr(img)
     icon = np.array(img)
     model = load_model(model_path)
-    model.summary()
 
     pred = model.predict(np.array([icon]))
     conf = max(pred[0])
     cate_index = np.argmax(pred[0])
-    print('pred cate', cate_index)
+    print('pred cate', cates[cate_index])
     print('max pred', pred[0].max())
 
     last_conv_i = None
@@ -126,11 +127,6 @@ if __name__ == '__main__':
         if 'conv' in layer.name:
             last_conv_i = layer_i
             last_conv_name = layer.name
-            print(layer.name)
-    heatmap=visualize_cam(model, last_conv_i, filter_indices=[cate_index],
-        seed_input=img, penultimate_layer_idx=last_conv_i-1)
 
-    plt.imshow(heatmap)
-    plt.show()
     plt.imshow(img)
     plt.show()

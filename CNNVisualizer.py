@@ -16,17 +16,17 @@ if __name__ == '__main__':
     model_path = 'sim_search_t/models/icon_model2.4_k3_t-ep-433-loss-0.319-acc-0.898-vloss-3.493-vacc-0.380.hdf5'
     # model_path = 'sim_search_t/models/sc_model2.3_k3_no_aug-ep-085-loss-0.786-acc-0.761-vloss-2.568-vacc-0.403.hdf5'
     sc_dataset_fd = 'c:/screenshots.resized/'
-    visualize_fd = 'visualize_cnn/board/'
+    visualize_fd = None#'visualize_cnn/board/'
     explainer_fn = None#make_vanilla_grad_explain_fn()
     visualize_fn = visualize_grad_cam
-    filter_cate = 'BOARD'
+    filter_cate = 'WORD'
     use_only_selected_cate = True#if False means dont predict from cate
     is_sc = False
     count_max = None
     use_grayscale = False
     use_custom_gradcam = False
-    show_visualize = False
-    min_conf = 0.9
+    show_visualize = True
+    min_conf = 0.8
 
     #auto declare
     count = 0
@@ -89,6 +89,7 @@ if __name__ == '__main__':
         #visualize if not reach count max
         if count_max is None or count < count_max:
             count += 1
+            print('saved visualize', app_id, 'count', count)
             if explainer_fn is None:
                 if visualize_fd is not None:
                     save_dest = visualize_fd + app_id + '.png'
@@ -103,9 +104,6 @@ if __name__ == '__main__':
                 
             else:
                 visualize_with_explain_fn(m, normed_img, cate_index, explainer_fn)
-
-            
-            print('saved visualize', app_id, 'count', count)
         else:
             break
     
