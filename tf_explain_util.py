@@ -1,13 +1,14 @@
 from tf_explain.core.grad_cam import GradCAM
 from tf_explain.core.occlusion_sensitivity import OcclusionSensitivity
 from tf_explain.core.vanilla_gradients import VanillaGradients
-from icon_util import load_icon_by_fn, rgb_to_gray
+from icon_util import load_icon_by_fn, rgb_to_gray, shift_hue
 from tensorflow.keras.models import load_model
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 from custom_gradcam import GradCAM as CustomGradCam
 from vis.visualization.saliency import visualize_cam, visualize_saliency
+
 
 cates = ['BOARD', 'TRIVIA',	'ARCADE','CARD','MUSIC','RACING','ACTION','PUZZLE','SIMULATION','STRATEGY','ROLE_PLAYING','SPORTS','ADVENTURE','CASINO','WORD','CASUAL','EDUCATIONAL']
 
@@ -109,24 +110,16 @@ if __name__ == '__main__':
     cate_index = 3
     model_path = 'sim_search_t/models/icon_model2.4_k3_t-ep-433-loss-0.319-acc-0.898-vloss-3.493-vacc-0.380.hdf5'
     img_path = 'icons.combine.recrawled/%s.png' % (app_id,)
-    img = load_icon_by_fn(img_path, 128, 128)/255
-
-    img = np.fliplr(img)
-    icon = np.array(img)
     model = load_model(model_path)
 
-    pred = model.predict(np.array([icon]))
-    conf = max(pred[0])
-    cate_index = np.argmax(pred[0])
-    print('pred cate', cates[cate_index])
-    print('max pred', pred[0].max())
+    for i in range(0, 360, 20):
+        img = load_icon_by_fn(img_path, 128, 128)
+        icon = shift_hue(img, i/360)/255
 
-    last_conv_i = None
-    last_conv_name = None
-    for layer_i,layer in enumerate(model.layers):
-        if 'conv' in layer.name:
-            last_conv_i = layer_i
-            last_conv_name = layer.name
+        pred = model.predict(np.array([icon]))
+        conf = max(pred[0])
+        cate_index = np.argmax(pred[0])
+        print('pred cate', cates[cate_index], 'max pred', pred[0].max())
 
     plt.imshow(img)
     plt.show()
