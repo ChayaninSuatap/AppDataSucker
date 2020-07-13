@@ -26,6 +26,7 @@ if __name__ == '__main__':
     use_grayscale = False
     use_custom_gradcam = False
     show_visualize = True
+    compute_color_magnitude = False
     min_conf = 0.8
 
     #auto declare
@@ -96,11 +97,13 @@ if __name__ == '__main__':
                 else:
                     save_dest = None
 
-                magnitude_ratio = visualize_fn(m, normed_img, cate_index,
+                result = visualize_fn(m, normed_img, cate_index,
                     save_dest = save_dest,
                     use_custom_gradcam=use_custom_gradcam,
-                    show_visualize=show_visualize)
-                magnitude_ratios.append(magnitude_ratio)
+                    show_visualize=show_visualize,
+                    compute_color_magnitude=compute_color_magnitude)
+                if compute_color_magnitude:
+                    magnitude_ratios.append(result)
                 
             else:
                 visualize_with_explain_fn(m, normed_img, cate_index, explainer_fn)
@@ -108,23 +111,9 @@ if __name__ == '__main__':
             break
     
     #show magnitude_ratio_avg
-    if magnitude_ratios is not None:
+    if compute_color_magnitude and magnitude_ratios is not None:
         print('magnitude ratio avg', np.array(magnitude_ratios).mean(axis=0))
         print('magnitude ratio std', np.array(magnitude_ratios).std(axis=0))
-
-
-    # sorted_preds = sorted(app_id_pred_d, key = lambda x : x[1], reverse=True)
-    # print(sorted_preds[:10])
-    # save_pickle(sorted_preds, 'sorted_preds_icon_model2.4_k3.obj')
-
-    # obj = load_pickle('sorted_preds_icon_model2.4_k3.obj')
-    # count = 0
-    # for app_id, conf in obj:
-    #     if conf <= 0.95 and conf >= 0.9:
-    #         print(app_id)
-
-
-    
 
 
         

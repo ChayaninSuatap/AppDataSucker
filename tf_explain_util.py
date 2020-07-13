@@ -13,8 +13,8 @@ from vis.visualization.saliency import visualize_cam, visualize_saliency
 cates = ['BOARD', 'TRIVIA',	'ARCADE','CARD','MUSIC','RACING','ACTION','PUZZLE','SIMULATION','STRATEGY','ROLE_PLAYING','SPORTS','ADVENTURE','CASINO','WORD','CASUAL','EDUCATIONAL']
 
 def visualize_grad_cam(model, icon, cate_index, save_dest=None, use_custom_gradcam=False,
-    show_visualize=True):
-    _, ax = plt.subplots(1, 3)
+    show_visualize=True, compute_color_magnitude=True):
+    fig, ax = plt.subplots(1, 3)
     plot_i = -1
     #get last convolution layer
     last_conv_layer = None
@@ -29,34 +29,31 @@ def visualize_grad_cam(model, icon, cate_index, save_dest=None, use_custom_gradc
             plot_i += 1
             if not use_custom_gradcam:
                 explainer =  GradCAM()
-                output = explainer.explain(([icon],None), model, cate_index, layer_name=layer.name, image_weight=0.5)
+                output = explainer.explain(([icon],None), model,
+                    cate_index, layer_name=layer.name, image_weight=0.5, colormap=cv2.COLORMAP_JET)
                 explainer =  GradCAM()
-                visualize_only = explainer.explain(([icon],None), model, cate_index, layer_name=layer.name, image_weight=0, colormap=cv2.COLORMAP_BONE)
+                visualize_only = explainer.explain(([icon],None), model,
+                    cate_index, layer_name=layer.name, image_weight=0,
+                    colormap=cv2.COLORMAP_JET if not compute_color_magnitude else cv2.COLORMAP_BONE)
             else:
-                # explainer = CustomGradCam(model, cate_index)
-                # heatmap = explainer.compute_heatmap(np.array([icon]))
-                # icon_new = (icon*255).astype('uint8')
-                # _, output = explainer.overlay_heatmap(heatmap, icon_new, colormap=cv2.COLORMAP_VIRIDIS)
-                # _, visualize_only = explainer.overlay_heatmap(heatmap, icon_new, colormap=cv2.COLORMAP_BONE, alpha=0)
 
                 visualize_only=visualize_saliency(model, last_conv_i, filter_indices=[cate_index],
                     seed_input=icon)
                 output=np.array(visualize_only)
 
-            visualize_only = rgb_to_gray(visualize_only/255)
-            magnitude_map = visualize_only[:,:,0]
-            applied_magnitude_map = np.zeros_like(icon)
-            for i in range(128):
-                for j in range(128):
-                    applied_magnitude_map[i][j][0] = magnitude_map[i][j] * icon[i][j][0] #red
-                    applied_magnitude_map[i][j][1] = magnitude_map[i][j] * icon[i][j][1] #green
-                    applied_magnitude_map[i][j][2] = magnitude_map[i][j] * icon[i][j][2] #blue
-            sum_magnitude_map = magnitude_map.sum()
-            sum_red = applied_magnitude_map[:,:,0].sum()
-            sum_green = applied_magnitude_map[:,:,1].sum()
-            sum_blue = applied_magnitude_map[:,:,2].sum()
-            print(sum_red, sum_green, sum_blue, sum_magnitude_map)
-            print(sum_red/sum_magnitude_map, sum_green/sum_magnitude_map, sum_blue/sum_magnitude_map)
+            if compute_color_magnitude:
+                visualize_only = rgb_to_gray(visualize_only/255)
+                magnitude_map = visualize_only[:,:,0]
+                applied_magnitude_map = np.zeros_like(icon)
+                for i in range(128):
+                    for j in range(128):
+                        applied_magnitude_map[i][j][0] = magnitude_map[i][j] * icon[i][j][0] #red
+                        applied_magnitude_map[i][j][1] = magnitude_map[i][j] * icon[i][j][1] #green
+                        applied_magnitude_map[i][j][2] = magnitude_map[i][j] * icon[i][j][2] #blue
+                sum_magnitude_map = magnitude_map.sum()
+                sum_red = applied_magnitude_map[:,:,0].sum()
+                sum_green = applied_magnitude_map[:,:,1].sum()
+                sum_blue = applied_magnitude_map[:,:,2].sum()
 
             ax[0].imshow(icon)
             ax[1].imshow(output)
@@ -64,11 +61,15 @@ def visualize_grad_cam(model, icon, cate_index, save_dest=None, use_custom_gradc
             ax[0].axis('off')
             ax[1].axis('off')
             ax[2].axis('off')
+
+    fig.tight_layout()
     if save_dest is not None:
         plt.savefig(save_dest)
     elif show_visualize:
         plt.show()
-    return np.array([sum_red/sum_magnitude_map, sum_green/sum_magnitude_map, sum_blue/sum_magnitude_map])
+
+    if compute_color_magnitude:
+        return np.array([sum_red/sum_magnitude_map, sum_green/sum_magnitude_map, sum_blue/sum_magnitude_map])
 
 def visualize_with_explain_fn(model, icon, cate_index, explain_fn, save_dest=None):
     _, ax = plt.subplots(1, 2)
