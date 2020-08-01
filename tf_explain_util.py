@@ -58,9 +58,13 @@ def visualize_grad_cam(model, icon, cate_index, save_dest=None, use_custom_gradc
             ax[0].imshow(icon)
             ax[1].imshow(output)
             ax[2].imshow(visualize_only)
-            ax[0].axis('off')
+            ax[0].set_xticks([])
+            ax[0].set_yticks([])
             ax[1].axis('off')
-            ax[2].axis('off')
+            # ax[1].set_xticks([])
+            # ax[1].set_yticks([])
+            ax[2].set_xticks([])
+            ax[2].set_yticks([])
 
     fig.tight_layout()
     if save_dest is not None:
