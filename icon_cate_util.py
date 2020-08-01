@@ -92,12 +92,12 @@ def create_icon_cate_model(cate_only=False, is_softmax=False, use_gap=False, tra
         model.compile(optimizer='adam',
             loss='mse',
             metrics=['mape'])
-    model.summary()
     return model
 
 def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shuffle=True, enable_cache=False, limit_cache_n=None,
     yield_app_id=False, skip_reading_image=False, predict_rating=False, icon_resize_dim=(128, 128), skip_reading_amount=0, datagen=None,
-    train_with_tpu=False):
+    train_with_tpu=False,
+    predict_class_rating=False, class_rating_split_period=None):
 
     cache_dict = {}
     
@@ -110,6 +110,7 @@ def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shu
             icons = []
             labels = []
             cate_labels = []
+            class_ratings = []
             app_ids = []
             #prepare chrunk
             for app_id, label, cate_label in g:
@@ -147,6 +148,15 @@ def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shu
                 labels.append(label)
                 cate_labels.append(cate_label)     
 
+                #add class rating
+                class_rating = [0]*len(class_rating_split_period)
+                if predict_class_rating:
+                    for j in range(len(class_rating_split_period)):
+                        if label <= class_rating_split_period[j]:
+                            class_rating[j] = 1
+                            class_ratings.append(class_rating)
+                            break
+
             icons = np.asarray(icons)
 
             #test dataget
@@ -169,6 +179,8 @@ def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shu
             icons /= 255
             labels = np.asarray(labels)
             cate_labels = np.asarray(cate_labels)
+            if predict_class_rating:
+                class_ratings = np.array(class_ratings)
 
             #train with TPU don't care left samples (not full batch)
             if len(icons) < batch_size:
@@ -179,6 +191,8 @@ def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shu
                 yield (icons, cate_labels) if not yield_app_id else (app_ids, icons, cate_labels)
             elif cate_only and predict_rating:
                 yield (icons, labels) if not yield_app_id else (app_ids, icons, labels)
+            elif predict_class_rating:
+                yield (icons, class_ratings) if not yield_app_id else (app_ids, icons, class_ratings) 
             else:
                 yield (icons, [labels, cate_labels]) if not yield_app_id else (app_ids, icons, [labels, cate_labels])
                 
