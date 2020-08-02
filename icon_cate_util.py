@@ -384,6 +384,16 @@ def plot_confusion_matrix_generator_icon_cate(model, test_gen_for_ground_truth, 
 def compute_class_weight_for_cate(aial_train):
     return keras_util.compute_class_weight([np.argmax(x) for _,_,x,*rest in aial_train])
 
+def compute_class_weight_for_class_rating(aial_train, split_period):
+    ys = [] #not onehot
+    for _, rating,*_ in aial_train:
+        for j in range(len(split_period)):
+            if rating <= split_period[j]:
+                ys.append(j)
+                break
+    return keras_util.compute_class_weight(ys)
+
+
 if __name__ == '__main__':
     #seed 772 for icons.rem.duplicate
     #0.523598116128659

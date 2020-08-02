@@ -55,6 +55,9 @@ if __name__ == '__main__':
 
     pretrained_model = load_model('C:/Users/chaya/Downloads/icon_model1.4_k0_t-ep-026-loss-1.735-acc-0.436-vloss-2.705-vacc-0.262.hdf5')        
     model = create_class_rating_model_from_pretrained_model(pretrained_model, 4)
+    cw = icon_cate_util.compute_class_weight_for_class_rating(aial_train, split_period)
+    print(cw)
+    input()
 
     model.fit_generator(gen_train,
     steps_per_epoch=math.ceil(len(aial_train)/batch_size),
