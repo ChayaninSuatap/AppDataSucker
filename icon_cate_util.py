@@ -149,8 +149,8 @@ def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shu
                 cate_labels.append(cate_label)     
 
                 #add class rating
-                class_rating = [0]*len(class_rating_split_period)
                 if predict_class_rating:
+                    class_rating = [0]*len(class_rating_split_period)
                     for j in range(len(class_rating_split_period)):
                         if label <= class_rating_split_period[j]:
                             class_rating[j] = 1
@@ -189,7 +189,7 @@ def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shu
             #yield
             if cate_only and not predict_rating:
                 yield (icons, cate_labels) if not yield_app_id else (app_ids, icons, cate_labels)
-            elif cate_only and predict_rating:
+            elif not cate_only and predict_rating:
                 yield (icons, labels) if not yield_app_id else (app_ids, icons, labels)
             elif predict_class_rating:
                 yield (icons, class_ratings) if not yield_app_id else (app_ids, icons, class_ratings) 

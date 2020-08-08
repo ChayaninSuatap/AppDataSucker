@@ -2,6 +2,9 @@ import zipfile
 import os
 import sys
 
+source_fd = 'c:/screenshots.resized/'
+dest_fd = 'c:screenshots.resized.zip/'
+
 def split(arr, size):
     arrs = []
     while len(arr) > size:
@@ -12,13 +15,13 @@ def split(arr, size):
     return arrs
 
 chrunk_size = 184722 // 6
-ss_path = 'e:/screenshots.distincted.rem.human/'
+ss_path = source_fd
 
 fns = os.listdir(ss_path)
 chrunks = split(fns, chrunk_size)
 
 for i, chrunk in enumerate(chrunks):
-    z = zipfile.ZipFile('e:/screenshots.distincted.rem.human.zip/%d.zip' % (i,), mode='w')
+    z = zipfile.ZipFile('%s%d.zip' % (dest_fd, i,), mode='w')
     for fn in chrunk:
         z.write(ss_path + fn, arcname=fn)
         print('added', fn, 'in chrunk', i)
