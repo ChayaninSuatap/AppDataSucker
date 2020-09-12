@@ -31,7 +31,8 @@ class CrawlState() :
                 k = line[1:-1]
                 self.state[k] = v
         except:
-            pass
+            print(mypath.crawlstate_txt, 'not found please create an empty of it')
+            input()
 
     def add(self, link):
         if link not in self.state :

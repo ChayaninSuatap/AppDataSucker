@@ -1,5 +1,5 @@
-data_db = 'data.db'
-crawlstate_txt = 'crawlstate.txt'
+data_db = 'crawl_data/2020_09_12/data.db'
+crawlstate_txt = 'crawl_data/2020_09_12/crawlstate.txt'
 chrome_driver = 'chromedriver.exe'
 icon_folder = 'icons.backup/'
 screenshot_folder = 'screenshots/'

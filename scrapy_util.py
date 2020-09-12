@@ -26,7 +26,7 @@ def _download_app_rating_amount(resp):
 
 def _download_app_screenshots_amount(resp):
     try:
-        return len(resp.css('button.NIc6yf').extract())
+        return len(resp.css('button.Q4vdJd'))
     except:
         return None
 
@@ -40,7 +40,7 @@ def download_app_data(resp, conn, update_only = False):
     price = _download_app_price(resp)
     rating_amount = _download_app_rating_amount(resp)
     screenshots_amount = _download_app_screenshots_amount(resp)
-    video_screenshot = 1 if resp.css('div.MSLVtf.NIc6yf') != [] else 0
+    video_screenshot = 1 if resp.css('div.MSLVtf.Q4vdJd') != [] else 0
      
     #extract additional infomation
     add_info_contents = _extract_additional_info_data(resp)
@@ -130,11 +130,9 @@ def _download_app_price(resp):
         return None
 
 def _download_app_description(resp):
-    description = ''
-    desc_lines = resp.css('div.DWPxHb').css('div.DWPxHb').css('content').css('div::text').extract()
-    for lines in desc_lines : 
-       description += lines + '\n'
-    if description == '' :
+    try:
+        description = resp.css('div.W4P4ne ')[0].xpath('//meta[@itemprop="description"]')[0].attrib['content']
+    except:
         description = None
     return description
 
