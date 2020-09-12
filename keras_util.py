@@ -41,7 +41,7 @@ def group_for_fit_generator(xs, n, shuffle=False):
             i = 0
             yield out
             out = []
-    if out != []:
+    if len(out) > 0:
         yield out
 
 class PlotConfusionMatrixCallback(Callback):
