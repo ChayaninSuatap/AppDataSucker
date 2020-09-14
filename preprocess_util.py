@@ -30,10 +30,11 @@ def prep_rating_category():
     
     return app_ids_and_labels
 
-def prep_rating_category_scamount_download(for_softmax=False):
-    conn = db_util.connect_db()
+def prep_rating_category_scamount_download(conn=None, for_softmax=False):
+    if conn is None:
+        conn = db_util.connect_db()
     app_ids_and_labels = []
-    dat=conn.execute('select app_id, rating, category, screenshots_amount, download_amount, rating_amount  from app_data')
+    dat=conn.execute('select app_id, rating, category, screenshots_amount, download_amount, rating_amount  from app_data order by app_id')
     for x in dat:
         if x[1] != None and x[2] != None and x[3] != None and x[4] != None and x[5] != None:
             app_ids_and_labels.append( (x[0], x[1], x[2], x[3], x[4], x[5])) 

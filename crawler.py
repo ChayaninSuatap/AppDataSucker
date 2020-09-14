@@ -28,6 +28,7 @@ class PlaystoreCrawler( scrapy.Spider):
                 sleep(2)
                 for link in uncrawled_links:
                     yield scrapy.Request(link, self.parse)
+
         #dont crawl cluster
         elif not self.crawl_cluster :
             while self.crawl_state.has_uncrawled_link_no_cluster() :

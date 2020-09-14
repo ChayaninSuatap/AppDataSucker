@@ -21,8 +21,11 @@ def create_table():
         print(repr(e))
         return False
 
-def connect_db():
-    return sqlite3.connect(mypath.data_db)
+def connect_db(db_path=None):
+    if db_path is not None:
+        return sqlite3.connect(db_path)
+    else:
+        return sqlite3.connect(mypath.data_db)
 
 def insert_new_row(app_id, conn):
     try:
