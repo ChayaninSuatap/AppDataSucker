@@ -64,13 +64,47 @@ class DBComparer:
                 print(y, end='\t')
             print()
 
+    def _read_db(self):
+        old_dat = prep_rating_category_scamount_download(self.old_conn)
+        new_dat = prep_rating_category_scamount_download(self.new_conn)
+
+        old_d = {}
+        for rec in old_dat:
+            old_d[rec[0]] = rec
+
+        new_d = {}
+        for rec in new_dat:
+            new_d[rec[0]] = rec
+        
+        return old_d, new_d
+        
+    def count_gone_app_ids(self):
+        old_d, new_d = self._read_db()
+        count = 0
+        for k,v in old_d.items():
+            if k not in new_d:
+                count += 1
+        return count
+    
+    def show_gone_app_ids_download_freq(self):
+        old_d, new_d = self._read_db()
+        freq = {}
+        for k,v in old_d.items():
+            if k not in new_d:
+                download = v[4]
+                if download not in freq:
+                    freq[download] = 0
+                freq[download] += 1
+        sorted_keys = sorted(list(freq.keys()))
+        for k in sorted_keys:
+            print(k, freq[k])
+
 if __name__ == '__main__':
-    db_comparer = DBComparer(
+    dbc = DBComparer(
         'crawl_data/first_version/data.db',
         'crawl_data/2020_09_12/data.db'
     )
-    # db_comparer.plot_diff_rating_dist()
-    db_comparer.show_diff_download()
+    dbc.show_gone_app_ids_download_freq()
 
 
 
