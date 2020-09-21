@@ -12,6 +12,10 @@ class PlaystoreCrawler( scrapy.Spider):
     name = 'playstore_crawler'
     crawl_cluster = True
 
+    custom_settings={
+        'CONCURRENT_REQUESTS':'8'
+    }
+
     def __init__(self, crawl_cluster = True):
         self.crawl_state = CrawlState(save_interval = 10)
         self.conn_db = db_util.connect_db()

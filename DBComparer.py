@@ -2,6 +2,7 @@ from preprocess_util import prep_rating_category_scamount_download
 import db_util
 import numpy
 import matplotlib.pyplot as plt
+import os
 
 class DBComparer:
     def __init__(self, old_db_path, new_db_path):
@@ -99,12 +100,92 @@ class DBComparer:
         for k in sorted_keys:
             print(k, freq[k])
 
+    def show_reupload_apps(self):
+        'warning : ugly code'
+        old_d, new_d = self._read_db()
+        old_name_d = {}
+        new_name_d = {}
+        #get old names
+        dats = self.old_conn.execute('select app_id ,game_name from app_data')
+        for app_id, game_name in dats:
+            if app_id in old_d and app_id not in new_d:
+                old_name_d[app_id] = game_name
+        #get new names
+        dats = self.new_conn.execute('select app_id ,game_name from app_data')
+        for app_id, game_name in dats:
+            if app_id in new_d:
+                new_name_d[app_id] = game_name
+        #search same game name
+        def lcs(s1,s2):
+            len1, len2 = len(s1), len(s2)
+            ir, jr = 0, -1
+            for i1 in range(len1):
+                i2 = s2.find(s1[i1])
+                while i2 >= 0:
+                    j1, j2 = i1, i2
+                    while j1 < len1 and j2 < len2 and s2[j2] == s1[j1]:
+                        if j1-i1 >= jr-ir:
+                            ir, jr = i1, j1
+                        j1 += 1; j2 += 1
+                    i2 = s2.find(s1[i1], i2+1)
+            return s1[ir:jr+1]
+
+        # output = []
+        # for old_k in old_d.keys():
+        #     if old_k not in new_d:
+        #         lcs_best_app_id = None
+        #         lcs_best_result = None
+        #         lcs_best_n = None
+        #         for new_k in new_d.keys():
+        #             lcs_result = lcs(old_k, new_k)
+
+        #             if lcs_best_app_id is None:
+        #                 lcs_best_app_id = new_k
+        #                 lcs_best_result = lcs_result
+        #                 lcs_best_n = len(lcs_result)
+                
+        #         output.append( (old_k, lcs_best_app_id, lcs_best_result, lcs_best_n))
+        #         print(old_k, lcs_best_app_id)
+        # output = sorted(output, key=lambda x:x[3], reverse=True)
+        # f=open('reupload apps.txt','w', encoding='utf-8')
+        # for rec in output:
+        #     print(rec[0], rec[1], rec[2], rec[3], file=f)
+        # f.close()
+        
+
+        output = {}
+        duplicate_d = {}
+        for old_k in old_d.keys():
+            if old_k not in new_d:
+                for new_k in new_d.keys():
+                    # filter game exist in both old and new 
+                    if new_k not in old_d and\
+                        old_name_d[old_k] == new_name_d[new_k]: # has exactly same name
+                        game_name = old_name_d[old_k]
+
+                        if game_name in output:
+                            duplicate_d[game_name] = True
+                        
+                        output[game_name] = (old_k, new_k)
+        
+        f=open('reupload apps.txt','w', encoding='utf-8')
+        sorted_output = []
+        for k,v in output.items():
+            if k not in duplicate_d:
+                lcs_result = lcs(v[0], v[1])
+                sorted_output.append([k,v[0], v[1], len(lcs_result)])
+        sorted_output = sorted(sorted_output, key=lambda x:x[3], reverse=True)
+        for x in sorted_output:
+            print(x[0], x[1], x[2], x[3], file=f)
+        f.close()
+
 if __name__ == '__main__':
     dbc = DBComparer(
         'crawl_data/first_version/data.db',
-        'crawl_data/2020_09_12/data.db'
+        'crawl_data/2020_09_17/data.db'
     )
-    dbc.show_gone_app_ids_download_freq()
+    # dbc.show_gone_app_ids_download_freq()
+    dbc.show_reupload_apps()
 
 
 
