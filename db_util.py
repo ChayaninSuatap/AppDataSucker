@@ -84,6 +84,9 @@ def update_in_app_products(value, app_id, conn):
 def update_app_version(app_version, app_id, conn):
     _update_field('app_version', app_version, app_id, conn)
 
+def update_publisher(publisher, app_id, conn):
+    _update_field('publisher', publisher, app_id, conn)
+
 def _update_field(field_name , field_value, app_id, conn):
     conn.execute('UPDATE app_data SET ' + field_name + '= ? WHERE app_id = ?', (field_value, app_id, ))
     conn.commit()    
