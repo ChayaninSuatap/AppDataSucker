@@ -128,7 +128,7 @@ def datagenerator(aial, batch_size, epochs, cate_only=False, train_sc=False, shu
                         elif train_sc:
                             icon = icon_util.load_icon_by_fn(mypath.screenshot_folder + app_id, 256, 160, rotate_for_sc=True)
                         elif not train_sc:
-                            icon = icon_util.load_icon_by_app_id(app_id, icon_resize_dim[0], icon_resize_dim[0])
+                            icon = icon_util.load_icon_by_app_id(app_id, icon_resize_dim[0], icon_resize_dim[1])
                     except:
                         continue
                     #put in cache

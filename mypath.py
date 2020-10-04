@@ -1,5 +1,5 @@
 data_db = 'crawl_data/2020_09_17/data.db'
 crawlstate_txt = 'crawl_data/2020_09_17/crawlstate.txt'
 chrome_driver = 'chromedriver.exe'
-icon_folder = 'icons.backup/'
+icon_folder = 'icons_rem_dup_human_recrawl/icons_rem_dup_recrawl/'
 screenshot_folder = 'screenshots/'
