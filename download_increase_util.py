@@ -3,6 +3,7 @@ import global_util
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.models import Model, load_model
 import numpy as np
+import overall_feature_util
 
 def _prepare_dataset(app_ids_d, old_db_path, new_db_path):
     old_conn = db_util.connect_db(old_db_path)
@@ -45,7 +46,26 @@ def extend_cate_model(model):
             loss='categorical_crossentropy', metrics=['acc'])
     return model
 
+def prepare_overall_feature_dataset(download_increase_db, old_db_path):
+    '''download_increase_db = output from prepare_dataset()'''
+    conn = db_util.connect_db(old_db_path)
+    sql = """
+    select app_id, rating, download_amount, category, price, rating_amount, app_version, last_update_date, sdk_version, in_app_products, screenshots_amount, content_rating,
+    video_screenshot from app_data where not app_id like "%&%" and not rating is NULL"""
+    app_id_label_d = {app_id:label for app_id,label in download_increase_db}
+
+    dat = conn.execute(sql)
+    output = []
+    for rec in dat:
+        app_id = rec[0]
+        if app_id in app_id_label_d:
+            output_vec, single_node_output_vec, _ = overall_feature_util.extract_feature_vec(rec[1:], use_download_amount=False)
+            output.append((output_vec, single_node_output_vec, app_id_label_d[app_id]))
+    return output
+
 if __name__ == '__main__':
     pass
+
+
 
 

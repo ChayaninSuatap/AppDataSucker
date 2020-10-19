@@ -36,7 +36,8 @@ def _plot_confusion_matrix(cm, classes,
     plt.show()
 
 if __name__ == '__main__':
-    # _plot_confusion_matrix()
+
+    # get inputs from excel or sheet. thesis only.
     a = []
     print('Please input:')
     for i in range(17):

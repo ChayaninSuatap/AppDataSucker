@@ -62,7 +62,7 @@ def _extract_in_app_products(x):
     splited = x.split(' ')
     price = splited[1]
     price = price.replace(',','')
-    return float(price)
+    return math.log(float(price))
 
 def _extract_price(x):
     if x == None: return 0
@@ -72,7 +72,7 @@ def _extract_price(x):
     if splited[-1] == 'Buy':
         price = splited[-2]
         price = price.replace(',','')
-        return float(price)
+        return math.log(float(price))
     elif splited[-1] == 'Install':
         return 0
 
