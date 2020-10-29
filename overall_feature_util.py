@@ -46,7 +46,7 @@ def extract_feature_vec(rec , use_download_amount = True, use_rating_amount = Tr
     if use_last_update_date : single_node_output_vec += [last_update_date]
     if use_screenshots_amount : single_node_output_vec += [screenshots_amount]
     if use_price : single_node_output_vec += [price]
-    if use_app_version : single_node_output_vec += app_version
+    if use_app_version : single_node_output_vec += app_version #consume 2 nodes
     if use_video_screenshot : single_node_output_vec += [video_screenshot]
     #merge output node
     return output_vec, single_node_output_vec, rating

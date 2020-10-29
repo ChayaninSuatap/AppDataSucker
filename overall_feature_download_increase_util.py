@@ -7,14 +7,17 @@ import numpy as np
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Dense, Conv2D, Input, BatchNormalization, Dropout, LeakyReLU, concatenate
 import keras_util
+from sklearn.metrics import confusion_matrix
+from sklearn.utils.class_weight import compute_class_weight
 
-def prepare_overall_feature_dataset( old_db_path , new_db_path, random_seed, k_iter):
+
+def prepare_overall_feature_dataset( old_db_path , new_db_path, random_seed, k_iter, use_rating_amount=True):
     aial = global_util.load_pickle('aial_seed_327.obj')
     app_ids_d = {x[0]:True for x in aial}
     download_increase_db = _prepare_dataset(app_ids_d, old_db_path, new_db_path)
     random.seed(5)
     random.shuffle(download_increase_db)
-    dat = _prepare_overall_feature_dataset(download_increase_db, old_db_path)
+    dat = _prepare_overall_feature_dataset(download_increase_db, old_db_path, use_rating_amount=use_rating_amount)
 
     train_data , test_data = keras_util.gen_k_fold_pass(dat, kf_pass = k_iter, n_splits=4)
 
@@ -42,11 +45,10 @@ def prepare_overall_feature_dataset( old_db_path , new_db_path, random_seed, k_i
         other_test.append(other)
         label_test.append(label)
     
-    return (np.array(cate_train), np.array(sdk_version_train), np.array(content_rating_train), np.array(other_train), np.array(label_train)),
-    ((np.array(cate_test), np.array(sdk_version_test), np.array(content_rating_test), np.array(other_test), np.array(label_test))
+    return (np.array(cate_train), np.array(sdk_version_train), np.array(content_rating_train), np.array(other_train), np.array(label_train)), \
+    (np.array(cate_test), np.array(sdk_version_test), np.array(content_rating_test), np.array(other_test), np.array(label_test))
 
-
-def _prepare_overall_feature_dataset(download_increase_db, old_db_path):
+def _prepare_overall_feature_dataset(download_increase_db, old_db_path, use_rating_amount=True):
     '''download_increase_db = output from prepare_dataset()'''
     conn = db_util.connect_db(old_db_path)
     sql = """
@@ -64,7 +66,11 @@ def _prepare_overall_feature_dataset(download_increase_db, old_db_path):
     db_d = {}
     for rec in dat:
         app_id = rec[0]
-        [cate, sdk_version, content_rating], single_node_output_vec, _ = overall_feature_util.extract_feature_vec(rec[1:], use_download_amount=False)
+        [cate, sdk_version, content_rating], single_node_output_vec, _ = overall_feature_util.extract_feature_vec(
+            rec[1:],
+            use_download_amount=False,
+            use_rating_amount=use_rating_amount
+        )
         db_d[app_id] = (cate, sdk_version, content_rating, single_node_output_vec)
     
     output = []
@@ -106,16 +112,51 @@ def make_model(cate_nodes_size, sdk_version_nodes_size, content_rating_nodes_siz
     model.compile(loss='categorical_crossentropy', metrics=['acc'])
     return model
 
+def best_val_acc(history):
+    idx = np.array(history.history['val_acc']).argmax()
+    return history.history['val_acc'][idx], idx
+
+
 if __name__ == '__main__':
-    overall_feature_db = prepare_overall_feature_dataset('crawl_data/first_version/data.db', 'crawl_data/update_first_version_2020_09_12/data.db', 5)
+    for k_iter in range(4):
+        overall_feature_db = prepare_overall_feature_dataset(
+            'crawl_data/first_version/data.db',
+            'crawl_data/update_first_version_2020_09_12/data.db',
+            random_seed=5,
+            k_iter=k_iter,
+            use_rating_amount=False)
 
-    cates, sdk_versions, content_ratings, others, labels = overall_feature_db
+        trainset, testset = overall_feature_db
+        # c0, c1 = 0, 0
+        # for x in trainset[-1]:
+            # if x[0] == 1: c0+=1
+            # else: c1+=1
+        # print(c0, c1)
 
-    model = make_model(len(cates[0]), len(sdk_versions[0]), len(content_ratings[0]), len(others[0]))
+        cates, sdk_versions, content_ratings, others, _ = trainset
 
-    train_data, test_data = keras_util.gen_k_fold_pass(overall_feature_db, kf_pass=0, n_splits=4)
+        model = make_model(len(cates[0]), len(sdk_versions[0]), len(content_ratings[0]), len(others[0]))
 
-    #cates, sdk_versions, content_ratings, others, labels = train_data
+        #class weight
+        y_ints = np.argmax(trainset[-1], axis=1)
+        class_weights = compute_class_weight('balanced', np.unique(y_ints), y_ints)
+        cw = dict(enumerate(class_weights))
+        print(cw)
 
-    model.fit([cates, sdk_versions, content_ratings, others], labels, epochs=100)
+        history = model.fit(trainset[:-1], trainset[-1], epochs=10, validation_data=(testset[:-1], testset[-1]), verbose=0)
+        print(best_val_acc(history))
+
+        #confusion matrix
+        preds=model.predict(testset)
+        #create y_true
+        y_true = []
+        for label in testset[-1]:
+            y_true.append(label[1])
+        #create y_pred
+        y_pred = []
+        for pred in preds:
+            y_pred.append(0 if pred[0] > pred[1] else 0)
+
+        #show conf mat
+        print(confusion_matrix(y_true, y_pred))
 
