@@ -47,7 +47,8 @@ def extend_cate_model(model):
     return model
     
 if __name__ == '__main__':
-    pass
+    output = prepare_dataset()
+    print(len(output))
 
 
 

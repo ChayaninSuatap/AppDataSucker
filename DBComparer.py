@@ -3,6 +3,7 @@ import db_util
 import numpy
 import matplotlib.pyplot as plt
 import os
+import global_util
 
 class DBComparer:
     def __init__(self, old_db_path, new_db_path):
@@ -32,16 +33,22 @@ class DBComparer:
         plt.hist(diff_ratings, 150)
         plt.show()
     
-    def show_diff_download(self):
+    def show_diff_download(self, app_ids_d=None):
         old_dat = prep_rating_category_scamount_download(self.old_conn)
         new_dat = prep_rating_category_scamount_download(self.new_conn)
 
         old_d = {}
         for rec in old_dat:
+            if app_ids_d is not None:
+                if rec[0] not in app_ids_d:
+                    continue
             old_d[rec[0]] = rec
 
         new_d = {}
         for rec in new_dat:
+            if app_ids_d is not None:
+                if rec[0] not in app_ids_d:
+                    continue
             new_d[rec[0]] = rec
         
         output = {}
@@ -184,8 +191,10 @@ if __name__ == '__main__':
         'crawl_data/first_version/data.db',
         'crawl_data/2020_09_17/data.db'
     )
+    aial = global_util.load_pickle('aial_seed_327.obj')
+    app_ids_d = {x[0]:True for x in aial}
     # dbc.show_gone_app_ids_download_freq()
-    dbc.show_reupload_apps()
+    dbc.show_diff_download(app_ids_d)
 
 
 
