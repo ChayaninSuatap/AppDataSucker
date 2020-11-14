@@ -50,7 +50,7 @@ def extend_cate_model(model):
 def compute_class_weight(train_labels):
     y_ints = np.argmax(train_labels, axis=1)
     class_weights = sk_compute_class_weight('balanced', np.unique(y_ints), y_ints)
-    return (enumerate(class_weights))
+    return (dict(enumerate(class_weights)))
     
 if __name__ == '__main__':
     output = prepare_dataset()
