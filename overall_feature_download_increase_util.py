@@ -82,8 +82,10 @@ def _prepare_overall_feature_dataset(download_increase_db, old_db_path, use_rati
         app_id = rec[0]
         (cate, sdk_version, content_rating), single_node_output_vec, _ = overall_feature_util.extract_feature_vec(
             rec[1:],
-            use_download_amount=True,
-            use_rating_amount=use_rating_amount
+            # use_download_amount=True,
+            use_download_amount=False,
+            use_rating_amount=False
+            # use_rating_amount=use_rating_amount
         )
         db_d[app_id] = (cate, sdk_version, content_rating, single_node_output_vec)
     
@@ -117,8 +119,8 @@ def make_model(cate_nodes_size, sdk_version_nodes_size, content_rating_nodes_siz
     #merge inputs
     merged_inputs = concatenate([embed_cate, embed_sdk_version, embed_content_rating, embed_other])
     #insert denses
-    x = add_dense(merged_inputs, 16)
-    x = add_dense(x, 8)
+    x = add_dense(merged_inputs, 8)
+    # x = add_dense(x, 8)
     x = add_dense(x, 4)
     output_layer = Dense(2, activation='softmax')(x)
 
@@ -165,9 +167,15 @@ def oversampling(train_x, train_y):
         train_x.append(inc_x[idx])
         train_y.append(inc_y[idx])
     
-    return np.array(train_x), np.array(train_y)
+    return (train_x, np.array(train_y))
 
 if __name__ == '__main__':
+    confmats = []
+    best_accs = []
+    best_eps = []
+    epochs = 30
+    batch_size = 32
+
     for k_iter in range(4):
         dataset = prepare_overall_feature_dataset(
             'crawl_data/first_version/data.db',
@@ -176,9 +184,6 @@ if __name__ == '__main__':
             k_iter=k_iter,
             use_rating_amount=True)
         
-        epochs = 1
-        batch_size = 8
-
         train_cate = dataset['train_cate']
         train_sdk_version = dataset['train_sdk_version']
         train_content_rating = dataset['train_content_rating']
@@ -190,7 +195,11 @@ if __name__ == '__main__':
         test_others = dataset['test_others']
         test_labels = dataset['test_labels']
 
-        # train_others, train_labels = oversampling(train_others, train_labels)
+        # train_set, train_labels = oversampling((train_cate, train_sdk_version, train_content_rating, train_others), train_labels)
+        # train_cate = np.array(train_set[0])
+        # train_sdk_version = np.array(train_set[1])
+        # train_content_rating = np.array(train_set[2])
+        # train_others = np.array(train_set[3])
 
         #check set distribution
         c0, c1 = 0, 0
@@ -209,8 +218,8 @@ if __name__ == '__main__':
             len(train_cate[0]),
             len(train_sdk_version[0]),
             len(train_content_rating[0]),
-            len(train_others[0]))
-        model.summary()
+            len(train_others[0]),
+            min_input_size=3)
 
         #class weight
         y_ints = np.argmax(train_labels, axis=1)
@@ -232,15 +241,21 @@ if __name__ == '__main__':
             'other_input': test_others}
         , test_labels),
         batch_size=batch_size, class_weight=cw,
-            # callbacks=[cp_best_ep],
-            verbose=1)
+            callbacks=[cp_best_ep],
+            verbose=0)
         top_val_acc, top_val_ep = best_val_acc(history)
         print('%.3f %d' % (top_val_acc, top_val_ep))
+        best_accs.append(top_val_acc)
+        best_eps.append(top_val_ep)
 
         model = load_model('best_overall_download_increase.hdf5')
 
         #confusion matrix
-        preds=model.predict(x=[test_cate, test_sdk_version, test_content_rating, test_others])
+        preds=model.predict({
+            'cate_input': test_cate,
+            'sdk_version_input': test_sdk_version,
+            'content_rating_input': test_content_rating,
+            'other_input': test_others})
 
         #create y_true
         y_true = []
@@ -255,3 +270,12 @@ if __name__ == '__main__':
         confmat = confusion_matrix(y_true, y_pred)
         print(confmat[0][0], confmat[0][1])
         print(confmat[1][0], confmat[1][1])
+        
+        confmats.append(confmat)
+    
+    print('final result')
+    for acc, ep in zip(best_accs, best_eps):
+        print('%.3f %d' % (acc, ep))
+    final_confmats = sum(confmats)/4
+    print(final_confmats[0][0], final_confmats[0][1])
+    print(final_confmats[1][0], final_confmats[1][1])
