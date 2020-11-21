@@ -82,10 +82,8 @@ def _prepare_overall_feature_dataset(download_increase_db, old_db_path, use_rati
         app_id = rec[0]
         (cate, sdk_version, content_rating), single_node_output_vec, _ = overall_feature_util.extract_feature_vec(
             rec[1:],
-            # use_download_amount=True,
-            use_download_amount=False,
-            use_rating_amount=False
-            # use_rating_amount=use_rating_amount
+            use_download_amount=True,
+            use_rating_amount=use_rating_amount
         )
         db_d[app_id] = (cate, sdk_version, content_rating, single_node_output_vec)
     
@@ -97,7 +95,7 @@ def _prepare_overall_feature_dataset(download_increase_db, old_db_path, use_rati
 
     return output
 
-def make_model(cate_nodes_size, sdk_version_nodes_size, content_rating_nodes_size, other_input_nodes_size=8, min_input_size=3):
+def make_model(cate_nodes_size, sdk_version_nodes_size, content_rating_nodes_size, other_input_nodes_size=8, min_input_size=3, denses=[8,4]):
     #cate input
     cate_input = Input(shape=(cate_nodes_size,))
     sdk_version_input = Input(shape=(sdk_version_nodes_size,))
@@ -120,11 +118,13 @@ def make_model(cate_nodes_size, sdk_version_nodes_size, content_rating_nodes_siz
     merged_inputs = concatenate([embed_cate, embed_sdk_version, embed_content_rating, embed_other])
     #insert denses
     x = add_dense(merged_inputs, 8)
-    # x = add_dense(x, 8)
     x = add_dense(x, 4)
+
+    x = add_dense(merged_inputs, denses[0])
+    for dense_value in denses[1:]:
+        x = add_dense(x, dense_value)
     output_layer = Dense(2, activation='softmax')(x)
 
-    # model = Model(inputs=[cate_input, sdk_version_input, content_rating_input, other_input], outputs=output_layer)
     inputs = {
         'cate_input' : cate_input,
         'sdk_version_input': sdk_version_input,
@@ -219,7 +219,7 @@ if __name__ == '__main__':
             len(train_sdk_version[0]),
             len(train_content_rating[0]),
             len(train_others[0]),
-            min_input_size=3)
+            min_input_size=3, denses=[8,4])
 
         #class weight
         y_ints = np.argmax(train_labels, axis=1)
@@ -243,6 +243,8 @@ if __name__ == '__main__':
         batch_size=batch_size, class_weight=cw,
             callbacks=[cp_best_ep],
             verbose=0)
+
+        
         top_val_acc, top_val_ep = best_val_acc(history)
         print('%.3f %d' % (top_val_acc, top_val_ep))
         best_accs.append(top_val_acc)
