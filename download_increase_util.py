@@ -5,6 +5,8 @@ from tensorflow.keras.models import Model, load_model
 import numpy as np
 import overall_feature_util
 from sklearn.utils.class_weight import compute_class_weight as sk_compute_class_weight
+import keras_util
+import random
 
 def _prepare_dataset(app_ids_d, old_db_path, new_db_path):
     old_conn = db_util.connect_db(old_db_path)
@@ -53,9 +55,25 @@ def compute_class_weight(train_labels):
     return (dict(enumerate(class_weights)))
     
 if __name__ == '__main__':
-    output = prepare_dataset()
-    print(len(output))
+    data = prepare_dataset()
+    random.seed(5)
+    random.shuffle(data)
+    train, test = keras_util.gen_k_fold_pass(data, kf_pass=3, n_splits=4)
+    f_train = open('download_increase_for_ajk/train_k3.txt', 'w', encoding='utf-8')
+    f_test = open('download_increase_for_ajk/test_k3.txt', 'w', encoding='utf-8')
+    for x in train:
+        print('%s.png %d' % (x[0], x[1][1]), file=f_train)
+    for x in test:
+        print('%s.png %d' % (x[0], x[1][1]), file=f_test)
 
+    f_train.close()
+    f_test.close()
+    print(len(train),len(test))
+    c0, c1 = 0, 0
+    for x in test:
+        if x[-1][0] == 1: c0+=1
+        else: c1+=1
+    print(c0, c1)
 
 
 
