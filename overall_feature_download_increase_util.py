@@ -12,6 +12,13 @@ from sklearn.utils.class_weight import compute_class_weight
 from sklearn.preprocessing import  StandardScaler
 from tensorflow.keras.callbacks import ModelCheckpoint
 
+def make_app_id_overall_feature_d(prepare_dataset_data, old_db_path , use_rating_amount=True):
+    app_ids = [x[0] for x in prepare_dataset_data]
+    dat = _prepare_overall_feature_dataset(prepare_dataset_data, old_db_path, use_rating_amount=use_rating_amount)
+    output = {}
+    for  app_id, overall_feature_and_label in zip(app_ids,dat):
+        output[app_id] = overall_feature_and_label
+    return output
 
 def prepare_overall_feature_dataset( old_db_path , new_db_path, random_seed, k_iter, use_rating_amount=True):
     aial = global_util.load_pickle('aial_seed_327.obj')

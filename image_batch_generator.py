@@ -7,12 +7,14 @@ import math
 
 class image_batch_sequence(Sequence):
 
-    def __init__(self, data, batch_size, resize_size=(128,128), datagen=None, shuffle=True):
+    def __init__(self, data, batch_size, resize_size=(128,128), datagen=None, shuffle=True, app_id_overall_feature_d=None):
         self.data = data
         self.batch_size = batch_size
         self.resize_size = resize_size
         self.datagen = datagen
         self.shuffle = shuffle
+        self.app_id_overall_feature_d = app_id_overall_feature_d
+        self.use_overall = self.app_id_overall_feature_d is not None
     
     def __len__(self):
         return math.ceil(len(self.data)/self.batch_size)
@@ -22,14 +24,30 @@ class image_batch_sequence(Sequence):
         end_idx = min(start_idx + self.batch_size, len(self.data))
 
         xs = []
-        yss = [[] for i in range(len(self.data[0])-1)]
+        ys = []
+        cates = []
+        sdk_versions = []
+        content_ratings = []
+        others = []
+        labels = []
 
         for i in range(start_idx, end_idx):
             row = self.data[i]
             img = icon_util.load_icon_by_app_id(row[0], self.resize_size[0], self.resize_size[1])
             xs.append(img)
-            for y_col_i, y_col in enumerate(row[1:]):
-                yss[y_col_i].append(y_col)
+
+            if self.use_overall:
+                cate, sdk_version, content_rating, other, label = self.app_id_overall_feature_d[row[0]]
+                cates.append(cate)
+                sdk_versions.append(sdk_version)
+                content_ratings.append(content_rating)
+                others.append(other)
+                labels.append(label)
+                ys.append(row[1])
+                if not (label == row[1]).all():
+                    print(label)
+                    print(row[1])
+                    raise ValueError('app id may be mismatched')
 
         xs = np.array(xs)
         if self.datagen:
@@ -39,13 +57,16 @@ class image_batch_sequence(Sequence):
         
         
         xs = xs.astype('float32')/255
-        yss_np = []
-        for ys in yss:
-            yss_np.append(np.array(ys)) 
-        if len(yss_np) == 1:
-            return (xs, yss_np[0])
+        cates = np.array(cates)
+        sdk_versions = np.array(sdk_versions)
+        content_ratings = np.array(content_ratings)
+        others = np.array(others)
+        ys = np.array(ys)
+
+        if self.app_id_overall_feature_d is not None:
+            return ([xs, cates, sdk_versions, content_ratings, others], ys)
         else:
-            return (xs, yss_np[1])
+            return (xs, ys)
     
     def on_epoch_end(self):
         if self.shuffle:
