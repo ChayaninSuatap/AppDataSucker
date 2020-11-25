@@ -50,7 +50,7 @@ if __name__ == '__main__':
     overall_make_model_param = {
         'cate_nodes_size': 17, 'sdk_version_nodes_size': 38, 'content_rating_nodes_size': 38, 'other_input_nodes_size' : 9}
     model = make_icon_overall_model(
-        icon_model_path='sim_search_t/models/icon_model2.4_k0_t-ep-404-loss-0.318-acc-0.896-vloss-3.674-vacc-0.357.hdf5',
+        load_model('sim_search_t/models/icon_model2.4_k0_t-ep-404-loss-0.318-acc-0.896-vloss-3.674-vacc-0.357.hdf5'),
         overall_make_model_param=overall_make_model_param
     )
 
@@ -71,9 +71,11 @@ if __name__ == '__main__':
     cw = di.compute_class_weight([x[1] for x in train_data])
     print('class weight', cw)
     # sequences
+    # overall other scalers
+    scalers = global_util.load_pickle('overall_other_scalers.obj')
     train_seq = image_batch_sequence(
         train_data, batch_size=8, app_id_overall_feature_d=app_id_overall_feature_d)
     test_seq = image_batch_sequence(
-        test_data, batch_size=8, shuffle=False, app_id_overall_feature_d=app_id_overall_feature_d)
+        test_data, batch_size=8, shuffle=False, app_id_overall_feature_d=app_id_overall_feature_d, overall_other_scaler=scalers[0])
 
     model.fit(train_seq, epochs=1, batch_size=8)

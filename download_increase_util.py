@@ -55,25 +55,31 @@ def compute_class_weight(train_labels):
     return (dict(enumerate(class_weights)))
     
 if __name__ == '__main__':
-    data = prepare_dataset()
-    random.seed(5)
-    random.shuffle(data)
-    train, test = keras_util.gen_k_fold_pass(data, kf_pass=3, n_splits=4)
-    f_train = open('download_increase_for_ajk/train_k3.txt', 'w', encoding='utf-8')
-    f_test = open('download_increase_for_ajk/test_k3.txt', 'w', encoding='utf-8')
-    for x in train:
-        print('%s.png %d' % (x[0], x[1][1]), file=f_train)
-    for x in test:
-        print('%s.png %d' % (x[0], x[1][1]), file=f_test)
+    # data = prepare_dataset()
+    # random.seed(5)
+    # random.shuffle(data)
+    # train, test = keras_util.gen_k_fold_pass(data, kf_pass=3, n_splits=4)
+    # f_train = open('download_increase_for_ajk/train_k3.txt', 'w', encoding='utf-8')
+    # f_test = open('download_increase_for_ajk/test_k3.txt', 'w', encoding='utf-8')
+    # for x in train:
+    #     print('%s.png %d' % (x[0], x[1][1]), file=f_train)
+    # for x in test:
+    #     print('%s.png %d' % (x[0], x[1][1]), file=f_test)
 
-    f_train.close()
-    f_test.close()
-    print(len(train),len(test))
-    c0, c1 = 0, 0
-    for x in test:
-        if x[-1][0] == 1: c0+=1
-        else: c1+=1
-    print(c0, c1)
+    # f_train.close()
+    # f_test.close()
+    # print(len(train),len(test))
+    # c0, c1 = 0, 0
+    # for x in test:
+    #     if x[-1][0] == 1: c0+=1
+    #     else: c1+=1
+    # print(c0, c1)
+
+    model = load_model('sim_search_t/models/icon_model2.4_k0_t-ep-404-loss-0.318-acc-0.896-vloss-3.674-vacc-0.357.hdf5')
+    model = extend_cate_model(model)
+    model.summary()
+    print(model.layers[-2].name)
+    print(model.layers[-1].name)
 
 
 

@@ -7,7 +7,7 @@ import math
 
 class image_batch_sequence(Sequence):
 
-    def __init__(self, data, batch_size, resize_size=(128,128), datagen=None, shuffle=True, app_id_overall_feature_d=None):
+    def __init__(self, data, batch_size, resize_size=(128,128), datagen=None, shuffle=True, app_id_overall_feature_d=None, overall_other_scaler=None):
         self.data = data
         self.batch_size = batch_size
         self.resize_size = resize_size
@@ -15,6 +15,7 @@ class image_batch_sequence(Sequence):
         self.shuffle = shuffle
         self.app_id_overall_feature_d = app_id_overall_feature_d
         self.use_overall = self.app_id_overall_feature_d is not None
+        self.overall_other_scaler = overall_other_scaler
     
     def __len__(self):
         return math.ceil(len(self.data)/self.batch_size)
@@ -62,6 +63,10 @@ class image_batch_sequence(Sequence):
         content_ratings = np.array(content_ratings)
         others = np.array(others)
         ys = np.array(ys)
+
+        #normalize others
+        if self.overall_other_scaler is not None:
+            others = self.overall_other_scaler.transform(others)
 
         if self.app_id_overall_feature_d is not None:
             return ([xs, cates, sdk_versions, content_ratings, others], ys)

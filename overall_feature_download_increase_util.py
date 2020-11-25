@@ -102,7 +102,7 @@ def _prepare_overall_feature_dataset(download_increase_db, old_db_path, use_rati
 
     return output
 
-def make_model(cate_nodes_size, sdk_version_nodes_size, content_rating_nodes_size, other_input_nodes_size=8, min_input_size=3, denses=[8,4]):
+def make_model(cate_nodes_size, sdk_version_nodes_size, content_rating_nodes_size, other_input_nodes_size, min_input_size=3, denses=[8,4]):
     #cate input
     cate_input = Input(shape=(cate_nodes_size,))
     sdk_version_input = Input(shape=(sdk_version_nodes_size,))
@@ -180,8 +180,9 @@ if __name__ == '__main__':
     confmats = []
     best_accs = []
     best_eps = []
-    epochs = 30
+    epochs = 1
     batch_size = 32
+    scalers = []
 
     for k_iter in range(4):
         dataset = prepare_overall_feature_dataset(
@@ -220,6 +221,7 @@ if __name__ == '__main__':
         scaled = scaler.fit(train_others)
         train_others = scaler.transform(train_others)
         test_others = scaler.transform(test_others)
+        scalers.append(scaler)
 
         model = make_model(
             len(train_cate[0]),
@@ -288,3 +290,5 @@ if __name__ == '__main__':
     final_confmats = sum(confmats)/4
     print(final_confmats[0][0], final_confmats[0][1])
     print(final_confmats[1][0], final_confmats[1][1])
+
+    global_util.save_pickle(scalers, 'overall_others_scalers.obj')
