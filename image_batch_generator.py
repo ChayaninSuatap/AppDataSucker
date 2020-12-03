@@ -7,10 +7,12 @@ import math
 
 class image_batch_sequence(Sequence):
 
-    def __init__(self, data, batch_size, resize_size=(128,128), datagen=None, shuffle=True, app_id_overall_feature_d=None, overall_other_scaler=None):
+    def __init__(self, data, batch_size, train_sc=False, sc_fd = None, datagen=None, shuffle=True, app_id_overall_feature_d=None, overall_other_scaler=None):
         self.data = data
         self.batch_size = batch_size
-        self.resize_size = resize_size
+        self.resize_size = (128,128) if not train_sc else (256,160)
+        self.train_sc = train_sc
+        self.sc_fd = sc_fd
         self.datagen = datagen
         self.shuffle = shuffle
         self.app_id_overall_feature_d = app_id_overall_feature_d
@@ -34,7 +36,11 @@ class image_batch_sequence(Sequence):
 
         for i in range(start_idx, end_idx):
             row = self.data[i]
-            img = icon_util.load_icon_by_app_id(row[0], self.resize_size[0], self.resize_size[1])
+            if not self.train_sc:
+                img = icon_util.load_icon_by_app_id(row[0], self.resize_size[0], self.resize_size[1])
+            else:
+                img = icon_util.load_icon_by_fn(self.sc_fd + row[0], self.resize_size[0], self.resize_size[1], rotate_for_sc=True)
+
             xs.append(img)
 
             if self.use_overall:

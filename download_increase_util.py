@@ -7,6 +7,8 @@ import overall_feature_util
 from sklearn.utils.class_weight import compute_class_weight as sk_compute_class_weight
 import keras_util
 import random
+import os
+from sc_util import make_sc_dict
 
 def _prepare_dataset(app_ids_d, old_db_path, new_db_path):
     old_conn = db_util.connect_db(old_db_path)
@@ -29,6 +31,17 @@ def _prepare_dataset(app_ids_d, old_db_path, new_db_path):
                 output.append((k_old, np.array([0,1])))
             else:
                 output.append((k_old, np.array([1,0])))
+    return output
+
+def _prepare_dataset_sc(sc_fd, **kwargs):
+    preoutput = _prepare_dataset(**kwargs)
+    sc_dict = make_sc_dict(sc_fd)
+    output = []
+    for app_id, label in preoutput:
+        if app_id in sc_dict:
+            #add each sc of app_id
+            for sc_fn in sc_dict[app_id]:
+                output.append( (sc_fn, label))
     return output
 
 def prepare_dataset():
@@ -55,7 +68,14 @@ def compute_class_weight(train_labels):
     return (dict(enumerate(class_weights)))
     
 if __name__ == '__main__':
-    # data = prepare_dataset()
+    aial = global_util.load_pickle('aial_seed_327.obj')
+    app_ids_d = {x[0]:True for x in aial}
+    data = _prepare_dataset_sc(
+        'screenshots.256.distincted.rem.human',
+        app_ids_d=app_ids_d,
+        old_db_path='crawl_data/first_version/data.db',
+        new_db_path='crawl_data/update_first_version_2020_09_12/data.db')
+    print(data[:10])
     # random.seed(5)
     # random.shuffle(data)
     # train, test = keras_util.gen_k_fold_pass(data, kf_pass=3, n_splits=4)
@@ -75,11 +95,11 @@ if __name__ == '__main__':
     #     else: c1+=1
     # print(c0, c1)
 
-    model = load_model('sim_search_t/models/icon_model2.4_k0_t-ep-404-loss-0.318-acc-0.896-vloss-3.674-vacc-0.357.hdf5')
-    model = extend_cate_model(model)
-    model.summary()
-    print(model.layers[-2].name)
-    print(model.layers[-1].name)
+    # model = load_model('sim_search_t/models/icon_model2.4_k0_t-ep-404-loss-0.318-acc-0.896-vloss-3.674-vacc-0.357.hdf5')
+    # model = extend_cate_model(model)
+    # model.summary()
+    # print(model.layers[-2].name)
+    # print(model.layers[-1].name)
 
 
 
