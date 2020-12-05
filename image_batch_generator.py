@@ -39,9 +39,10 @@ class image_batch_sequence(Sequence):
             if not self.train_sc:
                 img = icon_util.load_icon_by_app_id(row[0], self.resize_size[0], self.resize_size[1])
             else:
-                img = icon_util.load_icon_by_fn(self.sc_fd + row[0], self.resize_size[0], self.resize_size[1], rotate_for_sc=True)
+                img = icon_util.load_icon_by_fn(self.sc_fd + '/' + row[0], self.resize_size[0], self.resize_size[1], rotate_for_sc=True)
 
             xs.append(img)
+            ys.append(row[1])
 
             if self.use_overall:
                 cate, sdk_version, content_rating, other, label = self.app_id_overall_feature_d[row[0]]
@@ -50,7 +51,6 @@ class image_batch_sequence(Sequence):
                 content_ratings.append(content_rating)
                 others.append(other)
                 labels.append(label)
-                ys.append(row[1])
                 if not (label == row[1]).all():
                     print(label)
                     print(row[1])
