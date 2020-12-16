@@ -91,6 +91,11 @@ if __name__ == '__main__':
         use_pretrained_model = True
     )
 
+    for i, w in enumerate(model.weights):
+        split_name = w.name.split('/')
+        new_name = split_name[0] + '_' + str(i) + '/' + split_name[1] + '_' + str(i)
+        model.weights[i]._handle_name = new_name
+
     aial = global_util.load_pickle('aial_seed_327.obj')
     app_ids_d = {x[0]: True for x in aial}
 
@@ -127,10 +132,12 @@ if __name__ == '__main__':
 
     #sc (oh forget to keep icon case)
     train_seq = image_batch_sequence(
-        train_data, batch_size=8, app_id_overall_feature_d=app_id_overall_feature_d,  overall_other_scaler=scalers[0],
+        train_data[:8], batch_size=8, app_id_overall_feature_d=app_id_overall_feature_d,  overall_other_scaler=scalers[0],
         train_sc=True, sc_fd='screenshots.256.distincted.rem.human')
     test_seq = image_batch_sequence(
-        test_data, batch_size=8, shuffle=False, app_id_overall_feature_d=app_id_overall_feature_d, overall_other_scaler=scalers[0],
+        test_data[:8], batch_size=8, shuffle=False, app_id_overall_feature_d=app_id_overall_feature_d, overall_other_scaler=scalers[0],
         train_sc=True, sc_fd='screenshots.256.distincted.rem.human')
 
-    model.fit(train_seq, epochs=1, batch_size=8)
+    from tensorflow.keras.callbacks import ModelCheckpoint
+    model.fit(train_seq, validation_data=test_seq, epochs=1, batch_size=8, callbacks=[ModelCheckpoint('t_{val_acc:.3f}.hdf5', monitor='val_acc', period=1, save_best_only=True)])
+    
