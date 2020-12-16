@@ -37,12 +37,17 @@ def _prepare_dataset_sc(sc_fd, **kwargs):
     preoutput = _prepare_dataset(**kwargs)
     sc_dict = make_sc_dict(sc_fd)
     output = []
+    output_for_overall_feature = []
+    output_for_overall_feature_d = {}
     for app_id, label in preoutput:
         if app_id in sc_dict:
             #add each sc of app_id
             for sc_fn in sc_dict[app_id]:
                 output.append( (sc_fn, label))
-    return output
+                output_for_overall_feature_d[sc_fn[:-6]] = label
+    for k,v in output_for_overall_feature_d.items():
+        output_for_overall_feature.append((k,v))
+    return output, output_for_overall_feature
 
 def prepare_dataset():
     aial = global_util.load_pickle('aial_seed_327.obj')
@@ -75,7 +80,7 @@ if __name__ == '__main__':
         app_ids_d=app_ids_d,
         old_db_path='crawl_data/first_version/data.db',
         new_db_path='crawl_data/update_first_version_2020_09_12/data.db')
-    print(data[:10])
+    # print(data[:10])
     # random.seed(5)
     # random.shuffle(data)
     # train, test = keras_util.gen_k_fold_pass(data, kf_pass=3, n_splits=4)

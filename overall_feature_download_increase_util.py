@@ -16,6 +16,9 @@ def make_app_id_overall_feature_d(prepare_dataset_data, old_db_path , use_rating
     app_ids = [x[0] for x in prepare_dataset_data]
     dat = _prepare_overall_feature_dataset(prepare_dataset_data, old_db_path, use_rating_amount=use_rating_amount)
     output = {}
+    if len(app_ids) != len(dat):
+        print(len(app_ids), len(dat))
+        raise ValueError('data len inconsistent for zip')
     for  app_id, overall_feature_and_label in zip(app_ids,dat):
         output[app_id] = overall_feature_and_label
     return output

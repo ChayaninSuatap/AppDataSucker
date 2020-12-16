@@ -45,7 +45,11 @@ class image_batch_sequence(Sequence):
             ys.append(row[1])
 
             if self.use_overall:
-                cate, sdk_version, content_rating, other, label = self.app_id_overall_feature_d[row[0]]
+                if not self.train_sc:
+                    app_id = row[0]
+                elif self.train_sc:
+                    app_id = row[0][:-6]
+                cate, sdk_version, content_rating, other, label = self.app_id_overall_feature_d[app_id]
                 cates.append(cate)
                 sdk_versions.append(sdk_version)
                 content_ratings.append(content_rating)
