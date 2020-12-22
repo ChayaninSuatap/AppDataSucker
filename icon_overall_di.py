@@ -73,8 +73,65 @@ def make_sc_overall_other_scalers_obj():
     
     global_util.save_pickle(scalers, 'sc_overall_other_scalers.obj')
 
+def make_sc_overall_other_scalers_obj_split_by_icon_split():
+    preped_dat = global_util.load_pickle('preped_dat.obj')
+    app_id_overall_feature_d = overall.make_app_id_overall_feature_d(
+        preped_dat,
+        'crawl_data/first_version/data.db')
+    
+    aial = global_util.load_pickle('aial_seed_327.obj')
+    app_ids_d = {x[0]: True for x in aial}
+
+    scalers = []
+
+    for i in range(4):
+        data_icon = di._prepare_dataset(
+            app_ids_d,
+            'crawl_data/first_version/data.db',
+            'crawl_data/update_first_version_2020_09_12/data.db')
+        random.seed(5)
+        random.shuffle(data_icon)
+        train_data_icon, test_data_icon = keras_util.gen_k_fold_pass(
+            data_icon, kf_pass=i, n_splits=4)
+        
+        sc_dat = global_util.load_pickle('sc_di_aial.obj')
+        train_data, test_data = split_sc_by_icon_split(train_data_icon, test_data_icon, sc_dat)
+
+        other_features = []
+        for app_id, _ in train_data:
+            overall_feature = app_id_overall_feature_d[app_id[:-6]]
+            other_feature = overall_feature[-2]
+            other_features.append(other_feature)
+        scaler = StandardScaler()
+        scaler.fit(np.array(other_features))
+        scalers.append( scaler)
+    
+    global_util.save_pickle(scalers, 'sc_overall_other_scalers_split_by_icon_split.obj')
+
+def split_sc_by_icon_split(icon_train_pairs, icon_test_pairs, sc_dat):
+    icon_train_dat = {}
+    icon_test_dat = {}
+
+    for app_id,_ in icon_train_pairs:
+        icon_train_dat[app_id] = True
+    for app_id,_ in icon_test_pairs:
+        icon_test_dat[app_id] = True
+    
+    sc_train, sc_test = [], []
+
+    for app_id, label in sc_dat:
+        if app_id[:-6] in icon_train_dat:
+            sc_train.append((app_id, label))
+        elif app_id[:-6] in icon_test_dat:
+            sc_test.append((app_id, label))
+        else:
+            raise ValueError('no match app_id in both train and test')
+    
+    return sc_train, sc_test
 
 if __name__ == '__main__':
+    # make_sc_overall_other_scalers_obj_split_by_icon_split()
+    # input('complete')
     overall_make_model_param = {
         'cate_nodes_size': 17, 'sdk_version_nodes_size': 38, 'content_rating_nodes_size': 38, 'other_input_nodes_size' : 9}
 
@@ -100,10 +157,14 @@ if __name__ == '__main__':
     app_ids_d = {x[0]: True for x in aial}
 
     #icon
-    # data = di._prepare_dataset(
-    #     app_ids_d,
-    #     'crawl_data/first_version/data.db',
-    #     'crawl_data/update_first_version_2020_09_12/data.db')
+    data_icon = di._prepare_dataset(
+        app_ids_d,
+        'crawl_data/first_version/data.db',
+        'crawl_data/update_first_version_2020_09_12/data.db')
+    random.seed(5)
+    random.shuffle(data_icon)
+    train_data_icon, test_data_icon = keras_util.gen_k_fold_pass(
+        data_icon, kf_pass=3, n_splits=4)
 
     # #sc
     # data, preped_data = di._prepare_dataset_sc(
@@ -113,11 +174,30 @@ if __name__ == '__main__':
     #     new_db_path='crawl_data/update_first_version_2020_09_12/data.db')
     # random.seed(5)
     # random.shuffle(data)
-    data = global_util.load_pickle('sc_di_aial.obj')
+    sc_dat = global_util.load_pickle('sc_di_aial.obj')
+    train_data, test_data = split_sc_by_icon_split(train_data_icon, test_data_icon, sc_dat)
+    print(len(train_data), len(test_data))
 
+    c0, c1 = 0, 0
+    for x in test_data:
+        if x[-1][0] == 1: c0+=1
+        else: c1+=1
+    print(c0, c1)
 
-    train_data, test_data = keras_util.gen_k_fold_pass(
-        data, kf_pass=0, n_splits=4)
+    ad = {}
+    bd = {}
+
+    for k,v in train_data:
+        ad[k[:-6]] = True
+    for k,v in test_data:
+        bd[k[:-6]] = True
+    for k in ad.keys():
+        if k in bd.keys():
+            print(k)
+    input('not dup ? maybe ?')
+
+    # train_data, test_data = keras_util.gen_k_fold_pass(
+        # data, kf_pass=0, n_splits=4)
 
     app_id_overall_feature_d = overall.make_app_id_overall_feature_d(
         global_util.load_pickle('preped_dat.obj'),
