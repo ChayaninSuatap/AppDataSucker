@@ -9,6 +9,7 @@ import keras_util
 import random
 import os
 from sc_util import make_sc_dict
+from sklearn.metrics import confusion_matrix
 
 def _prepare_dataset(app_ids_d, old_db_path, new_db_path):
     old_conn = db_util.connect_db(old_db_path)
@@ -71,15 +72,144 @@ def compute_class_weight(train_labels):
     y_ints = np.argmax(train_labels, axis=1)
     class_weights = sk_compute_class_weight('balanced', np.unique(y_ints), y_ints)
     return (dict(enumerate(class_weights)))
+
+def softvote_icon_sc():
+    dat = prepare_dataset()
+    dat_d = {}
+
+    for k,v in dat:
+        dat_d[k] = v
     
-if __name__ == '__main__':
+    for k in range(4):
+        icon_preds = global_util.load_pickle('icon_overall_di_preds_k%s.obj' % (k,))
+        sc_preds = global_util.load_pickle('sc_overall_di_preds_k%s.obj' % (k,))
+
+        acc = 0
+        count_sample = 0
+
+        y_true = []
+        y_pred = []
+        pred_d = {}
+
+        for app_id, icon_pred in icon_preds.items():
+            total = np.array(icon_pred)
+            count = 1
+            for i in range(21):
+                sc_fn = '%s%2d.png' % (app_id, i)
+                if sc_fn in sc_preds:
+                    total += sc_preds[sc_fn]
+                    count += 1
+            averaged = total / count
+
+            pred_d[app_id] = averaged
+
+            if averaged[0] < averaged[1]:
+                voted = np.array([0,1])
+            else:
+                voted = np.array([1,0])
+            
+            if all(dat_d[app_id] == voted):
+                acc += 1
+            count_sample += 1
+            y_true.append(dat_d[app_id][1])
+            y_pred.append(voted[1])
+        
+        confmat = confusion_matrix(y_true, y_pred, labels = [0, 1])
+        print(acc/count_sample)
+        print(confmat[0][0], confmat[0][1])
+        print(confmat[1][0], confmat[1][1])
+
+        global_util.save_pickle(pred_d, 'softvoted_icon_sc_di_k%d.obj' % (k,))
+
+from overall_feature_util import _all_game_category
+def confmat_by_cate(obj_fn):
+    dat = prepare_dataset()
+    dat_d = {}
+    for k,v in dat:
+        dat_d[k] = v
+
     aial = global_util.load_pickle('aial_seed_327.obj')
-    app_ids_d = {x[0]:True for x in aial}
-    data = _prepare_dataset_sc(
-        'screenshots.256.distincted.rem.human',
-        app_ids_d=app_ids_d,
-        old_db_path='crawl_data/first_version/data.db',
-        new_db_path='crawl_data/update_first_version_2020_09_12/data.db')
+    cate_d = {}
+    for app_id,_, cate_onehot, *_ in aial:
+        cate_d[app_id] = _all_game_category[cate_onehot.index(1)]
+
+    o = global_util.load_pickle(obj_fn)
+
+    y_true = {}
+    y_pred = {}
+
+    for cate in _all_game_category:
+        y_true[cate] = []
+        y_pred[cate] = []
+
+    for app_id, pred in o.items():
+        if pred[0] < pred[1]:
+            normed_pred = np.array([0,1])
+        else:
+            normed_pred = np.array([1,0])
+        
+        y_true[cate_d[app_id]].append(dat_d[app_id][1])
+        y_pred[cate_d[app_id]].append(normed_pred[1])
+        
+    confmat_d = {}
+    for cate in _all_game_category:
+        confmat = confusion_matrix(y_true[cate], y_pred[cate], labels = [0, 1])
+        # print(cate)
+        # print(confmat[0][0], confmat[0][1])
+        # print(confmat[1][0], confmat[1][1])
+        confmat_d[cate] = confmat
+
+    return confmat_d
+
+def average_confmat_4folds(fns=[
+    'icon_overall_di_preds_k0.obj',
+    'icon_overall_di_preds_k1.obj',
+    'icon_overall_di_preds_k2.obj',
+    'icon_overall_di_preds_k3.obj'
+]):
+    a = confmat_by_cate(fns[0])
+    b = confmat_by_cate(fns[1])
+    c = confmat_by_cate(fns[2])
+    d = confmat_by_cate(fns[3])
+    result_d = {}
+    for cate in _all_game_category:
+        result_d[cate] = a[cate] + b[cate] + c[cate] + d[cate]
+        result_d[cate] = result_d[cate] / 4
+    return result_d
+
+def pprint_confmat_d(confmat_d):
+    for cate in _all_game_category:
+        print(cate)
+        print(confmat_d[cate][0][0], confmat_d[cate][0][1])
+        print(confmat_d[cate][1][0], confmat_d[cate][1][1])
+        prec = confmat_d[cate][1][1]/(confmat_d[cate][0][1] + confmat_d[cate][1][1])
+        recall = confmat_d[cate][1][1]/(confmat_d[cate][1][1] + confmat_d[cate][1][0])
+        f1 = (prec*recall*2)/(prec+recall)
+        print('%.3f' % (f1,))
+
+if __name__ == '__main__':
+    # softvote_icon_sc()
+    # pprint_confmat_d(average_confmat_4folds([
+    #     'best_overall_di_k0.obj',
+    #     'best_overall_di_k1.obj',
+    #     'best_overall_di_k2.obj',
+    #     'best_overall_di_k3.obj'
+    # ]))
+    pprint_confmat_d(average_confmat_4folds([
+        'softvoted_icon_sc_di_k1.obj',
+        'softvoted_icon_sc_di_k2.obj',
+        'softvoted_icon_sc_di_k3.obj',
+        'softvoted_icon_sc_di_k0.obj'
+    ]))
+
+    # aial = global_util.load_pickle('aial_seed_327.obj')
+    # app_ids_d = {x[0]:True for x in aial}
+    # data = _prepare_dataset_sc(
+    #     'screenshots.256.distincted.rem.human',
+    #     app_ids_d=app_ids_d,
+    #     old_db_path='crawl_data/first_version/data.db',
+    #     new_db_path='crawl_data/update_first_version_2020_09_12/data.db')
+
     # print(data[:10])
     # random.seed(5)
     # random.shuffle(data)

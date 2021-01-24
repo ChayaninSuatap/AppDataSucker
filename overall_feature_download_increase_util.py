@@ -29,28 +29,32 @@ def prepare_overall_feature_dataset( old_db_path , new_db_path, random_seed, k_i
     download_increase_db = _prepare_dataset(app_ids_d, old_db_path, new_db_path)
     random.seed(5)
     random.shuffle(download_increase_db)
-    dat = _prepare_overall_feature_dataset(download_increase_db, old_db_path, use_rating_amount=use_rating_amount)
+    dat = _prepare_overall_feature_dataset(download_increase_db, old_db_path, use_rating_amount=use_rating_amount, get_app_id=True)
 
     (train_data , test_data) = keras_util.gen_k_fold_pass(dat, kf_pass = k_iter, n_splits=4)
 
+    app_id_train = []
     cate_train = []
     sdk_version_train = []
     content_rating_train = []
     other_train = []
     label_train = [] 
-    for  cate, sdk_version, content_rating, other, label in train_data:
+    for  app_id, cate, sdk_version, content_rating, other, label in train_data:
+        app_id_train.append(app_id)
         cate_train.append(cate)
         sdk_version_train.append(sdk_version)
         content_rating_train.append(content_rating)
         other_train.append(other)
         label_train.append(label)
     
+    app_id_test = []
     cate_test = []
     sdk_version_test = []
     content_rating_test = []
     other_test = []
     label_test = []
-    for cate, sdk_version, content_rating, other, label in test_data:
+    for app_id, cate, sdk_version, content_rating, other, label in test_data:
+        app_id_test.append(app_id)
         cate_test.append(cate)
         sdk_version_test.append(sdk_version)
         content_rating_test.append(content_rating)
@@ -58,6 +62,8 @@ def prepare_overall_feature_dataset( old_db_path , new_db_path, random_seed, k_i
         label_test.append(label)
     
     output = {
+        'app_id_train': app_id_train,
+        'app_id_test': app_id_test,
         'train_cate':np.array(cate_train),
         'train_sdk_version': np.array(sdk_version_train),
         'train_content_rating' : np.array(content_rating_train),
@@ -72,7 +78,7 @@ def prepare_overall_feature_dataset( old_db_path , new_db_path, random_seed, k_i
 
     return output
 
-def _prepare_overall_feature_dataset(download_increase_db, old_db_path, use_rating_amount=True):
+def _prepare_overall_feature_dataset(download_increase_db, old_db_path, use_rating_amount=True, get_app_id=False):
     '''download_increase_db = output from prepare_dataset()'''
     conn = db_util.connect_db(old_db_path)
     sql = """
@@ -101,7 +107,10 @@ def _prepare_overall_feature_dataset(download_increase_db, old_db_path, use_rati
     for app_id, label in app_id_label_d.items():
         if app_id in db_d:
             cate, sdk_version, content_rating, single_node_output_vec = db_d[app_id]
-            output.append((np.array(cate), np.array(sdk_version), np.array(content_rating), np.array(single_node_output_vec), np.array(label)))
+            t = (np.array(cate), np.array(sdk_version), np.array(content_rating), np.array(single_node_output_vec), np.array(label))
+            if get_app_id:
+                t = (app_id,) + t
+            output.append(t)
 
     return output
 
@@ -127,9 +136,6 @@ def make_model(cate_nodes_size, sdk_version_nodes_size, content_rating_nodes_siz
     #merge inputs
     merged_inputs = concatenate([embed_cate, embed_sdk_version, embed_content_rating, embed_other])
     #insert denses
-    x = add_dense(merged_inputs, 8)
-    x = add_dense(x, 4)
-
     x = add_dense(merged_inputs, denses[0])
     for dense_value in denses[1:]:
         x = add_dense(x, dense_value)
@@ -183,7 +189,7 @@ if __name__ == '__main__':
     confmats = []
     best_accs = []
     best_eps = []
-    epochs = 1
+    epochs = 30
     batch_size = 32
     scalers = []
 
@@ -195,11 +201,13 @@ if __name__ == '__main__':
             k_iter=k_iter,
             use_rating_amount=True)
         
+        app_id_train = dataset['app_id_train']
         train_cate = dataset['train_cate']
         train_sdk_version = dataset['train_sdk_version']
         train_content_rating = dataset['train_content_rating']
         train_others = dataset['train_others']
         train_labels = dataset['train_labels']
+        app_id_test = dataset['app_id_test']
         test_cate = dataset['test_cate']
         test_sdk_version = dataset['test_sdk_version']
         test_content_rating = dataset['test_content_rating']
@@ -214,10 +222,10 @@ if __name__ == '__main__':
 
         #check set distribution
         c0, c1 = 0, 0
-        for x in train_labels:
+        for x in test_labels:
             if x[0] == 1: c0+=1
             else: c1+=1
-        # print(c0, c1)
+        # print('testset dist',c0, c1)
 
         #normalize
         scaler = StandardScaler()
@@ -231,7 +239,7 @@ if __name__ == '__main__':
             len(train_sdk_version[0]),
             len(train_content_rating[0]),
             len(train_others[0]),
-            min_input_size=3, denses=[8,4])
+            min_input_size=4, denses=[8,4])
 
         #class weight
         y_ints = np.argmax(train_labels, axis=1)
@@ -239,7 +247,7 @@ if __name__ == '__main__':
         cw = dict(enumerate(class_weights))
         print(cw)
 
-        cp_best_ep = ModelCheckpoint('best_overall_download_increase.hdf5', monitor='val_acc', save_best_only=True, verbose=0, period=1)
+        cp_best_ep = ModelCheckpoint('best_overall_di_k%.hdf5' % (k_iter,), monitor='val_acc', save_best_only=True, verbose=0, period=1)
         history = model.fit(x={
             'cate_input': train_cate,
             'sdk_version_input': train_sdk_version,
@@ -262,7 +270,7 @@ if __name__ == '__main__':
         best_accs.append(top_val_acc)
         best_eps.append(top_val_ep)
 
-        model = load_model('best_overall_download_increase.hdf5')
+        model = load_model('best_overall_di_k%.hdf5' % (k_iter,))
 
         #confusion matrix
         preds=model.predict({
@@ -270,6 +278,12 @@ if __name__ == '__main__':
             'sdk_version_input': test_sdk_version,
             'content_rating_input': test_content_rating,
             'other_input': test_others})
+
+        #save pred_d
+        pred_d = {}
+        for app_id, pred in zip(app_id_test, preds):
+            pred_d[app_id] = pred
+        global_util.save_pickle(pred_d, 'best_overall_di_k%d.obj' % (k_iter,))
 
         #create y_true
         y_true = []
@@ -293,5 +307,10 @@ if __name__ == '__main__':
     final_confmats = sum(confmats)/4
     print(final_confmats[0][0], final_confmats[0][1])
     print(final_confmats[1][0], final_confmats[1][1])
+
+    prec = final_confmats[1][1]/(final_confmats[0][1] + final_confmats[1][1])
+    recall = final_confmats[1][1]/(final_confmats[1][1] + final_confmats[1][0])
+    f1 = (prec*recall*2)/(prec+recall)
+    print('%.3f' % (f1,))
 
     global_util.save_pickle(scalers, 'overall_others_scalers.obj')
