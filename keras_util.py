@@ -11,6 +11,7 @@ import numpy as np
 import math
 from datetime import datetime
 import global_util
+from sklearn.preprocessing import  StandardScaler
 
 def compute_class_weight(labels):
     #make class_freq
@@ -280,3 +281,11 @@ def plot_confusion_matrix_generator(model, ground_truth, test_gen_for_predict, s
     #plot confusion
     conmat = confusion_matrix( y, pred.argmax(axis=1))
     _plot_confusion_matrix(conmat, [])
+
+def standard_normalize(train_features, test_features):
+    scaler = StandardScaler()
+    fitted_scaler = scaler.fit(train_features)
+    train_features = scaler.transform(train_features)
+    test_features = scaler.transform(test_features)
+
+    return train_features, test_features, fitted_scaler

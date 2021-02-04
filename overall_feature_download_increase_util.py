@@ -151,11 +151,12 @@ def make_model(cate_nodes_size, sdk_version_nodes_size, content_rating_nodes_siz
     model.compile(loss='categorical_crossentropy', metrics=['acc'])
     return model
 
-def best_val_acc(history):
+def best_val_acc(history, acc_greater_val_acc=False):
     idx = None
     maxv = None
     for i,x in enumerate(history.history['val_acc']):
         if maxv is None or x > maxv:
+            if acc_greater_val_acc and history.history['acc'][i] < x: continue
             maxv = x
             idx = i
 

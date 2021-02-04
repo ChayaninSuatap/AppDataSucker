@@ -187,7 +187,24 @@ def pprint_confmat_d(confmat_d):
         f1 = (prec*recall*2)/(prec+recall)
         print('%.3f' % (f1,))
 
+def make_confmat(test_labels, preds):
+    #create y_true
+    y_true = []
+    for label in test_labels:
+        y_true.append(label[1])
+
+    #create y_pred
+    y_pred = []
+    for pred in preds:
+        y_pred.append(0 if pred[0] > pred[1] else 1)
+
+    confmat = confusion_matrix(y_true, y_pred, labels=[0,1])
+    return confmat
+
 if __name__ == '__main__':
+    dat = prepare_dataset()
+    print(dat[:5])
+
     # softvote_icon_sc()
     # pprint_confmat_d(average_confmat_4folds([
     #     'best_overall_di_k0.obj',
@@ -195,12 +212,13 @@ if __name__ == '__main__':
     #     'best_overall_di_k2.obj',
     #     'best_overall_di_k3.obj'
     # ]))
-    pprint_confmat_d(average_confmat_4folds([
-        'softvoted_icon_sc_di_k1.obj',
-        'softvoted_icon_sc_di_k2.obj',
-        'softvoted_icon_sc_di_k3.obj',
-        'softvoted_icon_sc_di_k0.obj'
-    ]))
+
+    # pprint_confmat_d(average_confmat_4folds([
+    #     'softvoted_icon_sc_di_k1.obj',
+    #     'softvoted_icon_sc_di_k2.obj',
+    #     'softvoted_icon_sc_di_k3.obj',
+    #     'softvoted_icon_sc_di_k0.obj'
+    # ]))
 
     # aial = global_util.load_pickle('aial_seed_327.obj')
     # app_ids_d = {x[0]:True for x in aial}
