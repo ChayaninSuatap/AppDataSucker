@@ -12,6 +12,7 @@ import math
 from datetime import datetime
 import global_util
 from sklearn.preprocessing import  StandardScaler
+import tensorflow.keras.backend as K
 
 def compute_class_weight(labels):
     #make class_freq
@@ -68,7 +69,6 @@ def _get_weights_of_layers(model):
                 weights = w_and_b[0].flatten()
                 output.append( weights)
     return output
-
 
 def _get_best_ep_and_acc(training_log):
     for i,x in enumerate(training_log):

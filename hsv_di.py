@@ -13,6 +13,8 @@ from tensorflow.keras.callbacks import ModelCheckpoint
 from sklearn.preprocessing import  StandardScaler
 from sklearn.metrics import confusion_matrix
 from overall_feature_download_increase_util import best_val_acc
+import tensorflow_addons as tfa
+from tensorflow.keras.callbacks import Callback
 
 def make_feature(fn, bin=10, img_size=None):
     img = Image.open(fn)
@@ -106,19 +108,50 @@ def undersample(train_data):
 
     return new_train_data
 
+class SaveBestF1Callback(Callback):
+
+    def __init__(self, test_features, test_labels, save_path):
+        self.test_features = test_features
+        self.test_labels = test_labels
+        self.f1s = []
+        self.save_path = save_path
+        self.best_ep = None
+        self.best_acc = None
+        self.best_val_acc = None
+        self.best_f1 = None
+        self.best_confmat = None
+
+    def on_epoch_end(self, epoch, logs):
+        preds = self.model.predict(self.test_features)
+        confmat = make_confmat(self.test_labels, preds)
+        prec = confmat[1][1]/(confmat[0][1] + confmat[1][1])
+        recall = confmat[1][1]/(confmat[1][1] + confmat[1][0])
+        f1 = (prec*recall*2)/(prec+recall)
+
+        if epoch == 0 or max(self.f1s) < f1:
+            self.model.save(self.save_path)
+            self.best_ep = epoch + 1
+            self.best_acc = logs['acc']
+            self.best_val_acc = logs['val_acc']
+            self.best_f1 = f1
+            self.best_confmat = confmat
+
+        self.f1s.append(f1)
+
+
 if __name__ == '__main__':
     # f = make_feature('hsv_di/test hsv/yellow.png', 20)
     # print(f)
     # input('done')
 
     icon_path = 'icons_rem_dup_human_recrawl/icons_rem_dup_recrawl/'
-    bin_split = 5
-    output_path = 'hsv_di/features/bin5.obj'
+    bin_split = 10
+    output_path = 'hsv_di/features/bin10.obj'
     # make_icon_dataset(bin_split, output_path=output_path)
     # input('done')
 
     save_folder = 'hsv_di/models/'
-    model_name = 'bin5'
+    model_name = 'bin10'
     batch_size = 32
     epochs = 50
     model_input_size = bin_split * 3
@@ -132,11 +165,16 @@ if __name__ == '__main__':
     best_accs = []
     best_eps = []
 
-    for k_iter in range(0):
+
+    for k_iter in [1]:
         (train_data , test_data) = keras_util.gen_k_fold_pass(processed_dat, kf_pass = k_iter, n_splits=4)
 
-        train_data = undersample(train_data)
-        #global.save ....
+        # undersampling
+        # train_data = undersample(train_data)
+        # global_util.save_pickle(train_data, 'hsv_di/test_undersampling_bin5.obj')
+        # input('done')
+
+        train_data = global_util.load_pickle('hsv_di/test_undersampling_bin10.obj')[0]
 
         # c0, c1 = 0, 0
         # for _,x in train_data:
@@ -169,23 +207,27 @@ if __name__ == '__main__':
         test_labels = np.array(test_labels)
 
         cw = compute_class_weight(train_labels)
+        print('class weight',cw)
 
         model = make_model(model_input_size, denses=denses)
-        cp_best_ep = ModelCheckpoint('%s%s_k%d.hdf5' % (save_folder, model_name, k_iter), monitor='val_acc', save_best_only=True, verbose=0)
+        # cp_best_ep = ModelCheckpoint('%s%s_k%d.h5' % (save_folder, model_name, k_iter), monitor='val_acc', save_best_only=True, verbose=0)
+        cp_best_ep = SaveBestF1Callback(test_features, test_labels, '%s%s_k%d.h5' % (save_folder, model_name, k_iter))
         history = model.fit(x=train_features, y=train_labels,
             validation_data=(test_features, test_labels),
             batch_size=batch_size, epochs=epochs, callbacks=[cp_best_ep], class_weight=cw, verbose=0)
 
-        top_val_acc, top_val_ep = best_val_acc(history)
-        print('%.3f %d' % (top_val_acc, top_val_ep))
-        best_accs.append(top_val_acc)
-        best_eps.append(top_val_ep)
+        print('%.3f %.3f %d' % (cp_best_ep.best_val_acc, cp_best_ep.best_f1, cp_best_ep.best_ep))
+        # best_accs.append( cp_best_ep.best_val_acc)
+        # best_eps.append( cp_best_ep.best_ep)
+        # print(best_val_acc(history))
 
         #show confmat
-        model = load_model('%s%s_k%d.hdf5' % (save_folder, model_name, k_iter))
+        model = load_model('%s%s_k%d.h5' % (save_folder, model_name, k_iter))
         preds = model.predict(test_features)
 
         confmat = make_confmat(test_labels, preds)
+        # confmat = cp_best_ep.best_confmat
+
         # print('confmat', k_iter)
         # print(confmat)
         confmats.append(confmat)
@@ -193,7 +235,7 @@ if __name__ == '__main__':
     print('final result')
     for acc, ep in zip(best_accs, best_eps):
         print('%.3f %d' % (acc, ep))
-    final_confmats = sum(confmats)/4
+    final_confmats = sum(confmats)/len(confmats)
     print(final_confmats[0][0], final_confmats[0][1])
     print(final_confmats[1][0], final_confmats[1][1])
 

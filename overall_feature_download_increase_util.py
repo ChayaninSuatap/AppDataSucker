@@ -162,6 +162,16 @@ def best_val_acc(history, acc_greater_val_acc=False):
 
     return history.history['val_acc'][idx], idx
 
+def best_val_get_f1(history):
+    idx = None
+    maxv = None
+    for i,x in enumerate(history.history['val_get_f1']):
+        if maxv is None or x > maxv:
+            maxv = x
+            idx = i
+
+    return history.history['val_acc'][idx], idx
+
 def oversampling(train_x, train_y):
     train_x = train_x.tolist()
     train_y = train_y.tolist()
