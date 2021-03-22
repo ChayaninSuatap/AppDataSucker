@@ -321,8 +321,43 @@ def filter_non_original_sc_human_set_from_sc_hpc(sc_hpc_path, sc_hpc_output_path
 
 
 if __name__ == '__main__':
-    pass
-    #create_all_sc_human_set_obj('screenshots/')
+    import csv
+    for k_iter in [0,1,2,3]:
+        icon_model_paths = [
+            'sim_search_t/models/icon_model2.4_k0_t-ep-404-loss-0.318-acc-0.896-vloss-3.674-vacc-0.357.hdf5', #0.39922222222222226 #pca 0.620
+            'sim_search_t/models/icon_model2.4_k1_t-ep-497-loss-0.273-acc-0.912-vloss-3.597-vacc-0.370.hdf5', #0.45232034632034623 #pca 0.640
+            'sim_search_t/models/icon_model2.4_k2_t-ep-463-loss-0.283-acc-0.904-vloss-3.585-vacc-0.368.hdf5', #0.5571528822055138 #pca 0.571
+            'sim_search_t/models/icon_model2.4_k3_t-ep-433-loss-0.319-acc-0.898-vloss-3.493-vacc-0.380.hdf5' #0.47025526107879045 #pca 0.635
+        ]
+        
+        cates = ['BOARD', 'TRIVIA',	'ARCADE','CARD','MUSIC','RACING','ACTION','PUZZLE','SIMULATION','STRATEGY','ROLE_PLAYING','SPORTS','ADVENTURE','CASINO','WORD','CASUAL','EDUCATIONAL']
+
+        aial = load_pickle('aial_seed_327.obj')
+
+        model = mod_model(icon_model_paths[k_iter])
+
+        # create data for ajk
+        # # result = {}
+        # # for app_id, _, cate, *_ in aial:
+        # #     icon = icon_util.load_icon_by_app_id(app_id, 128, 128)
+        # #     icon = np.array([icon])
+        # #     pred = model.predict(icon)[0]
+        # #     cate = cates[cate.index(1)]
+        # #     result[app_id] = (cate, pred)
+        # # save_pickle(result, 'journal/flatten_preds/icon/k%s.obj' % (k_iter,))
+
+        # # create csv
+        # # import csv
+        # # with open('journal/flatten_preds/icon/k%s.csv' % (k_iter,), 'w', newline='') as csv_file:
+        # #     header = ['app_id', 'category', 'feature']
+        # #     writer = csv.writer(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+
+        # #     obj = load_pickle('journal/flatten_preds/icon/k%s.obj' % (k_iter,))
+        # #     for app_id, (cate, pred) in obj.items():
+        # #         writer.writerow([app_id, cate] + pred.tolist())
+
+
+    create_all_sc_human_set_obj('screenshots/')
     # create_human_testset_groundtruth()
     # cate_dict = make_category_dict()
 
