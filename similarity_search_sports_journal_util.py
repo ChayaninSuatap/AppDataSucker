@@ -12,4 +12,33 @@ sports = {
     'cricket' : ['Ashes2010_androidmkp.indvseng', 'com.appon.worldofcricket', 'com.games2win.worldcupcricketchamp', 'com.indvspak.ashes', 'com.ipl.t20pl2015', 'com.jetplay.sachinsagacc', 'com.moonfrog.cricket', 'com.moonglabs.epiccricket', 'com.nautilus.RealCricketTestMatchEdition', 'com.nazara.viratsupercricket', 'com.nextwave.bigbash', 'com.nextwave.wcc_lt', 'com.renderedideas.cricket', 'com.zapak.gl2017', 'com.zapak.worldcup.t20.cricket', 'IndVsAus2012_androidmkp.indvsaus', 'org.cocos2dx.NautilusCricket2014', 't20cricket2012_androidmkp.extraaa_innings_t20']
 }
 
+from shutil import copyfile
+import os     
 import sc_util
+
+def prepare_icons(icon_path, sc_path, icon_output_path, sc_output_path, type_d, sc_dict):
+    for type, app_ids in type_d.items():
+        if not os.path.exists(icon_output_path + '/' + type):
+            os.mkdir(icon_output_path + '/' + type)
+        if not os.path.exists(sc_output_path + '/' + type):
+            os.mkdir(sc_output_path + '/' + type)
+        
+        for app_id in app_ids:
+            #icon
+            copyfile(icon_path + '/' + app_id + '.png', icon_output_path + '/' + type + '/' + app_id + '.png')
+
+            #screenshot
+            for sc_fn in sc_dict[app_id]:
+                copyfile(sc_path + '/' + sc_fn, sc_output_path + '/' + type + '/' + sc_fn)
+
+
+if __name__ == '__main__':
+    sc_dict = sc_util.make_sc_dict('screenshots.256.distincted.rem.human/')
+    prepare_icons(
+        icon_path='icons_rem_dup_human_recrawl/icons_rem_dup_recrawl',
+        sc_path='screenshots.256.distincted.rem.human/',
+        icon_output_path='journal/sim_search/sports/icons',
+        sc_output_path='journal/sim_search/sports/screenshots',
+        type_d=sports,
+        sc_dict=sc_dict)
+    # prepare_screenshots()
