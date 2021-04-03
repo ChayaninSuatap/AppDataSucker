@@ -43,7 +43,7 @@ def copy_sc_dataset_base_on_icon(icon_dataset_fd, sc_dataset_fd, sc_fd, human_ap
                     pass
 
 def compute_icon_to_icon_distance(icon_dataset_fd, model_paths, distance_fn, pred_cache_path,
-    load_cache=False, save_cache=False, use_pca = False):
+    load_cache=False, save_cache=False, use_pca = False, pca_dim=2):
     #load models
     models = []
     for model_path in model_paths:
@@ -77,7 +77,7 @@ def compute_icon_to_icon_distance(icon_dataset_fd, model_paths, distance_fn, pre
         #transform into 2 dimension
         if use_pca:
             data = np.array(list(img_d.values()))
-            result = clustering_util.make_pca(data)
+            result = clustering_util.make_pca(data, dim = pca_dim)
             for img_d_key, e in zip(img_d.keys(), result):
                 img_d[img_d_key] = e
         
@@ -119,7 +119,7 @@ def compute_icon_to_icon_distance(icon_dataset_fd, model_paths, distance_fn, pre
     return type_d, mrr_d, found_at_count
 
 def compute_sc_to_sc_distance(sc_dataset_fd, model_paths, distance_fn, pred_cache_path,
-    load_cache = False, save_cache = False, use_pca = False):
+    load_cache = False, save_cache = False, use_pca = False, pca_dim = 2):
     #load models
     models = []
     for model_path in model_paths:
@@ -151,10 +151,10 @@ def compute_sc_to_sc_distance(sc_dataset_fd, model_paths, distance_fn, pred_cach
 
                 mrr_d[fn] = []
         
-        #transform into 2 dimension
+        #transform into 2 dimension or more
         if use_pca:
             data = np.array(list(img_d.values()))
-            result = clustering_util.make_pca(data)
+            result = clustering_util.make_pca(data, dim=pca_dim)
             for img_d_key, e in zip(img_d.keys(), result):
                 img_d[img_d_key] = e
 
@@ -361,7 +361,7 @@ if __name__ == '__main__':
         # 'sim_search_t/models/icon_model2.4_k0_t-ep-404-loss-0.318-acc-0.896-vloss-3.674-vacc-0.357.hdf5', #0.39922222222222226 #pca 0.620
         # 'sim_search_t/models/icon_model2.4_k1_t-ep-497-loss-0.273-acc-0.912-vloss-3.597-vacc-0.370.hdf5', #0.45232034632034623 #pca 0.640
         # 'sim_search_t/models/icon_model2.4_k2_t-ep-463-loss-0.283-acc-0.904-vloss-3.585-vacc-0.368.hdf5', #0.5571528822055138 #pca 0.571
-        # 'sim_search_t/models/icon_model2.4_k3_t-ep-433-loss-0.319-acc-0.898-vloss-3.493-vacc-0.380.hdf5' #0.47025526107879045 #pca 0.635
+        'sim_search_t/models/icon_model2.4_k3_t-ep-433-loss-0.319-acc-0.898-vloss-3.493-vacc-0.380.hdf5' #0.47025526107879045 #pca 0.635
         #0.6169
     ]
 
@@ -372,46 +372,49 @@ if __name__ == '__main__':
         'sim_search_t/models/sc_model2.3_k3_no_aug-ep-085-loss-0.786-acc-0.761-vloss-2.568-vacc-0.403.hdf5' #0.4203212543079958 #pca 0.622 0.6826307811156297
     ]
 
-    #icon found_at_count average
-    #10.25	6.25	3.5	1.75	0.25	0	0.25	0.25	0.25	0.25	0.25	0.5	0.25	0.5	0	0.25	0	0.25	0	0	0	0	0	0
-    #sc case
-    #154.5	54.5	41.75	15	10.5	6.75	2	4	3.5	0.75	1.25	0.5	0.25	0	0.25	0	0	0.25	0	1.25	0	0	0	0
-    #icon + sc case
-    #16.25	3.5	2	1.25	0.5	1	0.25	0.25
-
     # plot_found_at_count('16	4.75	5	1	1	1.25	0.25	0.5	0	0.25',
     #     'Frequency of nearest correct suggestion using icons and screenshots of Puzzle dataset', limit_x = 10)
 
-    save_cache = False
-    load_cache = True
-
-    icon_cache_path = 'journal/sim_search/sports/icon_k%d.obj' % (1,)
+    save_cache = True
+    load_cache = False
+    use_pca = False
+    pca_dim = 50
+    k_fold = 3
 
     # total = None
     # for i in range(4):
-    #     icon_cache_path = 'journal/sim_search/sports/icon_k%d.obj' % (i,)
-    #     type_d, mrr_d, found_at_count = \
-    #         compute_icon_to_icon_distance(
-    #             icon_dataset_fd, icon_model_paths, distance_fn = euclidean,
-    #             pred_cache_path = icon_cache_path, save_cache = save_cache,
-    #             load_cache = load_cache, use_pca = True)
-    #     found_at_count = np.array(found_at_count)
-    #     print(found_at_count)
+
+    # icon_cache_path = 'journal/sim_search/sports/icon_pcadim%d_k%d.obj' % (pca_dim,k_fold,)
+    # if not use_pca:
+    #     icon_cache_path = 'journal/sim_search/sports/icon_nopca_k%d.obj' % (k_fold,)
+
+    # type_d, mrr_d, found_at_count = \
+    #     compute_icon_to_icon_distance(
+    #         icon_dataset_fd, icon_model_paths, distance_fn = euclidean,
+    #         pred_cache_path = icon_cache_path, save_cache = save_cache,
+    #         load_cache = load_cache, use_pca = use_pca, pca_dim=pca_dim)
+
+    # found_at_count = np.array(found_at_count)
+    # print(found_at_count)
+
     #     if total is None: total = found_at_count
     #     else: total += found_at_count
     
     # plot_found_at_count((total/4).tolist(), 'Icon rank frequency (average from each fold)', limit_x=10)
     # input()
 
-    sc_cache_path = 'journal/sim_search/sports/sc_k%d.obj' % (0,)
+
     # total = None
     # for i in range(4):
-    #     sc_cache_path = 'journal/sim_search/sports/sc_k%d.obj' % (i,)
-    #     mrr_d, found_at_count = compute_sc_to_sc_distance(sc_dataset_fd, sc_model_paths, distance_fn = euclidean, pred_cache_path = sc_cache_path, load_cache = load_cache, save_cache = save_cache, use_pca = True)
-    # # print(found_at_count)
-    #     if total is None: total = found_at_count
-    #     else: total += found_at_count
-    
+
+    # sc_cache_path = 'journal/sim_search/sports/sc_pcadim%d_k%d.obj' % (pca_dim, k_fold,)
+    # if not use_pca:
+    #     sc_cache_path = 'journal/sim_search/sports/sc_nopca_k%d.obj' % ( k_fold,)
+    # mrr_d, found_at_count = compute_sc_to_sc_distance(sc_dataset_fd, sc_model_paths, distance_fn = euclidean, pred_cache_path = sc_cache_path, load_cache = load_cache, save_cache = save_cache, use_pca = use_pca, pca_dim=pca_dim)
+    # print(found_at_count)
+
+        # if total is None: total = found_at_count
+        # else: total += found_at_count
     # plot_found_at_count((total/4).tolist(), 'Icon rank frequency (average from each fold)', limit_x=10)
     # input()
     
@@ -446,14 +449,16 @@ if __name__ == '__main__':
     'basketball' : ['*', 'red'],
     'cricket' : ['*', 'orange']
 }
-    plot_pca(sc_cache_path, print_text = False,
-        auto_gen_col=False, plot_by_game=False, title='Model I10 feature visualization', label_d=sports_journal_labels_d, marker_d=sports_journal_markers_d)
+    # plot_pca(sc_cache_path, print_text = False,
+    #     auto_gen_col=False, plot_by_game=False, title='Model I10 feature visualization', label_d=sports_journal_labels_d, marker_d=sports_journal_markers_d)
 
     # total = None
-    # for i in range(4):
-    #     icon_cache_path = 'journal/sim_search/sports/icon_k%d.obj' % (i,)
-    #     sc_cache_path = 'journal/sim_search/sports/sc_k%d.obj' % (i,)
-    #     type_d, mrr_d, found_at_count = compute_game_to_game_distance(icon_cache_path, sc_cache_path)
+
+    for i in range(4):
+        icon_cache_path = 'journal/sim_search/sports/icon_nopca_k%d.obj' % ( i,)
+        sc_cache_path = 'journal/sim_search/sports/sc_nopca_k%d.obj' % ( i,)
+        type_d, mrr_d, found_at_count = compute_game_to_game_distance(icon_cache_path, sc_cache_path)
+
     #     print(found_at_count)
     #     if total is None : total = np.array(found_at_count)
     #     else: total += np.array(found_at_count)
