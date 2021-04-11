@@ -79,7 +79,7 @@ def best_val_loss(history):
             minv = x
             idx = i
 
-    return history.history['val_loss'][idx], idx
+    return history.history['val_loss'][idx], history.history['val_mae'][idx], idx
 
 if __name__ == '__main__':
 
