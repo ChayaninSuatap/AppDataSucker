@@ -37,7 +37,7 @@ def mod_model(model, freeze, denses=[64]):
     output_layer = Dense(1, activation='sigmoid')(x)
 
     model = Model(input_layer.input, output_layer)
-    model.compile(loss='mse', optimizer='adam')
+    model.compile(loss='mse', optimizer='adam', metrics=['mae'])
     return model
 
 def make_human_acc_obj_from_lines(output_path = 'journal/pred_human_acc/icon_human_acc.obj'):
@@ -82,25 +82,28 @@ def best_val_loss(history):
     return history.history['val_loss'][idx], idx
 
 if __name__ == '__main__':
-    # epochs = 100
-    # batch_size = 16
-    # denses = [32]
-    # project = 'icon_sigmoid_32_notfreeze'
-    # freeze = False
 
-    # for k_iter in range(4):
-    #     model = load_model('sim_search_t/models/icon_model2.4_k3_t-ep-433-loss-0.319-acc-0.898-vloss-3.493-vacc-0.380.hdf5')
-    #     model = mod_model(model, freeze=freeze, denses=denses)
+    epochs = 100
+    batch_size = 16
+    denses = [32]
+    project = 'icon_sigmoid_32_notfreeze'
+    freeze = False
 
-    #     app_id_avg_acc_d = global_util.load_pickle('journal/pred_human_acc/icon_human_acc.obj')
-    #     dat = make_icon_dataset(app_id_avg_acc_d)
-    #     x_train, y_train, x_test, y_test = keras_util.gen_k_fold_pass_as_np(aial=dat, kf_pass=k_iter, n_splits=4)
+    for k_iter in range(4):
+        model = load_model('sim_search_t/models/icon_model2.4_k3_t-ep-433-loss-0.319-acc-0.898-vloss-3.493-vacc-0.380.hdf5')
+        model = mod_model(model, freeze=freeze, denses=denses)
 
-    #     checkpoint_save_path = 'journal/pred_human_acc/%s_k%d.hdf5' % (project, k_iter,)
-    #     checkpoint = ModelCheckpoint(checkpoint_save_path, monitor='val_loss', save_best_only=True, verbose=0)
-    #     history = model.fit(x=x_train, y=y_train, validation_data=(x_test, y_test),
-    #     epochs=epochs, batch_size=batch_size, callbacks=[checkpoint], verbose=0)
-    #     print(best_val_loss(history))
+        app_id_avg_acc_d = global_util.load_pickle('journal/pred_human_acc/icon_human_acc.obj')
+        dat = make_icon_dataset(app_id_avg_acc_d)
+        global_util.save_pickle(dat, 'journal/pred_human_acc/icon_feature_human_acc.obj')
+        input('done')
+        x_train, y_train, x_test, y_test = keras_util.gen_k_fold_pass_as_np(aial=dat, kf_pass=k_iter, n_splits=4)
+
+        checkpoint_save_path = 'journal/pred_human_acc/%s_k%d.hdf5' % (project, k_iter,)
+        checkpoint = ModelCheckpoint(checkpoint_save_path, monitor='val_loss', save_best_only=True, verbose=0)
+        history = model.fit(x=x_train, y=y_train, validation_data=(x_test, y_test),
+        epochs=epochs, batch_size=batch_size, callbacks=[checkpoint], verbose=0)
+        print(best_val_loss(history))
 
     # predict test set
     # model = load_model('journal/pred_human_acc/icon_sigmoid_16_k0.hdf5')
@@ -119,22 +122,25 @@ if __name__ == '__main__':
     
 
 
-    epochs = 100
-    batch_size = 8
-    denses = [16]
-    project = 'sc_sigmoid_16_nofreeze'
-    freeze = False
+    # epochs = 100
+    # batch_size = 8
+    # denses = [16]
+    # project = 'sc_sigmoid_16_nofreeze'
+    # freeze = False
 
-    for k_iter in range(4):
-        model = load_model('sim_search_t/models/sc_model2.3_k3_no_aug-ep-085-loss-0.786-acc-0.761-vloss-2.568-vacc-0.403.hdf5')
-        model = mod_model(model, freeze=freeze, denses=denses)
+    # for k_iter in range(4):
+    #     model = load_model('sim_search_t/models/sc_model2.3_k3_no_aug-ep-085-loss-0.786-acc-0.761-vloss-2.568-vacc-0.403.hdf5')
+    #     model = mod_model(model, freeze=freeze, denses=denses)
 
-        app_id_avg_acc_d = global_util.load_pickle('journal/pred_human_acc/sc_human_acc.obj')
-        dat = make_sc_dataset(app_id_avg_acc_d)
-        x_train, y_train, x_test, y_test = keras_util.gen_k_fold_pass_as_np(aial=dat, kf_pass=k_iter, n_splits=4)
+    #     app_id_avg_acc_d = global_util.load_pickle('journal/pred_human_acc/sc_human_acc.obj')
+    #     dat = make_sc_dataset(app_id_avg_acc_d)
 
-        checkpoint_save_path = 'journal/pred_human_acc/%s_k%d.hdf5' % (project, k_iter,)
-        checkpoint = ModelCheckpoint(checkpoint_save_path, monitor='val_loss', save_best_only=True, verbose=0)
-        history = model.fit(x=x_train, y=y_train, validation_data=(x_test, y_test),
-        epochs=epochs, batch_size=batch_size, callbacks=[checkpoint], verbose=0)
-        print(best_val_loss(history))
+    #     # global_util.save_pickle(dat, 'journal/pred_human_acc/sc_feature_human_acc.obj')
+    #     # input('done')
+    #     x_train, y_train, x_test, y_test = keras_util.gen_k_fold_pass_as_np(aial=dat, kf_pass=k_iter, n_splits=4)
+
+    #     checkpoint_save_path = 'journal/pred_human_acc/%s_k%d.hdf5' % (project, k_iter,)
+    #     checkpoint = ModelCheckpoint(checkpoint_save_path, monitor='val_loss', save_best_only=True, verbose=0)
+    #     history = model.fit(x=x_train, y=y_train, validation_data=(x_test, y_test),
+    #     epochs=epochs, batch_size=batch_size, callbacks=[checkpoint], verbose=0)
+    #     print(best_val_loss(history))
