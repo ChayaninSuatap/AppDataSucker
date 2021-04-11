@@ -252,6 +252,17 @@ def gen_k_fold_pass(aial, kf_pass, n_splits):
             break
     return app_ids_and_labels_train, app_ids_and_labels_test
 
+def gen_k_fold_pass_as_np(**args):
+    x_train, y_train, x_test, y_test = [], [], [], []
+    train_set, test_set = gen_k_fold_pass(**args)
+    for x,y in train_set:
+        x_train.append(x)
+        y_train.append(y)
+    for x,y in test_set:
+        x_test.append(x)
+        y_test.append(y)
+    return np.array(x_train), np.array(y_train) , np.array(x_test), np.array(y_test)
+
 def metric_top_k(k):
     o = functools.partial(keras.metrics.top_k_categorical_accuracy, k=k)
     o.__name__ = 'top_' + str(k)
