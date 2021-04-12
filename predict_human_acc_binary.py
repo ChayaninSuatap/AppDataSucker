@@ -63,6 +63,19 @@ def make_sc_dataset(sc_human_acc_obj, sc_dir = 'screenshots_human_test/'):
         output.append( (sc, avg_human_acc))
     return output
 
+def best_epoch_by_val(history, val, metrics):
+    idx = None
+    maxv = None
+    for i,x in enumerate(history.history[val]):
+        if maxv is None or x > maxv:
+            maxv = x
+            idx = i
+    
+    output = []
+    for metric in metrics:
+        output.append(history.history[metric][idx])
+    return output
+
 if __name__ == '__main__':
     # freeze = True
     # denses = [8]
