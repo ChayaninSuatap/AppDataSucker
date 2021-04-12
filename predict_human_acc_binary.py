@@ -74,6 +74,7 @@ def best_epoch_by_val(history, val, metrics):
     output = []
     for metric in metrics:
         output.append(history.history[metric][idx])
+    output.append(idx)
     return output
 
 if __name__ == '__main__':
