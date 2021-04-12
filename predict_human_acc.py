@@ -7,6 +7,7 @@ import numpy as np
 import keras_util
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras import backend as K
+from sklearn.metrics import r2_score
 
 def add_dense(size, last_layer, dropout_rate = 0.5, level=0):
     x = Dense(size)(last_layer)
@@ -82,11 +83,6 @@ def best_val_loss(history):
 
     return history.history['val_loss'][idx], history.history['val_mae'][idx], idx
 
-def coeff_determination(y_true, y_pred):
-    SS_res =  K.sum(K.square( y_true-y_pred ))
-    SS_tot = K.sum(K.square( y_true - K.mean(y_true) ) )
-    return ( 1 - SS_res/(SS_tot + K.epsilon()) )
-
 def r2(y_test, model_preds):
     preds = np.array([x[0] for x in model_preds])
     ss_res = np.square(y_test - preds).sum()
@@ -142,6 +138,7 @@ if __name__ == '__main__':
         # print(eval_result)
 
         print(r2(y_test, pred_result))
+        print(r2_score(y_test, pred_result))
 
         # for x in y_test: print(x)
     

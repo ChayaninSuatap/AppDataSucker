@@ -375,48 +375,48 @@ if __name__ == '__main__':
     # plot_found_at_count('16	4.75	5	1	1	1.25	0.25	0.5	0	0.25',
     #     'Frequency of nearest correct suggestion using icons and screenshots of Puzzle dataset', limit_x = 10)
 
-    save_cache = True
-    load_cache = False
-    use_pca = False
-    pca_dim = 50
+    save_cache = False
+    load_cache = True
+    use_pca = True
+    pca_dim = 40
     k_fold = 3
 
-    # total = None
-    # for i in range(4):
+    total = None
+    for k_fold in range(4):
 
-    # icon_cache_path = 'journal/sim_search/sports/icon_pcadim%d_k%d.obj' % (pca_dim,k_fold,)
-    # if not use_pca:
-    #     icon_cache_path = 'journal/sim_search/sports/icon_nopca_k%d.obj' % (k_fold,)
+        icon_cache_path = 'journal/sim_search/sports/icon_pcadim%d_k%d.obj' % (pca_dim,k_fold,)
+        if not use_pca:
+            icon_cache_path = 'journal/sim_search/sports/icon_nopca_k%d.obj' % (k_fold,)
 
-    # type_d, mrr_d, found_at_count = \
-    #     compute_icon_to_icon_distance(
-    #         icon_dataset_fd, icon_model_paths, distance_fn = euclidean,
-    #         pred_cache_path = icon_cache_path, save_cache = save_cache,
-    #         load_cache = load_cache, use_pca = use_pca, pca_dim=pca_dim)
+        type_d, mrr_d, found_at_count = \
+            compute_icon_to_icon_distance(
+                icon_dataset_fd, icon_model_paths, distance_fn = euclidean,
+                pred_cache_path = icon_cache_path, save_cache = save_cache,
+                load_cache = load_cache, use_pca = use_pca, pca_dim=pca_dim)
 
-    # found_at_count = np.array(found_at_count)
-    # print(found_at_count)
+        found_at_count = np.array(found_at_count)
+        # print(found_at_count)
 
-    #     if total is None: total = found_at_count
-    #     else: total += found_at_count
+        if total is None: total = found_at_count
+        else: total += found_at_count
     
-    # plot_found_at_count((total/4).tolist(), 'Icon rank frequency (average from each fold)', limit_x=10)
-    # input()
+    print((total/4).tolist())
+    # plot_found_at_count((total/4).tolist(), 'Icon rank frequency (pca dimension = 40)', limit_x=10)
+    input((total/4).tolist())
 
 
-    # total = None
-    # for i in range(4):
+    total = None
+    for k_fold in range(4):
+        sc_cache_path = 'journal/sim_search/sports/sc_pcadim%d_k%d.obj' % (pca_dim, k_fold,)
+        if not use_pca:
+            sc_cache_path = 'journal/sim_search/sports/sc_nopca_k%d.obj' % ( k_fold,)
+        mrr_d, found_at_count = compute_sc_to_sc_distance(sc_dataset_fd, sc_model_paths, distance_fn = euclidean, pred_cache_path = sc_cache_path, load_cache = load_cache, save_cache = save_cache, use_pca = use_pca, pca_dim=pca_dim)
 
-    # sc_cache_path = 'journal/sim_search/sports/sc_pcadim%d_k%d.obj' % (pca_dim, k_fold,)
-    # if not use_pca:
-    #     sc_cache_path = 'journal/sim_search/sports/sc_nopca_k%d.obj' % ( k_fold,)
-    # mrr_d, found_at_count = compute_sc_to_sc_distance(sc_dataset_fd, sc_model_paths, distance_fn = euclidean, pred_cache_path = sc_cache_path, load_cache = load_cache, save_cache = save_cache, use_pca = use_pca, pca_dim=pca_dim)
-    # print(found_at_count)
-
-        # if total is None: total = found_at_count
-        # else: total += found_at_count
-    # plot_found_at_count((total/4).tolist(), 'Icon rank frequency (average from each fold)', limit_x=10)
-    # input()
+        if total is None: total = found_at_count
+        else: total += found_at_count
+    print((total/4).tolist())
+    # plot_found_at_count((total/4).tolist(), 'Screenshot rank frequency (pca dimension = 40)', limit_x=10)
+    input()
     
     # # show_kmeans_clustering(sc_cache_path)
     # five_labels_d = {'blocky':'Blocky', 'card':'Card', 'driving_sim':'Driving simulator', 'war':'War','words':'Word'}
@@ -452,15 +452,16 @@ if __name__ == '__main__':
     # plot_pca(sc_cache_path, print_text = False,
     #     auto_gen_col=False, plot_by_game=False, title='Model I10 feature visualization', label_d=sports_journal_labels_d, marker_d=sports_journal_markers_d)
 
-    # total = None
+    total = None
 
     for i in range(4):
-        icon_cache_path = 'journal/sim_search/sports/icon_nopca_k%d.obj' % ( i,)
-        sc_cache_path = 'journal/sim_search/sports/sc_nopca_k%d.obj' % ( i,)
+        icon_cache_path = 'journal/sim_search/sports/icon_pcadim40_k%d.obj' % ( i,)
+        sc_cache_path = 'journal/sim_search/sports/sc_pcadim40_k%d.obj' % ( i,)
         type_d, mrr_d, found_at_count = compute_game_to_game_distance(icon_cache_path, sc_cache_path)
 
-    #     print(found_at_count)
-    #     if total is None : total = np.array(found_at_count)
-    #     else: total += np.array(found_at_count)
-    # plot_found_at_count((total/4).tolist(), 'Icon + SS rank frequency (average from each fold)', limit_x=10)
+        # print(found_at_count)
+        if total is None : total = np.array(found_at_count)
+        else: total += np.array(found_at_count)
+    print((total/4).tolist())
+    # plot_found_at_count((total/4).tolist(), 'Icon + Screenshot rank frequency (pca dimension = 40)', limit_x=10)
     # write_rank_into_file(type_d = type_d, mrr_d = mrr_d)
