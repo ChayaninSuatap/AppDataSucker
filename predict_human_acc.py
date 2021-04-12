@@ -6,6 +6,7 @@ import icon_util
 import numpy as np
 import keras_util
 from tensorflow.keras.callbacks import ModelCheckpoint
+from tensorflow.keras import backend as K
 
 def add_dense(size, last_layer, dropout_rate = 0.5, level=0):
     x = Dense(size)(last_layer)
@@ -81,37 +82,47 @@ def best_val_loss(history):
 
     return history.history['val_loss'][idx], history.history['val_mae'][idx], idx
 
+def coeff_determination(y_true, y_pred):
+    SS_res =  K.sum(K.square( y_true-y_pred ))
+    SS_tot = K.sum(K.square( y_true - K.mean(y_true) ) )
+    return ( 1 - SS_res/(SS_tot + K.epsilon()) )
+
+def r2(y_test, model_preds):
+    preds = np.array([x[0] for x in model_preds])
+    ss_res = np.square(y_test - preds).sum()
+    ss_tot = np.square(y_test - y_test.mean()).sum()
+    return 1 - ss_res/(ss_tot + np.finfo(float).eps )
+
 if __name__ == '__main__':
 
-    epochs = 100
-    batch_size = 16
-    denses = [32]
-    project = 'icon_sigmoid_32_notfreeze'
-    freeze = False
+    # epochs = 100
+    # batch_size = 16
+    # denses = [32]
+    # project = 'icon_sigmoid_32_notfreeze'
+    # freeze = False
 
-    for k_iter in range(4):
-        model = load_model('sim_search_t/models/icon_model2.4_k3_t-ep-433-loss-0.319-acc-0.898-vloss-3.493-vacc-0.380.hdf5')
-        model = mod_model(model, freeze=freeze, denses=denses)
+    # for k_iter in range(4):
+    #     model = load_model('sim_search_t/models/icon_model2.4_k3_t-ep-433-loss-0.319-acc-0.898-vloss-3.493-vacc-0.380.hdf5')
+    #     model = mod_model(model, freeze=freeze, denses=denses)
 
-        app_id_avg_acc_d = global_util.load_pickle('journal/pred_human_acc/icon_human_acc.obj')
-        dat = make_icon_dataset(app_id_avg_acc_d)
-        global_util.save_pickle(dat, 'journal/pred_human_acc/icon_feature_human_acc.obj')
-        input('done')
-        x_train, y_train, x_test, y_test = keras_util.gen_k_fold_pass_as_np(aial=dat, kf_pass=k_iter, n_splits=4)
+    #     app_id_avg_acc_d = global_util.load_pickle('journal/pred_human_acc/icon_human_acc.obj')
+    #     dat = make_icon_dataset(app_id_avg_acc_d)
+    #     global_util.save_pickle(dat, 'journal/pred_human_acc/icon_feature_human_acc.obj')
+    #     input('done')
+    #     x_train, y_train, x_test, y_test = keras_util.gen_k_fold_pass_as_np(aial=dat, kf_pass=k_iter, n_splits=4)
 
-        checkpoint_save_path = 'journal/pred_human_acc/%s_k%d.hdf5' % (project, k_iter,)
-        checkpoint = ModelCheckpoint(checkpoint_save_path, monitor='val_loss', save_best_only=True, verbose=0)
-        history = model.fit(x=x_train, y=y_train, validation_data=(x_test, y_test),
-        epochs=epochs, batch_size=batch_size, callbacks=[checkpoint], verbose=0)
-        print(best_val_loss(history))
+    #     checkpoint_save_path = 'journal/pred_human_acc/%s_k%d.hdf5' % (project, k_iter,)
+    #     checkpoint = ModelCheckpoint(checkpoint_save_path, monitor='val_loss', save_best_only=True, verbose=0)
+    #     history = model.fit(x=x_train, y=y_train, validation_data=(x_test, y_test),
+    #     epochs=epochs, batch_size=batch_size, callbacks=[checkpoint], verbose=0)
+    #     print(best_val_loss(history))
 
     # predict test set
-    # model = load_model('journal/pred_human_acc/icon_sigmoid_16_k0.hdf5')
+    # model = load_model('journal/pred_human_acc/icon_sigmoid_32_nofreeze_k1.hdf5')
     # app_id_avg_acc_d = global_util.load_pickle('journal/pred_human_acc/icon_human_acc.obj')
     # dat = make_icon_dataset(app_id_avg_acc_d)
-    # x_train, y_train, x_test, y_test = keras_util.gen_k_fold_pass_as_np(aial=dat, kf_pass=0, n_splits=4)
+    # x_train, y_train, x_test, y_test = keras_util.gen_k_fold_pass_as_np(aial=dat, kf_pass=1, n_splits=4)
 
-    # model.compile(loss='mse', optimizer='adam', metrics=['mae'])
     # pred_result = model.predict(x_test, batch_size = 1)
     # for x in pred_result: print(x[0])
     # eval_result = model.evaluate(x_test, y_test, batch_size=1)
@@ -119,6 +130,20 @@ if __name__ == '__main__':
 
     # for x in y_test: print(x)
 
+    for k_iter in range(4):
+        model = load_model('journal/pred_human_acc/sc_sigmoid_16_k%d.hdf5' % (k_iter,))
+        model.compile(loss='mse', optimizer='adam', metrics=['mae', coeff_determination])
+        app_id_avg_acc_d = global_util.load_pickle('journal/pred_human_acc/sc_human_acc.obj')
+        dat = make_sc_dataset(app_id_avg_acc_d)
+        x_train, y_train, x_test, y_test = keras_util.gen_k_fold_pass_as_np(aial=dat, kf_pass=k_iter, n_splits=4)
+
+        pred_result = model.predict(x_test, batch_size = 1)
+        # eval_result = model.evaluate(x_test, y_test, batch_size=1)
+        # print(eval_result)
+
+        print(r2(y_test, pred_result))
+
+        # for x in y_test: print(x)
     
 
 
