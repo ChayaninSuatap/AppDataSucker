@@ -89,7 +89,23 @@ def r2(y_test, model_preds):
     ss_tot = np.square(y_test - y_test.mean()).sum()
     return 1 - ss_res/(ss_tot + np.finfo(float).eps )
 
+
+def find_app_ids_each_fold_by_lines():
+    app_ids = []
+    print('read')
+    for i in range(340):
+        line = input()
+        app_ids.append(line)
+    for i in range(4):
+        _, app_ids_by_fold = keras_util.gen_k_fold_pass(app_ids, kf_pass=i, n_splits=4)
+        print('fold',i)
+        for app_id in app_ids_by_fold:
+            print(app_id)
+
+
 if __name__ == '__main__':
+
+    find_app_ids_each_fold_by_lines()
 
     # epochs = 100
     # batch_size = 16
@@ -126,19 +142,19 @@ if __name__ == '__main__':
 
     # for x in y_test: print(x)
 
-    for k_iter in range(4):
-        model = load_model('journal/pred_human_acc/sc_sigmoid_16_k%d.hdf5' % (k_iter,))
-        model.compile(loss='mse', optimizer='adam', metrics=['mae', coeff_determination])
-        app_id_avg_acc_d = global_util.load_pickle('journal/pred_human_acc/sc_human_acc.obj')
-        dat = make_sc_dataset(app_id_avg_acc_d)
-        x_train, y_train, x_test, y_test = keras_util.gen_k_fold_pass_as_np(aial=dat, kf_pass=k_iter, n_splits=4)
+    # for k_iter in range(4):
+    #     model = load_model('journal/pred_human_acc/sc_sigmoid_16_k%d.hdf5' % (k_iter,))
+    #     model.compile(loss='mse', optimizer='adam', metrics=['mae', coeff_determination])
+    #     app_id_avg_acc_d = global_util.load_pickle('journal/pred_human_acc/sc_human_acc.obj')
+    #     dat = make_sc_dataset(app_id_avg_acc_d)
+    #     x_train, y_train, x_test, y_test = keras_util.gen_k_fold_pass_as_np(aial=dat, kf_pass=k_iter, n_splits=4)
 
-        pred_result = model.predict(x_test, batch_size = 1)
-        # eval_result = model.evaluate(x_test, y_test, batch_size=1)
-        # print(eval_result)
+    #     pred_result = model.predict(x_test, batch_size = 1)
+    #     # eval_result = model.evaluate(x_test, y_test, batch_size=1)
+    #     # print(eval_result)
 
-        print(r2(y_test, pred_result))
-        print(r2_score(y_test, pred_result))
+    #     print(r2(y_test, pred_result))
+    #     print(r2_score(y_test, pred_result))
 
         # for x in y_test: print(x)
     
