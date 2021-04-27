@@ -3,6 +3,7 @@ from icon_util import load_icon_by_fn, rgb_to_gray
 from tensorflow.keras.models import load_model, Model
 import tensorflow as tf
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+tf.config.run_functions_eagerly(True)
 import matplotlib.pyplot as plt
 import numpy as np
 import keras_util
@@ -13,50 +14,77 @@ import gc
 
 cates = ['BOARD', 'TRIVIA',	'ARCADE','CARD','MUSIC','RACING','ACTION','PUZZLE','SIMULATION','STRATEGY','ROLE_PLAYING','SPORTS','ADVENTURE','CASINO','WORD','CASUAL','EDUCATIONAL']
 
-def load_computed_aial():
+def load_computed_aial(is_sc=False, is_test=False):
     output = {}
-    fd = 'visualize_cnn/gradcam/'
+    fd = 'visualize_cnn/gradcam/icon/'
+    if is_sc:
+        fd = 'visualize_cnn/gradcam/screenshot/'
     for cate_fd in os.listdir(fd):
-        for icon_fn in os.listdir(fd + cate_fd + '/train/'):
+        for icon_fn in os.listdir((fd + cate_fd ) + ('/train/' if not is_test else '/test/')):
             app_id = icon_fn.split('_')[-1][:-4]
             output[app_id] = True
     return output
 
 
 if __name__ == '__main__':
-        model_path = 'sim_search_t/models/icon_model2.4_k3_t-ep-433-loss-0.319-acc-0.898-vloss-3.493-vacc-0.380.hdf5'
-        # model_path = 'sim_search_t/models/sc_model2.3_k3_no_aug-ep-085-loss-0.786-acc-0.761-vloss-2.568-vacc-0.403.hdf5'
-        sc_dataset_fd = 'c:/screenshots.resized/'
+        # model_path = 'sim_search_t/models/icon_model2.4_k3_t-ep-433-loss-0.319-acc-0.898-vloss-3.493-vacc-0.380.hdf5'
+        model_path = 'sim_search_t/models/sc_model2.3_k3_no_aug-ep-085-loss-0.786-acc-0.761-vloss-2.568-vacc-0.403.hdf5'
+        sc_dataset_fd = 'screenshots.256.distincted.rem.human/'
         visualize_fd = None#'visualize_cnn/board/'
         explainer_fn = None#make_vanilla_grad_explain_fn()
         visualize_fn = visualize_grad_cam
         # use_only_selected_cate = True#if False means dont predict from cate
-        is_sc = False
+        is_sc = True
+        is_test = True
         count_max = None
         use_grayscale = False
         use_custom_gradcam = False
         show_visualize = False
         compute_color_magnitude = False
-        min_conf = 0
+        k_fold = 3
+        classify_correct_only = True
+        filter_cates = None
+        exclude_cates = ['BOARD', 'PUZZLE', 'ROLE_PLAYING']
 
         #auto declare
         count = 0
         magnitude_ratios = [] if explainer_fn is None else None
 
-        computed_aials = load_computed_aial()
+        computed_aials = load_computed_aial(is_sc=is_sc, is_test=is_test)
 
         aial = load_pickle('aial_seed_327.obj')
         m = load_model(model_path)
-        aial_train, aial_test = keras_util.gen_k_fold_pass(aial, kf_pass=3, n_splits=4)
-        app_id_pred_d = []
-        random.shuffle(aial_train)
+        aial_train, aial_test = keras_util.gen_k_fold_pass(aial, kf_pass=k_fold, n_splits=4)
+        visualize_set = aial_train if not is_test else aial_test
+        random.shuffle(visualize_set)
+
+        if is_sc:
+            new_visualize_set = []
+            for app_id, *rest  in visualize_set:
+                for i in range(21):
+                    sc_fn = '%s%2d.png' % (app_id, i)
+                    if os.path.exists(sc_dataset_fd + sc_fn):
+                        new_visualize_set.append((sc_fn, ) + tuple(rest))
+                    else:
+                        break
+            visualize_set = new_visualize_set
         
-        for x in aial_train:
+        for x in visualize_set:
             app_id = x[0]
             if app_id in computed_aials:
                 print('computed already')
                 continue
             real_cate_index = np.array(x[2]).argmax()
+
+            #filter include cates
+            if filter_cates is not None:
+                if cates[real_cate_index] not in filter_cates:
+                    continue
+                    
+            #filter exclude cates
+            if exclude_cates is not None:
+                if cates[real_cate_index] in exclude_cates:
+                    continue
 
             #show only or skip game from CATE..
             # if use_only_selected_cate and cates[real_cate_index] != filter_cate:
@@ -64,21 +92,12 @@ if __name__ == '__main__':
             # if not use_only_selected_cate and cates[real_cate_index] == filter_cate:
             #     continue
 
+            normed_imgs = []
             if not is_sc:
                 img_path = 'icons.combine.recrawled/' + app_id + '.png'
                 normed_img = load_icon_by_fn(img_path, 128, 128)/255
             else:
-                #find all exists sc fns of a app_id
-                exists_sc_fns = []
-                for i in range(21):
-                    sc_fn = '%s%2d.png' % (app_id, i)
-                    if os.path.exists(sc_dataset_fd + sc_fn):
-                        exists_sc_fns.append(sc_dataset_fd + sc_fn)
-                    else:
-                        break
-                if len(exists_sc_fns)==0:
-                    continue
-                img_path = random.choice(exists_sc_fns)
+                img_path = sc_dataset_fd + app_id
                 normed_img = load_icon_by_fn(img_path, 256, 160, True)/255
 
             if use_grayscale:
@@ -93,6 +112,10 @@ if __name__ == '__main__':
             for pred_val, cate_str in zip(pred[0], cates):
                 pred_tuple.append( (cate_str,pred_val))
             pred_tuple = sorted(pred_tuple, key = lambda x: x[1], reverse=True)
+            if classify_correct_only:
+                if pred_tuple[0][0] != cates[real_cate_index]:
+                    print('not corrected')
+                    continue
             print(pred_tuple[:5])
 
             #visualize if not reach count max
@@ -106,8 +129,8 @@ if __name__ == '__main__':
                         save_dest = None
 
                     result = visualize_fn(m, normed_img, cate_index,
-                        save_dest = 'visualize_cnn/gradcam/%s/train/%.3f_%s_%s.png' 
-                            % (cates[cate_index], conf, cates[real_cate_index], app_id),
+                        save_dest = 'visualize_cnn/gradcam/%s/%s/%s/%.3f_%s_%s.png' 
+                            % ('icon' if not is_sc else 'screenshot', cates[cate_index] ,'train' if not is_test else 'test', conf, cates[real_cate_index], app_id),
                         use_custom_gradcam=use_custom_gradcam,
                         show_visualize=show_visualize,
                         compute_color_magnitude=compute_color_magnitude)

@@ -6,8 +6,9 @@ import numpy as np
 import keras_util
 import random
 import math
-from basic_features import my_fit_scaler, my_transform_to_scaler, make_model
-from basic_features_t_augment import split_aial
+from basic_features import my_fit_scaler, my_transform_to_scaler, make_model, extract_hog, load_dataset
+from basic_features_t_augment import split_aial, make_test_set
+from tensorflow.keras.models import load_model
 
 def make_not_computed_gist_sc_list(old_sc_gist_txt, sc_fns, app_ids):
     old_computed_list = {}
@@ -170,8 +171,9 @@ if __name__ == '__main__':
     #     'basic_features_t/aial_hog16_sc_test_k3.obj')
     
     # aial_train = load_pickle('basic_features_t/aial_hog16_sc_train_k3.obj')
-    aial_test  = load_pickle('basic_features_t/aial_hog16_sc_test_k3.obj')
-    input(aial_test)
+    # aial_test  = load_pickle('basic_features_t/aial_hog16_sc_test_k3.obj')
+    # input(aial_test)
+
     # train_gen = make_dataset_generator(aial_train, 24, 'basic_features_t/hog16_sc_train_k3/', use_random=True)
     # test_gen = make_dataset_generator(aial_test, 24, 'basic_features_t/hog16_sc_test_k3/', use_random=False)
     # m = make_model(feature = 'hog', input_shape=9072)
@@ -180,10 +182,16 @@ if __name__ == '__main__':
     #     validation_steps = math.ceil(len(aial_test)/24),
     #     epochs=10)
 
+    # aial = load('aial_seed_327.obj')
+    # split_train_test('basic_features_t/sc_hog16.gzip', 
+    #     train_path='basic_features_t/hog16_sc_train_k2.gzip',
+    #     test_path ='basic_features_t/hog16_sc_test_k2.gzip', k_iter = 2, aial_obj=aial, sc=True)
+
     aial = load('aial_seed_327.obj')
-    split_train_test('basic_features_t/sc_hog16.gzip', 
-        train_path='basic_features_t/hog16_sc_train_k2.gzip',
-        test_path ='basic_features_t/hog16_sc_test_k2.gzip', k_iter = 2, aial_obj=aial, sc=True)
+    # for i in range(4):
+    #     split_train_test('basic_features_t/gist_icon_t.obj', 
+    #         train_path='journal/basic_features/gist_icon_train_k%d.gzip' % (i,),
+    #         test_path ='journal/basic_features/gist_icon_test_k%d.gzip' % (i,), k_iter = i, aial_obj=aial, sc=False)
 
     # check_gist_has_all_icons('basic_features_t/gist_icon_t.txt', app_ids)
     # make_not_computed_gist_sc_list('basic_features_t/gist.sc.txt', os.listdir('screenshots.256.distincted.rem.human'), app_ids)
@@ -191,3 +199,23 @@ if __name__ == '__main__':
     # make_gist_obj('basic_features_t/gist.sc.txt', 'basic_features_t/gist_sc_t.obj')
     # o = load('basic_features_t/gist_sc_t.obj')
     # print(o['jp.danball.valistroke11.png'])
+
+    #hog stuff
+    # model = load_model('journal/basic_features/models/hog16_icon_model1_k3_t-ep-476-loss-0.080-acc-0.714-vloss-2.941-vacc-0.316.hdf5')
+
+    # def extract_fn(img):
+    #     return extract_hog(img, pixels_per_cell=(16,16))
+
+    # aial_train, aial_test = split_aial(aial, k_iter=3)
+    # test_set = make_test_set(aial_test, samples_fd='icons.combine.recrawled/', resize_w=180, resize_h=180, extract_fn=extract_fn)
+
+    # result = model.evaluate(test_set[0], test_set[1])
+    # keras_util.eval_top5(model, test_set[0], test_set[1])
+
+    #gist stuff
+    model = load_model('journal/basic_features/models/gist_sc_model7_k3_t-ep-980-loss-0.074-acc-0.717-vloss-2.981-vacc-0.284.hdf5')
+    test_fn = 'journal/basic_features/gist_sc/gist_sc_test_k3.obj'
+    xtrain, xtest, ytrain, ytest = load_dataset(test_fn, test_fn)
+
+    keras_util.eval_top5(model, xtest, ytest)
+

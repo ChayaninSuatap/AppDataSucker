@@ -70,8 +70,12 @@ def make_sc_dataset(sc_human_acc_obj, sc_dir = 'screenshots_human_test/'):
     return output
 
 if __name__ == '__main__':
-    d = global_util.load_pickle('journal/pred_human_acc/icon_human_acc_17reg.obj')
-    dat = make_icon_dataset(d)
+    # d = global_util.load_pickle('journal/pred_human_acc/sc_human_acc_17reg.obj')
+    # for key, val in d.items():
+    #     for v in val: print(v, end=' ')
+    #     print()
+    # input()
+    # dat = make_icon_dataset(d)
     # global_util.save_pickle(dat, 'journal/pred_human_acc/sc_feature_human_acc_17reg.obj')
     epochs = 50
     batch_size = 16
@@ -79,6 +83,7 @@ if __name__ == '__main__':
     denses = []
     model = load_model('sim_search_t/models/icon_model2.4_k3_t-ep-433-loss-0.319-acc-0.898-vloss-3.493-vacc-0.380.hdf5')
     model = mod_model(model, freeze, denses)
+    model.summary()
 
     for k_iter in range(4):
         x_train, y_train, x_test, y_test = keras_util.gen_k_fold_pass_as_np(aial=dat, kf_pass=k_iter, n_splits=4)

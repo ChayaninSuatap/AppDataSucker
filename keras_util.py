@@ -273,13 +273,20 @@ def metric_top_k_tf(k):
     o.__name__ = 'top_' + str(k)
     return o
 
-def eval_top_5(model, test_generator, steps, use_tf_metric=False):
+def eval_top_5_generator(model, test_generator, steps, use_tf_metric=False):
     gen = test_generator
     metric = metric_top_k_tf if use_tf_metric else metric_top_k
     model.compile(optimizer='adam',
         loss='categorical_crossentropy',
         metrics=[metric(1),metric(2),metric(3),metric(4), metric(5)])
     print(model.evaluate_generator(gen, steps=steps))
+
+def eval_top5(model, x, y):
+    metric = metric_top_k
+    model.compile(optimizer='adam',
+        loss='categorical_crossentropy',
+        metrics=[metric(1),metric(2),metric(3),metric(4), metric(5)])
+    print(model.evaluate(x, y))
 
 def plot_confusion_matrix_generator(model, ground_truth, test_gen_for_predict, steps_per_epoch):
     from sklearn.metrics import confusion_matrix

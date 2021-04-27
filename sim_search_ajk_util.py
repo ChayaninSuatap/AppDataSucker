@@ -7,6 +7,7 @@ import numpy as np
 import clustering_util
 import matplotlib.pyplot as plt
 from collections import OrderedDict
+from tensorflow.keras.models import load_model
 
 def copy_sc_dataset_base_on_icon(icon_dataset_fd, sc_dataset_fd, sc_fd, human_app_ids_path = 'app_ids_for_human_test.obj'):
     for type_fd in os.listdir(icon_dataset_fd):
@@ -43,7 +44,7 @@ def copy_sc_dataset_base_on_icon(icon_dataset_fd, sc_dataset_fd, sc_fd, human_ap
                     pass
 
 def compute_icon_to_icon_distance(icon_dataset_fd, model_paths, distance_fn, pred_cache_path,
-    load_cache=False, save_cache=False, use_pca = False, pca_dim=2):
+    load_cache=False, save_cache=False, use_pca = False, pca_dim=2, metric='MRR'):
     #load models
     models = []
     for model_path in model_paths:
@@ -74,7 +75,7 @@ def compute_icon_to_icon_distance(icon_dataset_fd, model_paths, distance_fn, pre
 
                 mrr_d[fn] = []
 
-        #transform into 2 dimension
+        #transform into pca_dim dimension
         if use_pca:
             data = np.array(list(img_d.values()))
             result = clustering_util.make_pca(data, dim = pca_dim)
@@ -99,27 +100,31 @@ def compute_icon_to_icon_distance(icon_dataset_fd, model_paths, distance_fn, pre
         save_pickle((type_d, img_d, mrr_d, dis_d),pred_cache_path)
         print('save done') 
 
-    #compute mrr
-    total_mrr = 0
-    added_count = 0
-    found_at_count = np.zeros(( len(img_d)-1,))
-    for k,v in mrr_d.items():
-        main_type = type_d[k]
-        for i,(img_b, dis) in enumerate(v):
-            found_at = i + 1
-            if main_type == type_d[img_b]:
-                total_mrr += 1 / found_at
-                added_count += 1
-                found_at_count[found_at-1]+=1
-                break
+    if metric == 'MRR':
+        #compute mrr
+        total_mrr = 0
+        added_count = 0
+        found_at_count = np.zeros(( len(img_d)-1,))
+        for k,v in mrr_d.items():
+            main_type = type_d[k]
+            for i,(img_b, dis) in enumerate(v):
+                found_at = i + 1
+                if main_type == type_d[img_b]:
+                    total_mrr += 1 / found_at
+                    added_count += 1
+                    found_at_count[found_at-1]+=1
+                    break
 
-    mrr = total_mrr / len(mrr_d)
-    print(mrr)
+        metric_value = total_mrr / len(mrr_d)
+    elif metric == 'MAP':
+       metric_value, found_at_count = compute_map(mrr_d, type_d, found_at_count_len = len(img_d)-1)
+    else:
+        raise ValueError('Wrong metric')
 
-    return type_d, mrr_d, found_at_count
+    return metric_value, type_d, mrr_d, found_at_count
 
 def compute_sc_to_sc_distance(sc_dataset_fd, model_paths, distance_fn, pred_cache_path,
-    load_cache = False, save_cache = False, use_pca = False, pca_dim = 2):
+    load_cache = False, save_cache = False, use_pca = False, pca_dim = 2, metric='MRR'):
     #load models
     models = []
     for model_path in model_paths:
@@ -189,10 +194,39 @@ def compute_sc_to_sc_distance(sc_dataset_fd, model_paths, distance_fn, pred_cach
         save_pickle((type_d, img_d, mrr_d, dis_d),pred_cache_path)
         print('save done')
     
+    if metric == 'MRR':
+        #compute mrr
+        total_mrr = 0
+        added_count = 0
+        found_at_count = np.zeros(( 1000,))
+        for k,v in mrr_d.items():
+            main_type = type_d[k]
+            for i,(img_b, dis) in enumerate(v):
+                found_at = i + 1
+                if main_type == type_d[img_b]:
+                    total_mrr += 1 / found_at
+                    added_count += 1
+                    found_at_count[found_at-1] += 1
+
+                    if found_at == 1:
+                        if k[:-2] == img_b[:-2]:
+                            raise ValueError('suggest it own game!')
+                    break
+
+        metric_value = total_mrr / len(mrr_d)
+
+    elif metric == 'MAP':
+        metric_value, found_at_count = compute_map(mrr_d, type_d, found_at_count_len=1000)
+    else:
+        raise ValueError('Wrong metric')
+    
+    return metric_value, mrr_d, found_at_count
+
+def compute_mrr(mrr_d, type_d, found_at_count_len):
     #compute mrr
     total_mrr = 0
     added_count = 0
-    found_at_count = np.zeros(( 1000,))
+    found_at_count_len = np.zeros((len(mrr_d),))
     for k,v in mrr_d.items():
         main_type = type_d[k]
         for i,(img_b, dis) in enumerate(v):
@@ -201,36 +235,50 @@ def compute_sc_to_sc_distance(sc_dataset_fd, model_paths, distance_fn, pred_cach
                 total_mrr += 1 / found_at
                 added_count += 1
                 found_at_count[found_at-1] += 1
-
-                if found_at == 1:
-                    if k[:-2] == img_b[:-2]:
-                        raise ValueError('suggest it own game!')
                 break
 
     mrr = total_mrr / len(mrr_d)
-    print(mrr)
-    return mrr_d, found_at_count
+    return mrr, found_at_count
 
-def compute_mrr(mrr_d, type_d):
-    #compute mrr
-    total_mrr = 0
-    added_count = 0
-    found_at_count = np.zeros((len(mrr_d),))
+def compute_map(mrr_d, type_d, found_at_count_len):
+     #compute map
+        
+    # #delete
+    # mrr_d={
+    #     'A': [('D',0), ('B',1), ('D',1),('B',1),('B',1),('D',1),('D',1),('D',1),('D',1),('B',1)],
+    #     'B': [('A',0), ('D',1), ('A',1),('A',1),('D',1),('A',1),('A',1),('A',1),('D',1),('D',1)]
+    # }
+    # type_d={
+    #     'A': 0, 'B':0, 'C':1, 'D':1
+    # }
+
+    total_map = 0
+    found_at_count = np.zeros(( found_at_count_len,))
     for k,v in mrr_d.items():
         main_type = type_d[k]
-        for i,(img_b, dis) in enumerate(v):
-            found_at = i + 1
+        found_count = 1
+        current_map = 0
+
+        #delete
+        # q_found_at_count = np.zeros(( found_at_count_len,))
+
+        for i, (img_b, dis) in enumerate(v):
             if main_type == type_d[img_b]:
-                total_mrr += 1 / found_at
-                added_count += 1
-                found_at_count[found_at-1] += 1
-                break
+                current_map += found_count / (i+1)
+                found_count += 1
+                found_at_count[i] += 1
+                # q_found_at_count[i] += 1
+        
+        avg_prec = current_map / (found_count-1)
+        total_map += avg_prec
+        #delete
+        # print(avg_prec)
+        # print(q_found_at_count)
+    
+    _map = total_map / len(mrr_d)
+    return _map, found_at_count
 
-    mrr = total_mrr / len(mrr_d)
-    print(mrr)
-    return type_d, mrr_d, found_at_count
-
-def compute_game_to_game_distance(icon_cache_path, sc_cache_path):
+def compute_game_to_game_distance(icon_cache_path, sc_cache_path, compute_sc_only=False, metric='MRR'):
 
     type_icon, _, _, dis_icon = load_pickle(icon_cache_path)
     type_sc, _, _, dis_sc = load_pickle(sc_cache_path)
@@ -243,7 +291,10 @@ def compute_game_to_game_distance(icon_cache_path, sc_cache_path):
         for gb in type_icon.keys():
             if ga == gb: continue
             #add icon dis
-            total_dis = dis_icon[ga + '_' + gb]
+            if not compute_sc_only:
+                total_dis = dis_icon[ga + '_' + gb]
+            else:
+                total_dis = 0
 
             #add sc dis
             for ga_sc_fn in type_sc.keys():
@@ -263,8 +314,13 @@ def compute_game_to_game_distance(icon_cache_path, sc_cache_path):
     #sort mrr
     for k,v in mrr_game.items():
         mrr_game[k] = sorted(v, key = lambda x: x[1])
-
-    return compute_mrr(mrr_game, type_icon)
+    
+    if metric == 'MRR':
+        return compute_mrr(mrr_game, type_icon, len(type_icon))
+    elif metric =='MAP':
+        return compute_map(mrr_game, type_icon, len(type_icon))
+    else:
+        raise ValueError('Wrong metric')
 
 def write_rank_into_file(cache_path = None, output_path = 't.txt', type_d = None, mrr_d = None):
     if cache_path != None:
@@ -300,7 +356,7 @@ def show_kmeans_clustering(icon_cache_path):
 
 def plot_pca(icon_cache_path, print_text = True, col_d = 
     {'blocky':'red', 'card':'blue', 'driving_sim':'orange', 'war':'magenta', 'words':'green'},
-    auto_gen_col = False, plot_by_game = False, title='', label_d = None, marker_d = None):
+    auto_gen_col = False, plot_by_game = False, title='', label_d = None, marker_d = None, show_types_only = None):
     type_d, img_d, mrr_d, _ = load_pickle(icon_cache_path) 
 
     data = np.array(list(img_d.values()))
@@ -315,6 +371,9 @@ def plot_pca(icon_cache_path, print_text = True, col_d =
             plt.text(x,y, icon_fn, {'size':8})
 
         label = type_d[icon_fn] if label_d == None else label_d[type_d[icon_fn]]
+
+        if show_types_only is not None:
+            if type_d[icon_fn] not in show_types_only: continue
 
         if plot_by_game:
             app_id = icon_fn[:-6]
@@ -350,6 +409,13 @@ def plot_found_at_count(line, title, limit_x = 9999):
     plt.title(title, fontsize=12)
     plt.show()
 
+def print_feature_from_cache(pred_cache_path, show_types_only=None):
+    type_d, img_d, _, _ = load_pickle(pred_cache_path)
+    for app_id, feature in img_d.items():
+        if show_types_only is not None:
+            if type_d[app_id] not in show_types_only: continue
+        print(app_id.replace(' ', '_'), type_d[app_id], feature[0], feature[1], feature[2])
+
 if __name__ == '__main__':
     icon_dataset_fd = 'journal/sim_search/sports/icons/'
     sc_dataset_fd = 'journal/sim_search/sports/screenshots/'
@@ -358,18 +424,18 @@ if __name__ == '__main__':
     # input()
 
     icon_model_paths = [
-        # 'sim_search_t/models/icon_model2.4_k0_t-ep-404-loss-0.318-acc-0.896-vloss-3.674-vacc-0.357.hdf5', #0.39922222222222226 #pca 0.620
+        'sim_search_t/models/icon_model2.4_k0_t-ep-404-loss-0.318-acc-0.896-vloss-3.674-vacc-0.357.hdf5', #0.39922222222222226 #pca 0.620
         # 'sim_search_t/models/icon_model2.4_k1_t-ep-497-loss-0.273-acc-0.912-vloss-3.597-vacc-0.370.hdf5', #0.45232034632034623 #pca 0.640
         # 'sim_search_t/models/icon_model2.4_k2_t-ep-463-loss-0.283-acc-0.904-vloss-3.585-vacc-0.368.hdf5', #0.5571528822055138 #pca 0.571
-        'sim_search_t/models/icon_model2.4_k3_t-ep-433-loss-0.319-acc-0.898-vloss-3.493-vacc-0.380.hdf5' #0.47025526107879045 #pca 0.635
+        # 'sim_search_t/models/icon_model2.4_k3_t-ep-433-loss-0.319-acc-0.898-vloss-3.493-vacc-0.380.hdf5' #0.47025526107879045 #pca 0.635
         #0.6169
     ]
 
     sc_model_paths = [
-        # 'sim_search_t/models/sc_model2.3_k0_no_aug-ep-087-loss-0.721-acc-0.782-vloss-2.793-vacc-0.400.hdf5',  #0.4112483636213254 #pca 0.6438055771389106
+        'sim_search_t/models/sc_model2.3_k0_no_aug-ep-087-loss-0.721-acc-0.782-vloss-2.793-vacc-0.400.hdf5',  #0.4112483636213254 #pca 0.6438055771389106
         # 'sim_search_t/models/sc_model2.3_k1_no_aug-ep-135-loss-0.995-acc-0.708-vloss-2.763-vacc-0.398.hdf5', #0.5123068412801622 #pca 0.8075961636567699
         # 'sim_search_t/models/sc_model2.3_k2_no_aug-ep-068-loss-0.907-acc-0.723-vloss-2.568-vacc-0.396.hdf5', #0.4684522538516435 #pca 0.557 0.6155817433595208
-        'sim_search_t/models/sc_model2.3_k3_no_aug-ep-085-loss-0.786-acc-0.761-vloss-2.568-vacc-0.403.hdf5' #0.4203212543079958 #pca 0.622 0.6826307811156297
+        # 'sim_search_t/models/sc_model2.3_k3_no_aug-ep-085-loss-0.786-acc-0.761-vloss-2.568-vacc-0.403.hdf5' #0.4203212543079958 #pca 0.622 0.6826307811156297
     ]
 
     # plot_found_at_count('16	4.75	5	1	1	1.25	0.25	0.5	0	0.25',
@@ -377,9 +443,13 @@ if __name__ == '__main__':
 
     save_cache = False
     load_cache = True
-    use_pca = True
-    pca_dim = 40
-    k_fold = 3
+    use_pca = False
+    pca_dim = 50
+    # k_fold = 0
+    metric = 'MAP'
+
+    # print_feature_from_cache('journal/sim_search/sports/sc_pcadim%d_k%d.obj' % (pca_dim,k_fold,),
+    #     show_types_only=['pingpong'])
 
     total = None
     for k_fold in range(4):
@@ -388,35 +458,38 @@ if __name__ == '__main__':
         if not use_pca:
             icon_cache_path = 'journal/sim_search/sports/icon_nopca_k%d.obj' % (k_fold,)
 
-        type_d, mrr_d, found_at_count = \
+        metric_value, type_d, mrr_d, found_at_count = \
             compute_icon_to_icon_distance(
                 icon_dataset_fd, icon_model_paths, distance_fn = euclidean,
                 pred_cache_path = icon_cache_path, save_cache = save_cache,
-                load_cache = load_cache, use_pca = use_pca, pca_dim=pca_dim)
+                load_cache = load_cache, use_pca = use_pca, pca_dim=pca_dim, metric=metric)
 
         found_at_count = np.array(found_at_count)
-        # print(found_at_count)
 
         if total is None: total = found_at_count
         else: total += found_at_count
+
+        print(metric_value, end=' ')
+    print()
     
-    print((total/4).tolist())
-    # plot_found_at_count((total/4).tolist(), 'Icon rank frequency (pca dimension = 40)', limit_x=10)
-    input((total/4).tolist())
+    # print((total/4).tolist())
+    # # plot_found_at_count((total/4).tolist(), 'Icon rank frequency (pca dimension = 40)', limit_x=10)
+    # input((total/4).tolist())
 
 
-    total = None
+    # total = None
     for k_fold in range(4):
         sc_cache_path = 'journal/sim_search/sports/sc_pcadim%d_k%d.obj' % (pca_dim, k_fold,)
         if not use_pca:
             sc_cache_path = 'journal/sim_search/sports/sc_nopca_k%d.obj' % ( k_fold,)
-        mrr_d, found_at_count = compute_sc_to_sc_distance(sc_dataset_fd, sc_model_paths, distance_fn = euclidean, pred_cache_path = sc_cache_path, load_cache = load_cache, save_cache = save_cache, use_pca = use_pca, pca_dim=pca_dim)
-
-        if total is None: total = found_at_count
-        else: total += found_at_count
-    print((total/4).tolist())
-    # plot_found_at_count((total/4).tolist(), 'Screenshot rank frequency (pca dimension = 40)', limit_x=10)
-    input()
+        metric_value, mrr_d, found_at_count = compute_sc_to_sc_distance(sc_dataset_fd, sc_model_paths, distance_fn = euclidean, pred_cache_path = sc_cache_path, load_cache = load_cache, save_cache = save_cache, use_pca = use_pca, pca_dim=pca_dim, metric=metric)
+        print(metric_value, end=' ')
+        # if total is None: total = found_at_count
+        # else: total += found_at_count
+    print()
+    # print((total/4).tolist())
+    # # plot_found_at_count((total/4).tolist(), 'Screenshot rank frequency (pca dimension = 40)', limit_x=10)
+    # input()
     
     # # show_kmeans_clustering(sc_cache_path)
     # five_labels_d = {'blocky':'Blocky', 'card':'Card', 'driving_sim':'Driving simulator', 'war':'War','words':'Word'}
@@ -449,19 +522,46 @@ if __name__ == '__main__':
     'basketball' : ['*', 'red'],
     'cricket' : ['*', 'orange']
 }
+    # sc_cache_path = 'journal/sim_search/sports/sc_k0.obj'
     # plot_pca(sc_cache_path, print_text = False,
-    #     auto_gen_col=False, plot_by_game=False, title='Model I10 feature visualization', label_d=sports_journal_labels_d, marker_d=sports_journal_markers_d)
+    #     auto_gen_col=False, plot_by_game=False, title='Screenshot model I10 feature visualization',
+    #     label_d=sports_journal_labels_d, marker_d=sports_journal_markers_d,
+    #     show_types_only=['snooker', 'cricket', 'football'])
 
-    total = None
+    # total = None
 
     for i in range(4):
-        icon_cache_path = 'journal/sim_search/sports/icon_pcadim40_k%d.obj' % ( i,)
-        sc_cache_path = 'journal/sim_search/sports/sc_pcadim40_k%d.obj' % ( i,)
-        type_d, mrr_d, found_at_count = compute_game_to_game_distance(icon_cache_path, sc_cache_path)
+        icon_cache_path = 'journal/sim_search/sports/icon_pcadim%d_k%d.obj' % ( pca_dim, i,)
+        if not use_pca:
+            icon_cache_path = 'journal/sim_search/sports/icon_nopca_k%d.obj' % ( i,)
+        sc_cache_path = 'journal/sim_search/sports/sc_pcadim%d_k%d.obj' % ( pca_dim, i,)
+        if not use_pca:
+            sc_cache_path = 'journal/sim_search/sports/sc_nopca_k%d.obj' % ( i,)
+        metric_value, found_at_count = compute_game_to_game_distance(icon_cache_path, sc_cache_path,
+            compute_sc_only=False,
+            metric=metric)
+        
+        print(metric_value, end = ' ')
+    print()
 
         # print(found_at_count)
-        if total is None : total = np.array(found_at_count)
-        else: total += np.array(found_at_count)
-    print((total/4).tolist())
+        # if total is None : total = np.array(found_at_count)
+        # else: total += np.array(found_at_count)
+    # print((total/4).tolist())
+
     # plot_found_at_count((total/4).tolist(), 'Icon + Screenshot rank frequency (pca dimension = 40)', limit_x=10)
     # write_rank_into_file(type_d = type_d, mrr_d = mrr_d)
+
+    for i in range(4):
+        icon_cache_path = 'journal/sim_search/sports/icon_pcadim%d_k%d.obj' % ( pca_dim, i,)
+        if not use_pca:
+            icon_cache_path = 'journal/sim_search/sports/icon_nopca_k%d.obj' % ( i,)
+        sc_cache_path = 'journal/sim_search/sports/sc_pcadim%d_k%d.obj' % ( pca_dim, i,)
+        if not use_pca:
+            sc_cache_path = 'journal/sim_search/sports/sc_nopca_k%d.obj' % ( i,)
+        metric_value, found_at_count = compute_game_to_game_distance(icon_cache_path, sc_cache_path,
+            compute_sc_only=True,
+            metric=metric)
+        
+        print(metric_value, end = ' ')
+    print()
