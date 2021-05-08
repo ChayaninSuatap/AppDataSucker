@@ -48,5 +48,5 @@ if __name__ == '__main__':
     
     _plot_confusion_matrix(a, ['Board', 'Trivia', 'Arcade', 'Card', 'Music', 'Racing',
  'Action', 'Puzzle', 'Simulation', 'Strategy', 'Role playing', 'Sports', 'Adventure', 'Casino', 'Word', 'Casual', 'Educational'],
- title='Ensembling model S13 performance'
+ title=''
  )

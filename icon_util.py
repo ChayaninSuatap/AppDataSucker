@@ -9,13 +9,26 @@ import matplotlib.pyplot as plt
 import colorsys
 
 def load_icon_by_app_id(app_id, resizeW, resizeH):
-    return open_and_resize(mypath.icon_folder + app_id + '.png', resizeW, resizeH)
+    return open_and_resize(
+        fn=mypath.icon_folder + app_id + '.png',
+        resizeW=resizeW,
+        resizeH=resizeH)
 
 def load_icon_by_fn(fn, resizeW, resizeH, rotate_for_sc=False):
-    return open_and_resize(fn, resizeW, resizeH, rotate_for_sc)
+    return open_and_resize(fn=fn, resizeW=resizeW, resizeH=resizeH, rotate_for_sc=rotate_for_sc)
 
-def open_and_resize(fn, resizeW, resizeH, rotate_for_sc=False):
-    converted = _convert_to_rgba(fn, resizeW, resizeH, rotate_for_sc)
+def load_icon_by_fn_double_resize(fn, first_resize, second_resize, rotate_for_sc=False):
+    first_resized = _convert_to_rgba(
+        fn=fn,
+        resizeW=first_resize[0],
+        resizeH=first_resize[1],
+        rotate_for_sc=rotate_for_sc
+    )
+    second_resized = first_resized.resize((second_resize), Image.NEAREST)
+    return np.array(second_resized)[:,:,:3]
+
+def open_and_resize(**args):
+    converted = _convert_to_rgba(**args)
     return np.array(converted)[:,:,:3]
 
 def _convert_to_rgba(fn, resizeW, resizeH, rotate_for_sc=False):

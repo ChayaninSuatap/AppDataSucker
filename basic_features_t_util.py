@@ -213,9 +213,12 @@ if __name__ == '__main__':
     # keras_util.eval_top5(model, test_set[0], test_set[1])
 
     #gist stuff
-    model = load_model('journal/basic_features/models/gist_sc_model7_k3_t-ep-980-loss-0.074-acc-0.717-vloss-2.981-vacc-0.284.hdf5')
-    test_fn = 'journal/basic_features/gist_sc/gist_sc_test_k3.obj'
-    xtrain, xtest, ytrain, ytest = load_dataset(test_fn, test_fn)
+    # model = load_model('journal/basic_features/models/gist_sc_model7_k3_t-ep-980-loss-0.074-acc-0.717-vloss-2.981-vacc-0.284.hdf5')
+    test_fn = 'journal/basic_features/gist_icon/gist_icon_test_k3.obj'
+    # xtrain, xtest, ytrain, ytest = load_dataset(test_fn, test_fn)
+    # keras_util.eval_top5(model, xtest, ytest)
 
-    keras_util.eval_top5(model, xtest, ytest)
+    #extract ..
+    o = load(test_fn)
+    print(list(o.keys())[:5])
 
