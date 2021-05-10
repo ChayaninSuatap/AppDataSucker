@@ -59,17 +59,19 @@ def copy_sc_dataset_base_on_icon(icon_dataset_fd, sc_dataset_fd, sc_fd, human_ap
                     pass
 
 def compute_icon_to_icon_distance(icon_dataset_fd, model_path, distance_fn, pred_cache_path,
-    load_cache=False, save_cache=False, use_pca = False, pca_dim=2, metric='MRR', model_type=MODEL_TYPE_TRAIN, join_feature=False):
+    load_cache=False, save_cache=False, use_pca = False, pca_dim=2, metric='MRR',
+    model_type=MODEL_TYPE_TRAIN, join_feature=False, feature_d=None):
     #load models
-    if model_type == MODEL_TYPE_TRAIN:
-        model = (mod_model(model_path))
-    elif model_type == MODEL_TYPE_XCEPTION:
-        model = (load_and_mod_xception())
-    else:
-        raise ValueError('Wrong model type')
-    
-    if join_feature:
-        my_model = mod_model(model_path)
+    if feature_d is None:
+        if model_type == MODEL_TYPE_TRAIN:
+            model = (mod_model(model_path))
+        elif model_type == MODEL_TYPE_XCEPTION:
+            model = (load_and_mod_xception())
+        else:
+            raise ValueError('Wrong model type')
+        
+        if join_feature:
+            my_model = mod_model(model_path)
         
     type_d = {} # fn --> type that I splited myself
     dis_d = {} # fn1_fn2 distance
@@ -84,23 +86,27 @@ def compute_icon_to_icon_distance(icon_dataset_fd, model_path, distance_fn, pred
             for icon_fn in os.listdir(icon_dataset_fd + type_fd + '/'):
                 fn = icon_fn[:-4]
                 type_d[fn] = type_fd
-
-                icon_path = icon_dataset_fd + type_fd + '/' + icon_fn
-
-                if model_type == MODEL_TYPE_TRAIN:
-                    icon = load_icon_by_fn(icon_path, 128, 128)
-                    icon = np.array([icon]) / 255
-                elif model_type == MODEL_TYPE_XCEPTION:
-                    icon = load_icon_by_fn_double_resize(icon_path, (128, 128), (224, 224))
-                    icon = preprocess_input(np.array([icon]))
+                # get pred
+                if feature_d is not None:
+                    pred = feature_d[fn]
                 else:
-                    raise ValueError('')
+                    icon_path = icon_dataset_fd + type_fd + '/' + icon_fn
 
-                pred = model.predict(icon)[0]
-                if join_feature:
-                    icon = load_icon_by_fn(icon_path, 128, 128)
-                    icon = np.array([icon]) / 255
-                    pred = np.concatenate([my_model.predict(icon)[0], pred])
+                    if model_type == MODEL_TYPE_TRAIN:
+                        icon = load_icon_by_fn(icon_path, 128, 128)
+                        icon = np.array([icon]) / 255
+                    elif model_type == MODEL_TYPE_XCEPTION:
+                        icon = load_icon_by_fn_double_resize(icon_path, (128, 128), (224, 224))
+                        icon = preprocess_input(np.array([icon]))
+                    else:
+                        raise ValueError('')
+
+                    pred = model.predict(icon)[0]
+                    if join_feature:
+                        icon = load_icon_by_fn(icon_path, 128, 128)
+                        icon = np.array([icon]) / 255
+                        pred = np.concatenate([my_model.predict(icon)[0], pred])
+
                 img_d[fn] = pred
 
                 mrr_d[fn] = []
@@ -154,17 +160,18 @@ def compute_icon_to_icon_distance(icon_dataset_fd, model_path, distance_fn, pred
 
 def compute_sc_to_sc_distance(sc_dataset_fd, model_path, distance_fn, pred_cache_path,
     load_cache = False, save_cache = False, use_pca = False, pca_dim = 2,
-    metric=METRIC_MRR, model_type=MODEL_TYPE_TRAIN, join_feature=False):
+    metric=METRIC_MRR, model_type=MODEL_TYPE_TRAIN, join_feature=False, feature_d=None):
     #load models
-    if model_type == MODEL_TYPE_TRAIN:
-        model=(mod_model(model_path))
-    elif model_type == MODEL_TYPE_XCEPTION:
-        model=(load_and_mod_xception())
-    else:
-        raise ValueError('Wrong model type')
-    
-    if join_feature:
-        my_model = (mod_model(model_path))
+    if feature_d is None:
+        if model_type == MODEL_TYPE_TRAIN:
+            model=(mod_model(model_path))
+        elif model_type == MODEL_TYPE_XCEPTION:
+            model=(load_and_mod_xception())
+        else:
+            raise ValueError('Wrong model type')
+        
+        if join_feature:
+            my_model = (mod_model(model_path))
 
     type_d = {} # fn --> type that I splited myself
     dis_d = {} # fn1_fn2 distance
@@ -180,23 +187,26 @@ def compute_sc_to_sc_distance(sc_dataset_fd, model_path, distance_fn, pred_cache
                 fn = sc_fn[:-4]
                 type_d[fn] = type_fd
 
-                sc_path = sc_dataset_fd + type_fd + '/' + sc_fn
-
-                if model_type == MODEL_TYPE_TRAIN:
-                    sc = load_icon_by_fn(sc_path, 256, 160, rotate_for_sc = True)
-                    sc = np.array([sc]) / 255
-                elif model_type == MODEL_TYPE_XCEPTION:
-                    sc = load_icon_by_fn_double_resize(sc_path, (256,160),(224, 224), rotate_for_sc = True)
-                    sc = preprocess_input(np.array([sc]))
+                if feature_d is not None:
+                    pred = feature_d[sc_fn][0]
                 else:
-                    raise ValueError('')
+                    sc_path = sc_dataset_fd + type_fd + '/' + sc_fn
 
-                pred = model.predict(sc)[0]
+                    if model_type == MODEL_TYPE_TRAIN:
+                        sc = load_icon_by_fn(sc_path, 256, 160, rotate_for_sc = True)
+                        sc = np.array([sc]) / 255
+                    elif model_type == MODEL_TYPE_XCEPTION:
+                        sc = load_icon_by_fn_double_resize(sc_path, (256,160),(224, 224), rotate_for_sc = True)
+                        sc = preprocess_input(np.array([sc]))
+                    else:
+                        raise ValueError('')
 
-                if join_feature:
-                    sc = load_icon_by_fn(sc_path, 256, 160, rotate_for_sc = True)
-                    sc = np.array([sc]) / 255
-                    pred = np.concatenate([my_model.predict(sc)[0], pred])
+                    pred = model.predict(sc)[0]
+
+                    if join_feature:
+                        sc = load_icon_by_fn(sc_path, 256, 160, rotate_for_sc = True)
+                        sc = np.array([sc]) / 255
+                        pred = np.concatenate([my_model.predict(sc)[0], pred])
 
                 img_d[fn] = pred
 
@@ -489,17 +499,24 @@ if __name__ == '__main__':
     # plot_found_at_count('16	4.75	5	1	1	1.25	0.25	0.5	0	0.25',
     #     'Frequency of nearest correct suggestion using icons and screenshots of Puzzle dataset', limit_x = 10)
 
-    save_cache = True
-    load_cache = False
-    use_pca = True
-    pca_dim = 5
-    k_folds = [0,1,2,3]
-    metric = METRIC_MRR
+    save_cache = False
+    load_cache = True
+    pca_dim = 0
+    k_folds = [0]
+    metric = METRIC_MAP
     model_type = MODEL_TYPE_XCEPTION
     join_feature = True
+    feature_d_icon = load_pickle('journal/sim_search/sports/gist_icon_features.obj')
+    feature_d_sc = load_pickle('journal/sim_search/sports/gist_sc_features.obj')
+    project = 'gist'
+
+    #auto setup vars
+    use_pca = True if pca_dim > 0 else False
 
     if metric not in ['MRR', 'MAP']: raise ValueError('')
     if model_type != MODEL_TYPE_XCEPTION and join_feature: raise ValueError('')
+    if feature_d_icon is not None or feature_d_sc is not None:
+        print('Warning : feature_d overriding model prediction')
 
     # print_feature_from_cache('journal/sim_search/sports/sc_pcadim%d_k%d.obj' % (pca_dim,k_fold,),
     #     show_types_only=['pingpong'])
@@ -507,16 +524,14 @@ if __name__ == '__main__':
     total = None
     for k_fold in k_folds:
 
-        icon_cache_path = 'journal/sim_search/sports/%s_result/icon_pcadim%d_k%d.obj' % ('xception' if model_type==MODEL_TYPE_XCEPTION else 'trained_model',pca_dim,k_fold,)
-        if not use_pca:
-            icon_cache_path = 'journal/sim_search/sports/%s_result/icon_nopca_k%d.obj' % ('xception' if model_type==MODEL_TYPE_XCEPTION else 'trained_model', k_fold,)
+        icon_cache_path = 'journal/sim_search/sports/%s/icon_pcadim%d_k%d.obj' % (project,pca_dim,k_fold,)
 
         metric_value, type_d, mrr_d, found_at_count = \
             compute_icon_to_icon_distance(
                 icon_dataset_fd, icon_model_paths[k_fold], distance_fn = euclidean,
                 pred_cache_path = icon_cache_path, save_cache = save_cache,
                 load_cache = load_cache, use_pca = use_pca, pca_dim=pca_dim, metric=metric,
-                model_type=model_type, join_feature = join_feature)
+                model_type=model_type, join_feature = join_feature, feature_d = feature_d_icon)
 
         found_at_count = np.array(found_at_count)
 
@@ -533,14 +548,12 @@ if __name__ == '__main__':
 
     # total = None
     for k_fold in k_folds:
-        sc_cache_path = 'journal/sim_search/sports/%s_result/sc_pcadim%d_k%d.obj' % ('xception' if model_type==MODEL_TYPE_XCEPTION else 'trained_model', pca_dim, k_fold,)
-        if not use_pca:
-            sc_cache_path = 'journal/sim_search/sports/%s_result/sc_nopca_k%d.obj' % ('xception' if model_type==MODEL_TYPE_XCEPTION else 'trained_model', k_fold,)
+        sc_cache_path = 'journal/sim_search/sports/%s/sc_pcadim%d_k%d.obj' % (project, pca_dim, k_fold,)
         metric_value, mrr_d, found_at_count = compute_sc_to_sc_distance(sc_dataset_fd, sc_model_paths[k_fold],
             distance_fn = euclidean, pred_cache_path = sc_cache_path,
             load_cache = load_cache, save_cache = save_cache, use_pca = use_pca,
             pca_dim=pca_dim, metric=metric,
-            model_type=model_type, join_feature = join_feature)
+            model_type=model_type, join_feature = join_feature, feature_d = feature_d_sc)
         print(metric_value, end=' ')
         # if total is None: total = found_at_count
         # else: total += found_at_count
@@ -590,12 +603,8 @@ if __name__ == '__main__':
     # total = None
 
     for i in k_folds:
-        icon_cache_path = 'journal/sim_search/sports/%s_result/icon_pcadim%d_k%d.obj' % ('xception' if model_type==MODEL_TYPE_XCEPTION else 'trained_model',pca_dim,k_fold,)
-        if not use_pca:
-            icon_cache_path = 'journal/sim_search/sports/%s_result/icon_nopca_k%d.obj' % ('xception' if model_type==MODEL_TYPE_XCEPTION else 'trained_model', k_fold,)
-        sc_cache_path = 'journal/sim_search/sports/%s_result/sc_pcadim%d_k%d.obj' % ('xception' if model_type==MODEL_TYPE_XCEPTION else 'trained_model', pca_dim, k_fold,)
-        if not use_pca:
-            sc_cache_path = 'journal/sim_search/sports/%s_result/sc_nopca_k%d.obj' % ('xception' if model_type==MODEL_TYPE_XCEPTION else 'trained_model', k_fold,)
+        icon_cache_path = 'journal/sim_search/sports/%s/icon_pcadim%d_k%d.obj' % ( project ,pca_dim,k_fold,)
+        sc_cache_path = 'journal/sim_search/sports/%s/sc_pcadim%d_k%d.obj' % ( project, pca_dim, k_fold,)
         metric_value, found_at_count = compute_game_to_game_distance(icon_cache_path, sc_cache_path,
             compute_sc_only=False,
             metric=metric)
@@ -612,12 +621,8 @@ if __name__ == '__main__':
     # write_rank_into_file(type_d = type_d, mrr_d = mrr_d)
 
     for i in k_folds:
-        icon_cache_path = 'journal/sim_search/sports/%s_result/icon_pcadim%d_k%d.obj' % ('xception' if model_type==MODEL_TYPE_XCEPTION else 'trained_model',pca_dim,k_fold,)
-        if not use_pca:
-            icon_cache_path = 'journal/sim_search/sports/%s_result/icon_nopca_k%d.obj' % ('xception' if model_type==MODEL_TYPE_XCEPTION else 'trained_model', k_fold,)
-        sc_cache_path = 'journal/sim_search/sports/%s_result/sc_pcadim%d_k%d.obj' % ('xception' if model_type==MODEL_TYPE_XCEPTION else 'trained_model', pca_dim, k_fold,)
-        if not use_pca:
-            sc_cache_path = 'journal/sim_search/sports/%s_result/sc_nopca_k%d.obj' % ('xception' if model_type==MODEL_TYPE_XCEPTION else 'trained_model', k_fold,)
+        icon_cache_path = 'journal/sim_search/sports/%s/icon_pcadim%d_k%d.obj' % (project,pca_dim,k_fold,)
+        sc_cache_path = 'journal/sim_search/sports/%s/sc_pcadim%d_k%d.obj' % (project, pca_dim, k_fold,)
         metric_value, found_at_count = compute_game_to_game_distance(icon_cache_path, sc_cache_path,
             compute_sc_only=True,
             metric=metric)
